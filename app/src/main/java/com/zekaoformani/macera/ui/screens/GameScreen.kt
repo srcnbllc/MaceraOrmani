@@ -1,682 +1,631 @@
 package com.zekaoformani.macera.ui.screens
 
-import android.os.Build.VERSION.SDK_INT
+import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import coil.ImageLoader
-import coil.compose.AsyncImage
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
-import com.zekaoformani.macera.R
-import com.zekaoformani.macera.data.DataManager
-import com.zekaoformani.macera.data.GamePreferences
-import com.zekaoformani.macera.data.SoundManager
-import com.zekaoformani.macera.data.models.characters
+import androidx.compose.ui.window.Dialog
+import com.zekaoformani.macera.data.models.GameState
+import com.zekaoformani.macera.ui.components.ForestWoodButton
+import com.zekaoformani.macera.ui.components.ThumbDockControls
+import com.zekaoformani.macera.ui.theme.AmberGold
+import com.zekaoformani.macera.ui.theme.AmberOrange
+import com.zekaoformani.macera.ui.theme.EmeraldGreen
+import com.zekaoformani.macera.ui.theme.ForestGreenDark
+import com.zekaoformani.macera.ui.theme.ForestGreenDeep
+import com.zekaoformani.macera.ui.theme.ForestGreenPrimary
+import com.zekaoformani.macera.ui.theme.ShieldCyan
+import com.zekaoformani.macera.ui.theme.SoftCream
+import com.zekaoformani.macera.ui.theme.WoodBark
+import com.zekaoformani.macera.ui.theme.WoodBrownDark
 import kotlinx.coroutines.delay
-import kotlin.random.Random
+import kotlinx.coroutines.isActive
+import kotlin.math.abs
 
-enum class ObstacleType { GROUND }
+enum class HeroAction { RUN, JUMP, SLIDE }
 
 data class Obstacle(
-    val x: Float, val y: Float, val type: ObstacleType, val imageRes: Int, val width: Float, val height: Float
+    val id: Long,
+    var x: Float,
+    val type: ObstacleType, // ROCK, BRANCH, STUMP
+    val width: Float,
+    val height: Float
 )
 
-data class Coin(val x: Float, val y: Float, val width: Float = 45f, val height: Float = 45f)
+enum class ObstacleType { LOW_ROCK, HIGH_BRANCH, TREE_STUMP }
 
-data class Decoration(val x: Float, val y: Float, val speed: Float, val imageRes: Int)
+data class Collectible(
+    val id: Long,
+    var x: Float,
+    val y: Float,
+    val isAcorn: Boolean // Gold or Acorn
+)
 
 @Composable
 fun GameScreen(
-    characterId: Int,
-    chapterId: Int,
-    onNavigateBack: () -> Unit,
-    onLevelCompleted: (levelId: Int, scoreEarned: Int, starsEarned: Int) -> Unit
+    gameState: GameState,
+    onBackToMenu: () -> Unit,
+    onCompleteLevel: (Int, Int) -> Unit
 ) {
-    val context = LocalContext.current
-    val dataManager = remember { DataManager(context) }
-    val gamePrefs = remember { GamePreferences(context) }
-    val soundManager = remember { SoundManager.getInstance(context) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-
     val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    val screenWidth = configuration.screenWidthDp.toFloat()
-    val spawnX = screenWidth + 200f
+    // Ekran & Kahraman Ölçekleme: Yatay modda 115dp, dikeyde 90dp
+    val heroSizeDp: Dp = if (isLandscape) 115.dp else 90.dp
+    val obstacleScaleFactor: Float = if (isLandscape) 0.82f else 1.0f
 
-    val heroData = characters.find { it.id == characterId } ?: characters[0]
-
-    val imageLoader = remember {
-        ImageLoader.Builder(context).components {
-            if (SDK_INT >= 28) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
-        }.build()
-    }
-
-    var isPlaying by remember { mutableStateOf(false) }
-    var isGameOver by remember { mutableStateOf(false) }
-    var isPaused by remember { mutableStateOf(false) }
-
+    // Oyun Değişkenleri
     var score by remember { mutableIntStateOf(0) }
-    var collectedCoins by remember { mutableIntStateOf(0) }
+    var coinsCollected by remember { mutableIntStateOf(0) }
+    var shieldsLeft by remember { mutableIntStateOf(gameState.baseShields) }
+    var isPaused by remember { mutableStateOf(false) }
+    var isGameOver by remember { mutableStateOf(false) }
+    var isVictory by remember { mutableStateOf(false) }
 
-    val groundLevel = 0f
-    var charY by remember { mutableFloatStateOf(groundLevel) }
-    var velocityY by remember { mutableFloatStateOf(0f) }
-    val gravity = 1.6f
-    val baseJumpStrength = 22f + (heroData.jumpStars * 1.5f)
-
-    var isSliding by remember { mutableStateOf(false) }
-    var slideTimer by remember { mutableIntStateOf(0) }
-
-    var obstacles by remember { mutableStateOf(listOf<Obstacle>()) }
-    var coins by remember { mutableStateOf(listOf<Coin>()) }
-    var birds by remember { mutableStateOf(listOf<Decoration>()) }
-
-    // --- KAMP YETENEK SİSTEMİ ENTEGRASYONU ---
-    val baseShields = if (heroData.durabilityStars >= 4) 1 else 0
-    val maxShieldUses = baseShields + gamePrefs.getTentLevel() // Çadır seviyesi kalkan hakkı ekler
-
-    // YENİ: Kamp ateşi artık boolean değil, seviye (Int) tutuyor
-    val campfireLevel = gamePrefs.getCampfireLevel()
-    val dummyLevel = gamePrefs.getDummyLevel() // Eğitim kuklası altın toplama menzilini uzatır
-
-    val hasShieldAbility = maxShieldUses > 0
-    var shieldUsesLeft by remember { mutableIntStateOf(maxShieldUses) } // Kalan kalkan sayısı
-    var isShieldActive by remember { mutableStateOf(false) }
-    var shieldTimer by remember { mutableIntStateOf(0) }
-
+    // Dokunulmazlık Aurası (Auto-Shield Rescue tetiklendiğinde 1 saniye altın parlama)
     var isInvincible by remember { mutableStateOf(false) }
-    var invincibilityTimer by remember { mutableIntStateOf(0) }
+    var showRescueToast by remember { mutableStateOf(false) }
 
-    // ARKA PLAN AYARLARI
-    val bgImage = ImageBitmap.imageResource(id = R.drawable.sonsuz_orman)
-    val density = context.resources.displayMetrics.density
-    val rawImageWidthPx = bgImage.width.toFloat()
-    val rawImageHeightPx = bgImage.height.toFloat()
-    val screenHeightDp = configuration.screenHeightDp.toFloat()
+    // Karakter Aksiyonu (RUN, JUMP, SLIDE)
+    var heroAction by remember { mutableStateOf(HeroAction.RUN) }
+    var heroYOffset by remember { mutableFloatStateOf(0f) }
 
-    val scaleFactor = screenHeightDp / (rawImageHeightPx / density)
-    val scaledImageWidthDp = (rawImageWidthPx / density) * scaleFactor
+    // Engeller ve Toplanabilirler
+    val obstacles = remember { mutableStateListOf<Obstacle>() }
+    val collectibles = remember { mutableStateListOf<Collectible>() }
 
-    var bgOffsetX by remember { mutableFloatStateOf(0f) }
+    // Oyun Döngüsü
+    LaunchedEffect(isPaused, isGameOver, isVictory) {
+        var nextObstacleId = 1L
+        var nextCollectibleId = 1L
+        var spawnTimer = 0
 
-    // HIZ SİSTEMİ
-    val baseSpeed = 5f + (heroData.speedStars * 0.4f)
-    val bgSpeedFactor = 0.3f
-    val speedIncreaseFactor = 1f + (score / 150f)
-    val effectiveBgSpeed = (baseSpeed * bgSpeedFactor) * speedIncreaseFactor
-    val effectiveGameSpeed = baseSpeed * speedIncreaseFactor
+        while (isActive && !isPaused && !isGameOver && !isVictory) {
+            delay(16L) // ~60 FPS
+            score += 1
+            spawnTimer += 1
 
-    // MÜZİK YAŞAM DÖNGÜSÜ BEKÇİSİ
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    if (isPlaying && !isGameOver && !isPaused) {
-                        soundManager.playBackgroundMusic(R.raw.orman_muzigi)
-                    }
-                }
-                Lifecycle.Event.ON_PAUSE -> {
-                    soundManager.stopBackgroundMusic()
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            soundManager.stopBackgroundMusic()
-        }
-    }
-
-    LaunchedEffect(isPlaying, isGameOver, isPaused) {
-        if (isPlaying && !isGameOver && !isPaused) {
-            soundManager.playBackgroundMusic(R.raw.orman_muzigi)
-        } else {
-            soundManager.stopBackgroundMusic()
-        }
-    }
-
-    // OYUN DÖNGÜSÜ
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            delay(16)
-
-            if (isInvincible) {
-                invincibilityTimer--
-                if (invincibilityTimer <= 0) isInvincible = false
+            // Engel Üretimi
+            if (spawnTimer % 130 == 0) {
+                val obsType = if (spawnTimer % 260 == 0) ObstacleType.HIGH_BRANCH else ObstacleType.LOW_ROCK
+                val w = (60f * obstacleScaleFactor)
+                val h = (if (obsType == ObstacleType.HIGH_BRANCH) 50f else 60f) * obstacleScaleFactor
+                obstacles.add(
+                    Obstacle(
+                        id = nextObstacleId++,
+                        x = 1200f,
+                        type = obsType,
+                        width = w,
+                        height = h
+                    )
+                )
             }
 
-            if (isShieldActive) {
-                shieldTimer--
-                if (shieldTimer <= 0) {
-                    isShieldActive = false
+            // Altın/Palamut Üretimi
+            if (spawnTimer % 80 == 0) {
+                collectibles.add(
+                    Collectible(
+                        id = nextCollectibleId++,
+                        x = 1200f,
+                        y = if (spawnTimer % 160 == 0) 180f else 270f,
+                        isAcorn = spawnTimer % 240 == 0
+                    )
+                )
+            }
+
+            // Hareketi İlerlet
+            val speed = 8f
+            val obsIterator = obstacles.iterator()
+            while (obsIterator.hasNext()) {
+                val obs = obsIterator.next()
+                obs.x -= speed
+                if (obs.x < -100f) {
+                    obsIterator.remove()
                 }
             }
 
-            val loopWidth = scaledImageWidthDp * 2
-            bgOffsetX -= effectiveBgSpeed
-            if (bgOffsetX <= -loopWidth) {
-                bgOffsetX += loopWidth
-            }
-
-            if (charY > groundLevel || velocityY > 0f) {
-                charY += velocityY
-                velocityY -= gravity
-                if (charY <= groundLevel) {
-                    charY = groundLevel
-                    velocityY = 0f
+            val colIterator = collectibles.iterator()
+            while (colIterator.hasNext()) {
+                val col = colIterator.next()
+                col.x -= speed
+                if (col.x < -100f) {
+                    colIterator.remove()
                 }
             }
 
-            if (isSliding) {
-                slideTimer--
-                if (slideTimer <= 0) isSliding = false
-            }
+            // Çarpışma ve Tolerans Kontrolleri (%15-20 Tolerans Payı)
+            val heroLeft = 140f
+            val heroRight = 140f + (if (heroAction == HeroAction.SLIDE) 90f else 60f)
+            val heroBottom = 320f - heroYOffset
+            val heroTop = heroBottom - (if (heroAction == HeroAction.SLIDE) 40f else 80f)
 
-            val currentObstacles = obstacles.map { it.copy(x = it.x - effectiveGameSpeed) }.toMutableList()
-            val currentCoins = coins.map { it.copy(x = it.x - effectiveGameSpeed) }.toMutableList()
-            val currentBirds = birds.map { it.copy(x = it.x - (it.speed * speedIncreaseFactor)) }.toMutableList()
-
-            currentObstacles.removeAll { obs ->
-                val isPassed = obs.x < -200f
-                if (isPassed) score += 10
-                isPassed
-            }
-            currentCoins.removeAll { it.x < -100f }
-            currentBirds.removeAll { it.x < -200f }
-
-            if (Math.random() < 0.015) {
-                currentBirds.add(Decoration(x = spawnX, y = Random.nextInt(180, 480).toFloat(),
-                    speed = Random.nextDouble(1.8, 4.5).toFloat(), imageRes = R.drawable.obstacle_parrot))
-            }
-
-            if (currentObstacles.isEmpty() || currentObstacles.last().x < (spawnX - 600f)) {
-                if (Math.random() < 0.02) {
-                    val img = if (Math.random() < 0.5) R.drawable.obstacle_log else R.drawable.obstacle_rock
-                    currentObstacles.add(Obstacle(x = spawnX, y = 0f, type = ObstacleType.GROUND, imageRes = img, width = 120f, height = 130f))
-
-                    currentCoins.add(Coin(x = spawnX - 10f, y = 150f))
-                    currentCoins.add(Coin(x = spawnX + 70f, y = 205f))
-                    currentCoins.add(Coin(x = spawnX + 160f, y = 150f))
-                }
-            }
-
-            obstacles = currentObstacles
-            birds = currentBirds
-
-            val charX = 100f
-            val charW = if (isSliding) 140f else 120f
-            val charH = if (isSliding) 80f else 150f
-
-            val cLeft = charX + 45f
-            val cRight = charX + charW - 45f
-            val cBottom = charY + 10f
-            val cTop = charY + (if (isSliding) charH - 10f else charH - 25f)
-
-            // --- KUKLA YETENEĞİ (MIKNATIS ETKİSİ) ---
-            val magnetBonus = dummyLevel * 50f // Kukla seviyesi başına altınları 50px uzaktan çeker
-            val mLeft = cLeft - magnetBonus
-            val mRight = cRight + magnetBonus
-            val mBottom = cBottom - magnetBonus
-            val mTop = cTop + magnetBonus
-
-            val collectedThisFrame = currentCoins.filter { coin ->
-                val oLeft = coin.x; val oRight = coin.x + coin.width
-                val oBottom = coin.y; val oTop = coin.y + coin.height
-                mLeft < oRight && mRight > oLeft && mBottom < oTop && mTop > oBottom
-            }
-            if (collectedThisFrame.isNotEmpty()) {
-                collectedCoins += collectedThisFrame.size
-                score += collectedThisFrame.size * 5
-                currentCoins.removeAll(collectedThisFrame)
-                soundManager.playCollect()
-            }
-            coins = currentCoins
-
+            // Engellere Çarpışma Kontrolü
             for (obs in obstacles) {
-                val oLeft = obs.x + 35f; val oRight = obs.x + obs.width - 35f
-                val oBottom = obs.y + 15f; val oTop = obs.y + 80f
+                // Toleranslı Çarpışma Kutusu: Görsel sınırlara %18 tolerans
+                val tolerance = 0.18f
+                val obsEffectiveWidth = obs.width * (1f - tolerance)
+                val obsEffectiveHeight = obs.height * (1f - tolerance)
+                val obsLeft = obs.x + (obs.width * tolerance * 0.5f)
+                val obsRight = obsLeft + obsEffectiveWidth
+                val obsBottom = 320f
+                val obsTop = if (obs.type == ObstacleType.HIGH_BRANCH) 320f - 140f else 320f - obsEffectiveHeight
 
-                if (!isInvincible && cLeft < oRight && cRight > oLeft && cBottom < oTop && cTop > oBottom) {
-                    if (isShieldActive) {
-                        isShieldActive = false
-                        shieldTimer = 0
-                        isInvincible = true
-                        invincibilityTimer = 45
-                        soundManager.playJump()
-                    } else {
-                        isPlaying = false
-                        isGameOver = true
-                        soundManager.stopBackgroundMusic()
-                        soundManager.playGameOver()
+                val isHorizontallyOverlapping = heroRight > obsLeft && heroLeft < obsRight
+                val isVerticallyOverlapping = heroBottom > obsTop && heroTop < obsBottom
+
+                if (isHorizontallyOverlapping && isVerticallyOverlapping) {
+                    if (!isInvincible) {
+                        // Modül 2.2: Otomatik Kalkan Kurtarma (Auto-Shield Rescue)
+                        if (shieldsLeft > 0) {
+                            shieldsLeft -= 1
+                            isInvincible = true
+                            showRescueToast = true
+                            // 1 saniyelik altın parıltılı dokunulmazlık
+                            // hasar alma, oyuna devam et
+                        } else {
+                            isGameOver = true
+                        }
                     }
                 }
+            }
+
+            // Altın Toplama
+            val colCheckIterator = collectibles.iterator()
+            while (colCheckIterator.hasNext()) {
+                val col = colCheckIterator.next()
+                if (abs(col.x - heroLeft) < 50f && abs(col.y - heroTop) < 60f) {
+                    coinsCollected += if (col.isAcorn) 5 else 1
+                    colCheckIterator.remove()
+                }
+            }
+
+            // Seviye Zafer Şartı (Örn: 1500 Puan)
+            if (score >= 1500) {
+                isVictory = true
             }
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().weight(1f)
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        if (dragAmount.y < -15f && isPlaying && !isGameOver && !isPaused && charY == groundLevel) {
-                            velocityY = baseJumpStrength
-                            isSliding = false
-                            soundManager.playJump()
-                        } else if (dragAmount.y > 15f && isPlaying && !isGameOver && !isPaused && charY == groundLevel && !isSliding) {
-                            isSliding = true
-                            slideTimer = 35
-                        }
-                    }
-                }
-        ) {
+    // Dokunulmazlık Süresi (1000ms)
+    LaunchedEffect(isInvincible) {
+        if (isInvincible) {
+            delay(1000L)
+            isInvincible = false
+            showRescueToast = false
+        }
+    }
 
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val sX = (scaledImageWidthDp * density) / rawImageWidthPx
-                val sY = (screenHeightDp * density) / rawImageHeightPx
-                val offX = bgOffsetX * density
-                withTransform({
-                    translate(left = offX, top = 0f)
-                    scale(scaleX = sX, scaleY = sY, pivot = Offset.Zero)
-                }) {
-                    drawImage(image = bgImage, topLeft = Offset.Zero)
-                    withTransform({
-                        translate(left = rawImageWidthPx * 2, top = 0f)
-                        scale(scaleX = -1f, scaleY = 1f, pivot = Offset.Zero)
-                    }) {
-                        drawImage(image = bgImage, topLeft = Offset.Zero)
-                    }
-                    withTransform({ translate(left = rawImageWidthPx * 2, top = 0f) }) {
-                        drawImage(image = bgImage, topLeft = Offset.Zero)
-                    }
+    // Zıplama & Eğilme Zamanlayıcısı
+    LaunchedEffect(heroAction) {
+        if (heroAction == HeroAction.JUMP) {
+            // Zıplama animasyonu yükselme ve alçalma
+            for (i in 0..10) {
+                heroYOffset += 12f
+                delay(18L)
+            }
+            for (i in 0..10) {
+                heroYOffset -= 12f
+                delay(18L)
+            }
+            heroYOffset = 0f
+            heroAction = HeroAction.RUN
+        } else if (heroAction == HeroAction.SLIDE) {
+            delay(550L)
+            heroAction = HeroAction.RUN
+        }
+    }
+
+    // Jestler: Swipe Up = Zıpla, Swipe Down = Eğil
+    val gestureModifier = Modifier.pointerInput(Unit) {
+        detectVerticalDragGestures { _, dragAmount ->
+            if (dragAmount < -20f && heroAction == HeroAction.RUN) {
+                heroAction = HeroAction.JUMP
+            } else if (dragAmount > 20f && heroAction == HeroAction.RUN) {
+                heroAction = HeroAction.SLIDE
+            }
+        }
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(gestureModifier)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF81D4FA), // Açık Gökyüzü
+                        ForestGreenDark,   // Orman Ağaçları
+                        WoodBark           // Zemin Tabanı
+                    )
+                )
+            )
+    ) {
+        val screenHeight = maxHeight
+        val screenWidth = maxWidth
+
+        // 1. Zemin & Dünya Çizimi (Canvas)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val groundY = size.height * 0.78f
+
+            // Arka Plan Ağaç Silüetleri
+            drawCircle(
+                color = ForestGreenDeep.copy(alpha = 0.5f),
+                radius = 180f,
+                center = Offset(200f, groundY - 80f)
+            )
+            drawCircle(
+                color = ForestGreenPrimary.copy(alpha = 0.6f),
+                radius = 240f,
+                center = Offset(600f, groundY - 100f)
+            )
+
+            // Toprak Zemin Çizgisi
+            drawRect(
+                color = WoodBrownDark,
+                topLeft = Offset(0f, groundY),
+                size = Size(size.width, size.height - groundY)
+            )
+            // Üst Çim Şeridi
+            drawRect(
+                color = EmeraldGreen,
+                topLeft = Offset(0f, groundY - 10f),
+                size = Size(size.width, 10f)
+            )
+
+            // Toplanabilir Altın / Palamut Çizimi
+            for (col in collectibles) {
+                val drawY = groundY - (col.y * (groundY / 420f))
+                val drawX = col.x * (size.width / 1200f)
+                if (col.isAcorn) {
+                    drawCircle(color = AmberOrange, radius = 18f, center = Offset(drawX, drawY))
+                } else {
+                    drawCircle(color = AmberGold, radius = 14f, center = Offset(drawX, drawY))
                 }
             }
 
-            val groundLineY = (screenHeightDp * 0.85f).dp
-            val charPush = 10.dp
-            val obsPush = 35.dp
-            val coinPush = 25.dp
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                birds.forEach { bird ->
-                    val birdYPos = (screenHeightDp * 0.45f).dp - bird.y.dp
-                    AsyncImage(model = bird.imageRes, imageLoader = imageLoader, contentDescription = null,
-                        modifier = Modifier.offset(x = bird.x.dp, y = birdYPos).size(90.dp, 70.dp), contentScale = ContentScale.Fit)
-                }
-
-                coins.forEach { coin ->
-                    Image(painter = painterResource(id = R.drawable.item_coin), contentDescription = "Coin",
-                        modifier = Modifier.offset(x = coin.x.dp, y = groundLineY - coin.y.dp - coin.height.dp + coinPush).size(coin.width.dp, coin.height.dp))
-                }
-
-                obstacles.forEach { obs ->
-                    val yPos = groundLineY - obs.y.dp - obs.height.dp + obsPush
-                    Image(painter = painterResource(id = obs.imageRes), contentDescription = null,
-                        modifier = Modifier.offset(x = obs.x.dp, y = yPos).size(obs.width.dp, obs.height.dp), contentScale = ContentScale.Fit)
-                }
-
-                val cW = if (isSliding) 140.dp else 120.dp
-                val cH = if (isSliding) 80.dp else 150.dp
-
-                Box(
-                    modifier = Modifier.offset(x = 100.dp, y = groundLineY - charY.dp - cH + charPush).size(cW, cH),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isShieldActive) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawCircle(color = Color(0xFF69F0AE).copy(alpha = 0.35f), radius = size.width / 1.5f)
-                            drawCircle(color = Color(0xFF69F0AE), radius = size.width / 1.5f, style = androidx.compose.ui.graphics.drawscope.Stroke(6f))
-                        }
-                    } else if (isInvincible) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawCircle(color = Color.White.copy(alpha = 0.5f), radius = size.width / 1.8f)
-                        }
-                    }
-
-                    AsyncImage(model = heroData.imageRes, imageLoader = imageLoader, contentDescription = "Hero",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit, alignment = Alignment.BottomCenter)
-                }
-            }
-
-            // SOL ALT KALKAN BUTONU VE SAYAÇ
-            if (hasShieldAbility && isPlaying && !isGameOver && !isPaused) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .safeDrawingPadding(),
-                    contentAlignment = Alignment.BottomStart
-                ) {
-                    val shieldColor = when {
-                        isShieldActive -> Color(0xFF69F0AE)
-                        shieldUsesLeft <= 0 -> Color.Gray.copy(alpha = 0.5f) // Kalkan hakkı bittiyse gri
-                        else -> Color(0xFF29B6F6)
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = {
-                                if (shieldUsesLeft > 0 && !isShieldActive) {
-                                    shieldUsesLeft-- // Kalkan hakkını düşür
-                                    isShieldActive = true
-                                    // YENİ: 1200 frame (20sn) + Her seviye için ekstra 300 frame (5sn)
-                                    shieldTimer = 1200 + (campfireLevel * 300)
-                                }
-                            },
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(shieldColor.copy(alpha = 0.2f), CircleShape)
-                                .border(3.dp, shieldColor, CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Security,
-                                contentDescription = "Kalkan Aktif Et",
-                                tint = shieldColor,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-
-                        // Kalkan aktifse geri sayımı, değilse kalan kalkan sayısını gösterir
-                        if (isShieldActive) {
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                text = "${shieldTimer / 60}",
-                                color = Color(0xFF69F0AE),
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Black,
-                                style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 10f))
-                            )
-                        } else if (shieldUsesLeft > 0) {
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                text = "x$shieldUsesLeft",
-                                color = Color(0xFF29B6F6),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 8f))
-                            )
-                        }
-                    }
-                }
-            }
-
-            // --- ÜST PANEL ---
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp).safeDrawingPadding(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        if (isPlaying && !isGameOver) {
-                            isPlaying = false
-                            isPaused = true
-                        }
-                    },
-                    modifier = Modifier.background(Color.Black.copy(0.5f), CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Pause,
-                        contentDescription = "Duraklat",
-                        tint = Color.White
+            // Engel Çizimi
+            for (obs in obstacles) {
+                val drawX = obs.x * (size.width / 1200f)
+                val obsW = obs.width * (size.width / 1200f)
+                val obsH = obs.height * (groundY / 420f)
+                if (obs.type == ObstacleType.HIGH_BRANCH) {
+                    // Yüksek Dal (Eğilerek geçilir)
+                    drawRoundRect(
+                        color = WoodBark,
+                        topLeft = Offset(drawX, groundY - (obsH * 2.2f)),
+                        size = Size(obsW, obsH),
+                        cornerRadius = CornerRadius(8f, 8f)
+                    )
+                } else {
+                    // Alçak Kaya / Kütük (Zıplayarak geçilir)
+                    drawRoundRect(
+                        color = Color(0xFF5D4037),
+                        topLeft = Offset(drawX, groundY - obsH),
+                        size = Size(obsW, obsH),
+                        cornerRadius = CornerRadius(12f, 12f)
                     )
                 }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("SKOR: $score", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black, style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 8f)))
-                    Text("ALTIN: $collectedCoins", color = Color(0xFFFFD700), fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 8f)))
-                }
             }
+        }
 
-            if (!isPlaying && !isGameOver && !isPaused && score == 0) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.6f)), contentAlignment = Alignment.Center) {
-                    Button(onClick = { isPlaying = true }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
-                        Text("KOŞMAYA BAŞLA", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
+        // 2. Koşan Kahraman (Tilki) & Otomatik Kalkan Aurası
+        val heroBottomY = screenHeight * 0.78f
+        val heroXPos = if (isLandscape) 120.dp else 60.dp
+        val heroActualY = heroBottomY - (heroYOffset.dp) - (if (heroAction == HeroAction.SLIDE) 45.dp else heroSizeDp)
 
-            // --- DURAKLATILDI MENÜSÜ ---
-            if (isPaused) {
+        Box(
+            modifier = Modifier
+                .padding(start = heroXPos, top = heroActualY)
+                .size(heroSizeDp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Dokunulmazlık / Doğa Kalkanı Aurası (Altın Parlama Efekti)
+            if (isInvincible) {
                 Box(
-                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.85f)),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .size(heroSizeDp + 24.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(AmberGold.copy(alpha = 0.8f), ShieldCyan.copy(alpha = 0.4f), Color.Transparent)
+                            )
+                        )
+                        .border(2.dp, AmberGold, CircleShape)
+                )
+            }
+
+            // Karakter Görseli / Emojisi
+            val heroEmoji = when (heroAction) {
+                HeroAction.RUN -> "🦊"
+                HeroAction.JUMP -> "🦊✨"
+                HeroAction.SLIDE -> "🦊💨"
+            }
+            Text(
+                text = heroEmoji,
+                fontSize = if (heroAction == HeroAction.SLIDE) 40.sp else if (isLandscape) 64.sp else 52.sp
+            )
+        }
+
+        // 3. Üst Bilgi Barı (Skor, Altın, Kalkan, Duraklat Butonu)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Skor & Altın Paneli
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .border(1.dp, AmberGold.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "🪙 $coinsCollected", color = AmberGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "⭐ $score", color = SoftCream, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+
+            // Kurtarma Bildirimi Toast (Auto-Shield Rescue Toast)
+            AnimatedVisibility(visible = showRescueToast, enter = fadeIn(), exit = fadeOut()) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(EmeraldGreen.copy(alpha = 0.9f))
+                        .border(1.dp, Color.White, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "🛡️ KALKAN KURTARDI!",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+
+            // Duraklat Butonu
+            IconButton(
+                onClick = { isPaused = true },
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .border(1.dp, AmberGold, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Pause,
+                    contentDescription = "Duraklat",
+                    tint = SoftCream
+                )
+            }
+        }
+
+        // 4. Modül 2.1: Zemin Çizgisinin Altında Çift Başparmak Kumandası (Ground Layer Dock)
+        // Kahramanın ve engellerin önünü kesinlikle kapatmaz!
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            ThumbDockControls(
+                onSlide = {
+                    if (heroAction == HeroAction.RUN) {
+                        heroAction = HeroAction.SLIDE
+                    }
+                },
+                onJump = {
+                    if (heroAction == HeroAction.RUN) {
+                        heroAction = HeroAction.JUMP
+                    }
+                },
+                shieldsCount = shieldsLeft,
+                isLandscape = isLandscape
+            )
+        }
+
+        // 5. Popup Pencereleri (Tümünde verticalScroll - Butonlar Asla Taşmaz - Weight Hatası Yok)
+        if (isPaused) {
+            Dialog(onDismissRequest = { isPaused = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 480.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = WoodBrownDark)
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(Brush.verticalGradient(listOf(Color(0xFF34495E), Color(0xFF2C3E50))))
-                            .border(4.dp, Color(0xFF29B6F6), RoundedCornerShape(24.dp))
-                            .padding(24.dp)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "DURAKLATILDI",
-                            color = Color(0xFF29B6F6),
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Black,
-                            style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 15f))
-                        )
-
+                        Text(text = "⏸️ OYUN DURAKLATILDI", color = AmberGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "Ormanda mola verdin. Hazır olduğunda devam edebilirsin.", color = SoftCream, textAlign = TextAlign.Center, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            text = "SKOR: $score",
-                            color = Color.White,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
+                        ForestWoodButton(
+                            text = "DEVAM ET",
+                            icon = Icons.Default.PlayArrow,
+                            onClick = { isPaused = false },
+                            height = 50.dp
                         )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(55.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Brush.verticalGradient(listOf(Color(0xFF2ECC71), Color(0xFF27AE60))))
-                                .border(2.dp, Color.White, RoundedCornerShape(16.dp))
-                                .clickable {
-                                    isPaused = false
-                                    isPlaying = true
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("DEVAM ET", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(55.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Brush.verticalGradient(listOf(Color(0xFF7F8C8D), Color(0xFF2C3E50))))
-                                .border(2.dp, Color.LightGray, RoundedCornerShape(16.dp))
-                                .clickable {
-                                    dataManager.addCoins(collectedCoins)
-                                    dataManager.saveHighScore(score)
-                                    dataManager.saveLastScore(score)
-                                    isPaused = false
-                                    isPlaying = false
-                                    onNavigateBack()
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("ANA MENÜ", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ForestWoodButton(
+                            text = "HARİTAYA DÖN",
+                            onClick = onBackToMenu,
+                            height = 50.dp
+                        )
                     }
                 }
             }
+        }
 
-            // YAKALANDIN EKRANI
-            if (isGameOver) {
-                val isNewRecord = score > 0 && score > dataManager.getHighScore()
-
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.85f)),
-                    contentAlignment = Alignment.Center
+        // Modül 2.4: Pozitif ve Teşvik Edici Oyun Sonu ("HAYDİ TEKRAR DENE! 🦊")
+        if (isGameOver) {
+            Dialog(onDismissRequest = {}) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 520.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = WoodBrownDark)
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(Brush.verticalGradient(listOf(Color(0xFF4E342E), Color(0xFF2E1A14))))
-                            .border(4.dp, Color(0xFFFFB300), RoundedCornerShape(24.dp))
-                            .padding(24.dp)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "YAKALANDIN!",
-                            color = Color(0xFFFF5252),
-                            fontSize = 36.sp,
+                            text = "HAYDİ TEKRAR DENE! 🦊",
+                            color = AmberGold,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
-                            style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 15f))
+                            textAlign = TextAlign.Center
                         )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        if (isNewRecord) {
-                            Text(
-                                text = "👑 YENİ REKOR! 👑",
-                                color = Color(0xFF69F0AE),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                style = TextStyle(shadow = Shadow(Color.Black, blurRadius = 10f)),
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "SKOR: $score",
-                            color = Color.White,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "Orman Muhafızı pes etmez, her adım bir macera!",
+                            color = SoftCream,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp
                         )
-
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                        Box(
                             modifier = Modifier
-                                .background(Color.Black.copy(0.4f), RoundedCornerShape(12.dp))
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .padding(horizontal = 20.dp, vertical = 10.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.item_coin),
-                                contentDescription = "Kazanılan Altın",
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "+$collectedCoins",
-                                color = Color(0xFFFFD700),
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Black
+                                text = "Kazanılan Altın: 🪙 $coinsCollected  •  Puan: ⭐ $score",
+                                color = EmeraldGreen,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
                             )
                         }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        ForestWoodButton(
+                            text = "Yeniden Başla",
+                            icon = Icons.Default.Refresh,
+                            onClick = {
+                                score = 0
+                                coinsCollected = 0
+                                shieldsLeft = gameState.baseShields
+                                obstacles.clear()
+                                collectibles.clear()
+                                heroAction = HeroAction.RUN
+                                isGameOver = false
+                            },
+                            height = 50.dp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ForestWoodButton(
+                            text = "Haritaya Dön",
+                            onClick = onBackToMenu,
+                            height = 50.dp
+                        )
+                    }
+                }
+            }
+        }
 
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(55.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Brush.verticalGradient(listOf(Color(0xFF7F8C8D), Color(0xFF2C3E50))))
-                                    .border(2.dp, Color.LightGray, RoundedCornerShape(16.dp))
-                                    .clickable {
-                                        dataManager.addCoins(collectedCoins)
-                                        dataManager.saveHighScore(score)
-                                        dataManager.saveLastScore(score)
-                                        isPlaying = false
-                                        onNavigateBack()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("MENÜ", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(55.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Brush.verticalGradient(listOf(Color(0xFF2ECC71), Color(0xFF27AE60))))
-                                    .border(2.dp, Color.White, RoundedCornerShape(16.dp))
-                                    .clickable {
-                                        dataManager.addCoins(collectedCoins)
-                                        dataManager.saveHighScore(score)
-                                        dataManager.saveLastScore(score)
-
-                                        score = 0
-                                        collectedCoins = 0
-                                        charY = groundLevel
-                                        obstacles = emptyList()
-                                        coins = emptyList()
-                                        birds = emptyList()
-
-                                        // TEKRAR BAŞLARKEN KALKAN HAKLARINI YENİLE (Kamp özelliği eklentisi)
-                                        shieldUsesLeft = maxShieldUses
-                                        isShieldActive = false
-                                        shieldTimer = 0
-                                        isInvincible = false
-                                        invincibilityTimer = 0
-
-                                        isGameOver = false
-                                        isPlaying = true
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("TEKRAR", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                            }
-                        }
+        // Seviye Zafer Ekranı
+        if (isVictory) {
+            Dialog(onDismissRequest = {}) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 520.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = WoodBrownDark)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "🎉 TEBRİKLER KAŞİF!", color = EmeraldGreen, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Parkuru başarıyla tamamladın ve yeni bir damga kazandın!", color = SoftCream, textAlign = TextAlign.Center, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ForestWoodButton(
+                            text = "ÖDÜLLERİ AL & DEVAM ET",
+                            onClick = {
+                                onCompleteLevel(coinsCollected, score)
+                                onBackToMenu()
+                            },
+                            height = 50.dp
+                        )
                     }
                 }
             }

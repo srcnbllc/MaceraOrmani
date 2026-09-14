@@ -2,54 +2,21 @@ package com.zekaoformani.macera.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// The Luminous Sanctuary - Crystal Cave Palette
-val LuminousPrimary = Color(0xFFB5FFC2) // Büyülü Orman Yeşili
-val LuminousPrimaryContainer = Color(0xFF3FFF8B) // Neon Yeşil Vurgu
-val LuminousTertiary = Color(0xFFF8ACFF) // Büyülü Flora (Mor)
-val LuminousSecondary = Color(0xFFFFB778) // Parlak Kehribar (Ember)
-val LuminousSecondaryContainer = Color(0xFFFD9000) // Lava Turuncusu
+// Orman & Ahşap Teması Renkleri
+val ForestGreenLight = Color(0xFF4CAF50)
+val ForestGreenPrimary = Color(0xFF2E7D32)
+val ForestGreenDark = Color(0xFF1B5E20)
+val ForestGreenDeep = Color(0xFF0D3810)
 
-val LuminousSurface = Color(0xFF031013) // Derin Uçurum (Karanlık Boşluk)
-val LuminousOnSurface = Color(0xFFCDEBF2) // Yansımalı Açık Mavi-Beyaz
-val LuminousSurfaceVariant = Color(0xFF0A262E) // Cam Arka Plan Katmanı
-val LuminousOutlineVariant = Color(0xFF314C52) // Hayalet Çizgi (Ghost Border)
+val WoodBrownLight = Color(0xFF8D6E63)
+val WoodBrown = Color(0xFF6D4C41)
+val WoodBrownDark = Color(0xFF4E342E)
+val WoodBark = Color(0xFF2E1C14)
 
-// Eski deklarelere köprü (Hata vermemesi için)
-val Primary = LuminousPrimary
-val SecondaryColor = LuminousSecondary
-val BackgroundDark = LuminousSurface
-val BackgroundLight = Color(0xFFEDFAEE)
-val CardDark = LuminousSurfaceVariant
-val CardLight = Color(0xFFFFFFFF)
-val ScoreGold = Color(0xFFFFD700)
-val HealthRed = Color(0xFFFF4500)
-val PrimaryHover = LuminousPrimaryContainer
-val SurfaceLight = Color(0xFFFFFFFF)
-
-// Material 3 Dark Color Scheme eşleştirmeleri
-val DarkPrimary = LuminousPrimary
-val DarkOnPrimary = Color.Black
-val DarkPrimaryContainer = LuminousPrimaryContainer
-val DarkOnPrimaryContainer = Color.Black
-val DarkBackground = LuminousSurface
-val DarkOnBackground = LuminousOnSurface
-val DarkSurface = LuminousSurface
-val DarkOnSurface = LuminousOnSurface
-val DarkSurfaceVariant = LuminousSurfaceVariant
-val DarkOnSurfaceVariant = LuminousOnSurface
-val DarkSecondary = LuminousSecondary
-val DarkTertiary = LuminousTertiary
-
-// Material 3 Light Color Scheme eşleştirmeleri (Genelde karanlık tema kullanılacak)
-val LightPrimary = LuminousPrimary
-val LightOnPrimary = Color.Black
-val LightPrimaryContainer = LuminousPrimaryContainer
-val LightOnPrimaryContainer = Color.Black
-val LightBackground = BackgroundLight
-val LightOnBackground = Color(0xFF231A10)
-val LightSurface = SurfaceLight
-val LightOnSurface = Color(0xFF231A10)
-val LightSurfaceVariant = Color(0xFFE5E7EB) 
-val LightOnSurfaceVariant = Color(0xFF231A10)
-val LightSecondary = LuminousSecondary
-val LightTertiary = LuminousTertiary
+val AmberGold = Color(0xFFFFB300)
+val AmberGoldLight = Color(0xFFFFD54F)
+val AmberOrange = Color(0xFFFF9800)
+val EmeraldGreen = Color(0xFF00C853)
+val SoftCream = Color(0xFFFFF8E7)
+val CardOverlayDark = Color(0xCC1A2E1C)
+val ShieldCyan = Color(0xFF00E5FF)

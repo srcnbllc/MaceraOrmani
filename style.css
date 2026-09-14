@@ -1,0 +1,4300 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap');
+
+:root {
+  --bg-dark: #07130c;
+  --panel-bg: rgba(12, 28, 20, 0.92);
+  --panel-glass: rgba(18, 43, 31, 0.75);
+  --border-gold: #d4af37;
+  --border-gold-glow: rgba(212, 175, 55, 0.4);
+  --accent-gold: #e0a96d;
+  --brand-turq: #008080;
+  --brand-turq-light: #20b2aa;
+  --brand-blue: #007799;
+  --forest-dark: #1b4332;
+  --forest-medium: #2d6a4f;
+  --forest-light: #52b788;
+  --text-light: #f8f9fa;
+  --text-muted: #d8f3dc;
+  --danger: #e63946;
+  --warning: #f4a261;
+  --success: #2a9d8f;
+  --wood-dark: #221207;
+  --wood-mid: #3d210f;
+  --wood-border: #7c471e;
+  --wood-gold: #ffd166;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  font-family: 'Fredoka', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+body {
+  background: radial-gradient(circle at 50% 30%, #133325 0%, #08170f 60%, #030a06 100%);
+  color: var(--text-light);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+#app-container {
+  position: relative;
+  width: 420px;
+  height: 840px;
+  max-width: 100vw;
+  max-height: 100vh;
+  max-height: 100dvh;
+  background-color: var(--bg-dark);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(45, 106, 79, 0.35);
+  border-radius: 28px;
+  overflow: hidden;
+  border: 3px solid rgba(212, 175, 55, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobil ve PWA / WebView Cihaz Uyumluluğu */
+@media (max-width: 480px), (max-height: 840px) and (orientation: portrait) {
+  body {
+    background: #07130c;
+  }
+  #app-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================================
+   0. KURUMSAL ÜST BANT (İBB • BOĞAZİÇİ YÖNETİM)
+========================================================== */
+.top-branding-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  padding: 0 10px;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(4, 18, 12, 0.88);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.branding-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1.2vw, 8px);
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.branding-badge {
+  background: linear-gradient(135deg, #ffd166 0%, #d4af37 100%);
+  color: #07150e;
+  font-weight: 900;
+  font-size: clamp(8px, 2.2vw, 9.5px);
+  padding: 1px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.branding-sep {
+  color: rgba(212, 175, 55, 0.6);
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+.branding-corp {
+  color: #f8f9fa;
+  font-weight: 800;
+  font-size: clamp(8px, 2.2vw, 9.5px);
+  letter-spacing: 0.3px;
+  flex-shrink: 1;
+}
+
+.branding-title {
+  color: #ffd166;
+  font-weight: 800;
+  font-size: clamp(8px, 2.2vw, 9.5px);
+  letter-spacing: 0.3px;
+  flex-shrink: 1;
+}
+
+/* Legacy watermark compatibility fallback */
+.branding-watermark {
+  display: none !important;
+}
+
+/* Screens Common */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none !important;
+  flex-direction: column;
+  z-index: 10;
+  background-size: cover;
+  background-position: center;
+}
+
+.screen.active {
+  display: flex !important;
+  animation: fadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ==========================================================
+   1. MAIN MENU SCREEN (ORİJİNAL TEMİZ ARKA PLAN)
+========================================================== */
+#screen-menu {
+  background-image: url('Assets/Sprites/menu_arkaplan.png');
+  background-color: #11281c;
+  background-size: 100% 100%;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+/* ==========================================================
+   1. ANA MENÜ EKRANI BUTONLARI & KONUMLANDIRMA
+========================================================== */
+
+/* Sağ Üst: Doğal Ahşap Çevreyle Uyumlu Ses Butonu */
+.menu-audio-pos {
+  position: absolute;
+  top: calc(24px + 8px);
+  right: 12px;
+  z-index: 130;
+}
+
+/* Altın & Puan Panosunun Hemen Altında Ortalanmış Kaşif Profil Rozeti (Hapı) */
+.menu-profile-pill {
+  position: absolute;
+  top: 41.4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58%;
+  height: 38px;
+  background: linear-gradient(180deg, rgba(20, 48, 30, 0.95) 0%, rgba(8, 26, 17, 0.98) 100%);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 6px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+}
+
+.menu-profile-pill:hover, .menu-profile-pill:focus-visible {
+  transform: translateX(-50%) scale(1.03);
+  background: linear-gradient(180deg, rgba(28, 65, 42, 0.96) 0%, rgba(12, 36, 24, 0.98) 100%);
+  border-color: #ffd166;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 209, 102, 0.4);
+}
+
+.menu-profile-pill:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.profile-pill-icon {
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
+  border: 1px solid #ffd166;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.profile-pill-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  flex: 1;
+  margin-left: 8px;
+  overflow: hidden;
+}
+
+.profile-pill-sub {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.profile-pill-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.profile-pill-edit {
+  font-size: 12px;
+  opacity: 0.8;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.menu-profile-pill:hover .profile-pill-edit {
+  transform: rotate(15deg) scale(1.15);
+  opacity: 1;
+}
+
+/* Arka Plandaki Ahşap "AYARLAR" Dişli Çarkına Birebir Karşılık Gelen Buton */
+.btn-hit-settings {
+  position: absolute;
+  top: 6.2%;
+  left: 2.2%;
+  width: 14%;
+  height: 8.8%;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  z-index: 130;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-hit-settings:hover, .btn-hit-settings:focus-visible {
+  border-color: rgba(255, 209, 102, 0.85);
+  box-shadow: 0 0 18px rgba(255, 209, 102, 0.6), inset 0 0 8px rgba(255, 209, 102, 0.3);
+  transform: scale(1.06) rotate(15deg);
+}
+
+.btn-hit-settings:active {
+  transform: scale(0.94) rotate(30deg);
+}
+
+/* Ses Butonu */
+.native-audio-toggle {
+  background: rgba(10, 28, 19, 0.88);
+  border: 1.5px solid var(--border-gold);
+  color: #ffd166;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+}
+
+.native-audio-toggle:hover {
+  transform: scale(1.08);
+  background: var(--forest-medium);
+  border-color: #ffd166;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.4);
+}
+
+.native-audio-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Ahşap Pano Üzerindeki Sayı Sayaçları (ALTIN ve PUAN Alanlarına Tam Oturtulur) */
+.stat-slot-gold, .stat-slot-score {
+  position: absolute;
+  top: 35.4%;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 15.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.9);
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.stat-slot-gold {
+  left: 39.5%;
+  transform: translateX(-50%);
+}
+
+.stat-slot-score {
+  left: 65.2%;
+  transform: translateX(-50%);
+}
+
+/* Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar (Birebir 1:1 Geometri) */
+.native-wood-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60.5%;
+  height: 8.5%;
+  background: transparent;
+  border: 2.5px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 24px;
+  z-index: 30;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+              background 0.2s ease, 
+              border-color 0.2s ease, 
+              box-shadow 0.2s ease;
+}
+
+.native-wood-btn .wood-btn-label {
+  flex: 1;
+  text-align: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: transparent; /* Arka plandaki ahşap kabartma yazıyı korur veya hover'da belirginleştirir */
+  text-transform: uppercase;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Buton Seçme / Vurgu İşaretleri (Sol ve Sağ Altın Oklar) */
+.native-wood-btn .selection-arrow {
+  font-size: 14px;
+  color: #ffd166;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.9);
+  pointer-events: none;
+}
+
+.native-wood-btn .selection-arrow.left-arrow {
+  margin-left: 20px;
+}
+
+.native-wood-btn:hover, .native-wood-btn:focus-visible, .native-wood-btn.selected {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #ffd166;
+  box-shadow: 0 0 20px rgba(255, 209, 102, 0.65), inset 0 0 14px rgba(255, 255, 255, 0.22);
+  transform: translateX(-50%) scale(1.025);
+}
+
+.native-wood-btn:hover .wood-btn-label, 
+.native-wood-btn:focus-visible .wood-btn-label,
+.native-wood-btn.selected .wood-btn-label {
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 209, 102, 0.7);
+}
+
+.native-wood-btn:hover .selection-arrow, 
+.native-wood-btn:focus-visible .selection-arrow,
+.native-wood-btn.selected .selection-arrow {
+  opacity: 1;
+  transform: scale(1.1);
+  animation: arrowBounce 0.9s infinite alternate ease-in-out;
+}
+
+@keyframes arrowBounce {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.25); text-shadow: 0 0 12px #ffe6a7; }
+}
+
+.native-wood-btn:active {
+  transform: translateX(-50%) scale(0.97);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.4);
+}
+
+/* 4 Butonun Arka Plandaki Ahşap Tabelalara Birebir Karşılık Gelen Düşey Konumları */
+.btn-hit-1 { top: 48.6%; }
+.btn-hit-2 { top: 57.9%; }
+.btn-hit-3 { top: 67.2%; }
+.btn-hit-4 { top: 76.5%; }
+
+/* ==========================================================
+   GENEL BUTON TASARIMLARI
+========================================================== */
+.btn-main, .wood-btn-main {
+  background: linear-gradient(180deg, #d4af37 0%, #aa8420 60%, #7c5807 100%);
+  color: #ffffff;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  padding: 12px 22px;
+  border-radius: 20px;
+  border: 2px solid #ffd166;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 6px 14px rgba(0, 0, 0, 0.65), 0 0 14px rgba(255, 209, 102, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.8);
+}
+
+.btn-main:hover, .wood-btn-main:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 18px rgba(0, 0, 0, 0.75), 0 0 18px rgba(255, 209, 102, 0.5);
+}
+
+.btn-main:active, .wood-btn-main:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, #1b4332 0%, #0d281a 100%);
+  color: #d8f3dc;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  border: 1.5px solid #52b788;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(180deg, #2d6a4f 0%, #153c29 100%);
+  border-color: #ffd166;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================
+   2. HERO SELECTION SCREEN
+========================================================== */
+#screen-heroes {
+  background: radial-gradient(circle at 50% 30%, #173d2b 0%, #0b2217 65%, #04120a 100%);
+  padding: 44px 18px 22px;
+  justify-content: space-between;
+}
+
+.top-bar, .wood-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.btn-back-pill, .wood-btn-back {
+  background: rgba(10, 30, 20, 0.85);
+  border: 1.5px solid #d4af37;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.btn-back-pill:hover, .wood-btn-back:hover {
+  transform: translateY(-2px);
+  border-color: #ffd166;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+}
+
+.map-sign-title, .wood-sign-title {
+  background: rgba(8, 26, 17, 0.9);
+  border: 1.5px solid var(--border-gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  color: #ffd166;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.map-counter-pill, .wood-counter-pill {
+  background: rgba(10, 30, 20, 0.85);
+  border: 1.5px solid #d4af37;
+  padding: 6px 12px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #ffd166;
+}
+
+.hero-card, .wood-hero-card {
+  background: linear-gradient(180deg, rgba(16, 46, 32, 0.95) 0%, rgba(8, 26, 17, 0.95) 100%);
+  border: 2px solid var(--border-gold);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.7);
+}
+
+.hero-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.carousel-nav, .wood-nav-btn {
+  background: rgba(20, 55, 38, 0.9);
+  border: 1.5px solid var(--border-gold);
+  color: #ffd166;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.carousel-nav:hover, .wood-nav-btn:hover {
+  transform: scale(1.1);
+  background: var(--forest-medium);
+}
+
+.hero-avatar-wrap {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
+  border: 3px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(255, 209, 102, 0.35);
+}
+
+.hero-avatar-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.hero-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.hero-desc {
+  font-size: 13px;
+  color: #d8f3dc;
+  text-align: center;
+  line-height: 1.35;
+  margin-bottom: 14px;
+  min-height: 36px;
+}
+
+.hero-stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff9e6;
+}
+
+.stat-stars {
+  color: #ffd166;
+  letter-spacing: 2px;
+}
+
+/* ==========================================================
+   3. BÖLÜM SEÇİM HARİTASI (ORMAN ETAPLARI - TEMİZ YEŞİL & ALTIN DİZAYN)
+========================================================== */
+#screen-map {
+  background: radial-gradient(circle at 50% 25%, #153825 0%, #0a2115 65%, #030f08 100%);
+  padding: 42px 14px 18px;
+  flex-direction: column;
+}
+
+.map-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.map-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+.map-scroll-area::-webkit-scrollbar-thumb {
+  background: #2d6a4f;
+  border-radius: 10px;
+}
+
+/* Şık Orman Etabı Kartı (Kullanıcının Beğendiği Tasarım) */
+.stage-card, .wood-stage-plank {
+  background: rgba(10, 30, 20, 0.88);
+  border: 1.5px solid rgba(82, 183, 136, 0.35);
+  border-radius: 20px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(0, 0, 0, 0.5);
+}
+
+.stage-card:hover, .wood-stage-plank:hover {
+  transform: translateX(4px) scale(1.01);
+  border-color: #ffd166;
+  background: rgba(16, 44, 30, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 20px rgba(0, 0, 0, 0.65), 0 0 14px rgba(255, 209, 102, 0.25);
+}
+
+/* Oynanabilir / Aktif Bölüm (Altın Çerçeveli Parlama) */
+.stage-card.is-active-stage, .wood-stage-plank.is-active-stage {
+  border-color: #ffd166;
+  border-width: 2px;
+  background: rgba(16, 46, 31, 0.95);
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.35), 0 6px 16px rgba(0,0,0,0.6);
+  animation: stagePulse 2.4s infinite;
+}
+
+@keyframes stagePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+/* Altın Numaratör Kutusu */
+.stage-num, .wood-medallion-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(12, 36, 24, 0.95);
+  border: 2px solid #ffd166;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 6px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  color: #ffffff;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.9);
+  flex-shrink: 0;
+}
+
+.stage-info, .wood-stage-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stage-title, .wood-stage-title {
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  line-height: 1.3;
+}
+
+.stage-facility, .wood-stage-facility {
+  font-size: 11px;
+  color: #52b788;
+  font-weight: 600;
+}
+
+.stage-reward-pill, .wood-reward-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.stage-reward-pill.beltur, .wood-reward-pill.beltur {
+  background: rgba(224, 169, 109, 0.2);
+  border: 1px solid #e0a96d;
+  color: #ffd166;
+}
+
+.stage-reward-pill.zipline, .wood-reward-pill.zipline {
+  background: rgba(46, 196, 182, 0.2);
+  border: 1px solid #2ec4b6;
+  color: #80ffdb;
+}
+
+.stage-reward-pill.qr-tag {
+  background: rgba(244, 162, 97, 0.2);
+  border: 1px solid #f4a261;
+  color: #ffd166;
+}
+
+/* Durum Rozeti (Tik, Play, Kilit) */
+.stage-status-badge, .wood-status-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.stage-status-badge.active, .wood-status-badge.active {
+  background: #0077b6;
+  color: #ffffff;
+  border: 1.5px solid #90e0ef;
+  box-shadow: 0 0 10px rgba(0, 119, 182, 0.6);
+}
+
+.stage-status-badge.completed, .wood-status-badge.completed {
+  background: #2a9d8f;
+  color: #ffffff;
+  border: 1.5px solid #52b788;
+}
+
+.stage-status-badge.locked, .wood-status-badge.locked {
+  background: rgba(40, 25, 15, 0.8);
+  border: 1px solid #7c471e;
+  color: #e76f51;
+}
+
+.stage-status-badge.qr-needed {
+  background: rgba(180, 83, 9, 0.85);
+  border: 1.5px solid #ffd166;
+  color: #ffd166;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.4);
+}
+
+/* ==========================================================
+   4. MODALLER (AÇILIR PENCERELER - KESİNLİKLE VARSAYILAN OLARAK GİZLİ)
+========================================================== */
+.modal-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(3, 12, 7, 0.84) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  z-index: 2000 !important;
+}
+
+.modal-overlay.active {
+  display: flex !important;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: linear-gradient(180deg, #102f20 0%, #081a11 100%);
+  border: 2px solid var(--border-gold);
+  border-radius: 20px;
+  padding: 12px 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 20px 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.modal-header-tag {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 0.8px;
+}
+
+.modal-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: #d8f3dc;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.modal-facilities {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  color: #ffd166;
+  border: 1px dashed rgba(212, 175, 55, 0.4);
+}
+
+.victory-photo {
+  width: 100%;
+  height: 135px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 2px solid var(--border-gold);
+  margin-bottom: 4px;
+}
+
+/* ==========================================================
+   5. RUNNER GAMEPLAY SCREEN
+========================================================== */
+#screen-game {
+  background-color: #11281c;
+  position: relative;
+  overflow: hidden;
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* 60 FPS Hareketli Çizgi Film Hayvan Karakteri DOM Katmanı (Tilki, Maymun, Kaplan) */
+.runner-player-sprite-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 60;
+  transform-origin: center bottom;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: opacity 0.08s linear;
+  touch-action: none;
+}
+
+.runner-player-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  image-rendering: auto;
+}
+
+/* HUD Overlay */
+.game-hud {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 100%;
+  padding: 0 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.hud-pill {
+  background: rgba(8, 24, 16, 0.88);
+  border: 1.5px solid var(--border-gold);
+  padding: 5px 10px;
+  border-radius: 18px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.hearts-container {
+  color: #ff4757;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+
+/* Canlı Etap İlerleme Çubuğu & Kalan Süre Takibi (3-5 Dakika Koşu) */
+.hud-progress-wrap {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  background: rgba(8, 24, 16, 0.88);
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  border-radius: 12px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.hud-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #ffd166;
+  margin-bottom: 3px;
+}
+
+.hud-progress-track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 6px;
+}
+
+.hud-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2a9d8f, #52b788, #ffd166);
+  border-radius: 6px;
+  transition: width 0.2s linear;
+}
+
+.hud-progress-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+  transition: left 0.2s linear;
+  pointer-events: none;
+}
+
+/* In-game Forest Spot Card Banner */
+.in-game-spot-card {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  background: rgba(8, 24, 16, 0.94);
+  border: 2px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 12px 14px;
+  text-align: center;
+  z-index: 150;
+  pointer-events: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+  animation: slideDownCard 0.4s ease-out;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+@keyframes slideDownCard {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.in-game-spot-card.hidden {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.spot-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--brand-turq-light);
+  letter-spacing: 0.8px;
+}
+
+.spot-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffd166;
+  margin: 2px 0;
+}
+
+.spot-info {
+  font-size: 11.5px;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.spot-amenities {
+  font-size: 10.5px;
+  color: #52b788;
+  font-style: italic;
+}
+
+/* Touch Control Hints on Mobile */
+.touch-control-hint {
+  position: absolute;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 24, 16, 0.85);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffd166;
+  pointer-events: none;
+  z-index: 100;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  white-space: nowrap;
+}
+
+/* .game-action-buttons ve .btn-touch-action stilleri Bölüm 23 altında optimize edilmiştir */
+
+/* ==========================================================
+   6. TOAST NOTIFICATION SERVICE
+========================================================== */
+#toast-container {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: rgba(10, 30, 20, 0.95);
+  border: 1.5px solid var(--border-gold);
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+@keyframes slideToast {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast.success { border-color: #2ec4b6; }
+.toast.warning { border-color: #f4a261; }
+.toast.error { border-color: #e63946; }
+
+/* ==========================================================
+   7. İKİLİ GÖRÜNÜM (HARİTA & LİSTE) VE İNTERAKTİF PİNLER
+========================================================== */
+.view-toggle-bar {
+  display: flex;
+  background: rgba(10, 30, 20, 0.92);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 20px;
+  padding: 3px;
+  margin: 2px 0 10px;
+  gap: 4px;
+}
+
+.btn-toggle-view {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #b7e4c7;
+  padding: 7px 10px;
+  border-radius: 16px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-view.active {
+  background: linear-gradient(180deg, #d4af37 0%, #aa8420 100%);
+  color: #11281c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 1. İNTERAKTİF HARİTA GÖRÜNÜMÜ */
+.map-interactive-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 2px solid var(--border-gold);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0,0,0,0.6);
+  background: #0d281a;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-interactive-area.hidden, .map-scroll-area.hidden {
+  display: none !important;
+}
+
+.map-pan-viewport {
+  flex: 1;
+  width: 100%;
+  overflow: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #2d6a4f #0a2115;
+}
+
+.map-canvas-wrap {
+  position: relative;
+  width: 860px;
+  height: 540px;
+  min-width: 860px;
+  min-height: 540px;
+}
+
+.map-aerial-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.map-pins-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+/* Ahşap İğne Butonu (MapDefaultPin.png) */
+.map-pin-btn {
+  position: absolute;
+  transform: translate(-50%, -85%);
+  width: 50px;
+  height: 60px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 10;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map-pin-btn:hover {
+  transform: translate(-50%, -95%) scale(1.18);
+  z-index: 50;
+}
+
+.map-pin-btn.is-active-pin {
+  animation: pinBounce 1.8s infinite ease-in-out;
+  z-index: 30;
+}
+
+@keyframes pinBounce {
+  0%, 100% { transform: translate(-50%, -85%) scale(1); }
+  50% { transform: translate(-50%, -98%) scale(1.14); }
+}
+
+.map-pin-graphic {
+  position: relative;
+  width: 44px;
+  height: 48px;
+}
+
+.map-pin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.75));
+}
+
+.map-pin-number {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  color: #ffffff;
+  text-shadow: 0 1px 3px #000, 0 2px 4px #000;
+}
+
+.map-pin-status-icon {
+  position: absolute;
+  bottom: 0px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  border: 1px solid #ffffff;
+}
+
+.map-pin-status-icon.active {
+  background: #0077b6;
+  color: #fff;
+}
+.map-pin-status-icon.completed {
+  background: #2a9d8f;
+  color: #fff;
+}
+.map-pin-status-icon.locked {
+  background: #e76f51;
+  color: #fff;
+}
+.map-pin-status-icon.qr-needed {
+  background: #d97706;
+  color: #fff;
+}
+
+.map-pin-tag {
+  background: rgba(8, 24, 16, 0.92);
+  border: 1px solid #ffd166;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  margin-top: -3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.map-pan-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 24, 16, 0.88);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #ffd166;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 10.5px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   8. BAŞARIMLAR, FİREBASE & MİKRO-ÖDÜL KUPONLARI
+========================================================== */
+.modal-content-large {
+  max-height: 82vh;
+  overflow-y: auto;
+}
+
+.cloud-sync-badge {
+  background: rgba(42, 157, 143, 0.25);
+  border: 1px solid #2a9d8f;
+  color: #52b788;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  animation: cloudPulse 2.5s infinite;
+}
+
+@keyframes cloudPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; border-color: #ffd166; }
+}
+
+.achievements-xp-summary {
+  background: rgba(10, 30, 20, 0.85);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.xp-level-badge {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #ffd166;
+}
+
+.xp-progress-bar-wrap {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.xp-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2a9d8f 0%, #ffd166 100%);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.xp-text {
+  font-size: 11px;
+  color: #b7e4c7;
+  font-weight: 700;
+  text-align: right;
+}
+
+.achievements-scroll-area, .vouchers-scroll-area {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.achievements-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+.achievements-scroll-area::-webkit-scrollbar-thumb {
+  background: #2d6a4f;
+  border-radius: 10px;
+}
+
+/* Başarım Kartı (Doğal Ahşap & Orman Temalı Hizalama) */
+.achievement-card {
+  background: rgba(12, 34, 22, 0.9);
+  border: 1.5px solid rgba(82, 183, 136, 0.3);
+  border-radius: 14px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.achievement-card.completed {
+  border-color: #ffd166;
+  background: linear-gradient(135deg, rgba(32, 20, 12, 0.9) 0%, rgba(16, 46, 31, 0.95) 100%);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.achievement-icon {
+  font-size: 20px;
+  width: 34px;
+  height: 34px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 209, 102, 0.4);
+}
+
+.achievement-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.achievement-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achievement-card.completed .achievement-title {
+  color: #ffd166;
+}
+
+.achievement-desc {
+  font-size: 10px;
+  color: #d8f3dc;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achievement-progress-wrap {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.achievement-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #52b788, #ffd166);
+  border-radius: 5px;
+}
+
+.achievement-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-claim-reward {
+  background: linear-gradient(180deg, #ffd166 0%, #d4af37 100%);
+  color: #1a0f00;
+  border: 1.5px solid #fff;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+  animation: rewardPulse 1.5s infinite;
+  white-space: nowrap;
+}
+
+@keyframes rewardPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.btn-claim-reward.claimed {
+  background: rgba(50, 80, 60, 0.5);
+  color: #a7c4b5;
+  border-color: transparent;
+  box-shadow: none;
+  animation: none;
+  cursor: default;
+}
+
+/* İşletme İkram Kuponu Bileti */
+.voucher-card {
+  background: linear-gradient(135deg, rgba(16, 44, 30, 0.95), rgba(8, 26, 17, 0.95));
+  border: 1.5px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.voucher-card.locked {
+  opacity: 0.6;
+  border-color: rgba(212, 175, 55, 0.3);
+  filter: grayscale(0.4);
+}
+
+.voucher-icon {
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffd166;
+  flex-shrink: 0;
+}
+
+.voucher-info {
+  flex: 1;
+}
+
+.voucher-biz-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 0.5px;
+}
+
+.voucher-reward-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 1px 0;
+}
+
+.voucher-status-text {
+  font-size: 10.5px;
+  color: #b7e4c7;
+}
+
+.btn-voucher-action {
+  background: linear-gradient(180deg, #2a9d8f 0%, #1b4332 100%);
+  border: 1.5px solid #52b788;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-voucher-action:hover {
+  border-color: #ffd166;
+  transform: translateY(-1px);
+}
+
+/* Gelişim Vadisi Profil & Kupa Vitrini */
+.camp-profile-box {
+  background: rgba(10, 32, 22, 0.9);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 18px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.camp-avatar-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f, #0d281a);
+  border: 2px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.camp-profile-info {
+  flex: 1;
+}
+
+.camp-xp-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 4px 0 2px;
+}
+
+.camp-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2a9d8f, #ffd166);
+  border-radius: 8px;
+  transition: width 0.3s;
+}
+
+.trophy-shelf-wrap {
+  background: rgba(8, 24, 16, 0.92);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+.shelf-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+
+.shelf-items {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+}
+
+.shelf-trophy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 58px;
+  flex-shrink: 0;
+}
+
+.shelf-trophy-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.shelf-trophy-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: #d8f3dc;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   9. CANLI SAHA QR TARAYICI (KAMERA VİZÖRÜ & ANİMASYONLAR)
+========================================================== */
+.qr-modal-content {
+  max-height: 94vh;
+  overflow-y: auto;
+  gap: 10px;
+}
+
+.qr-target-badge {
+  background: rgba(255, 209, 102, 0.18);
+  border: 1px solid #ffd166;
+  color: #ffd166;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.qr-camera-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  background: #020b06;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-reader-box {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+.qr-reader-box video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 16px;
+}
+
+/* Kütüphane başlık ve butonlarını gizleme */
+#qr-reader__dashboard, #qr-reader__status_span, #qr-reader__scan_region img, #qr-reader__header_message {
+  display: none !important;
+}
+
+.qr-viewfinder-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+}
+
+.qr-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #ffd166;
+  border-style: solid;
+  border-width: 0;
+  filter: drop-shadow(0 0 4px #ffd166);
+}
+
+.qr-corner.top-left {
+  top: -2px;
+  left: -2px;
+  border-top-width: 3.5px;
+  border-left-width: 3.5px;
+  border-top-left-radius: 10px;
+}
+
+.qr-corner.top-right {
+  top: -2px;
+  right: -2px;
+  border-top-width: 3.5px;
+  border-right-width: 3.5px;
+  border-top-right-radius: 10px;
+}
+
+.qr-corner.bottom-left {
+  bottom: -2px;
+  left: -2px;
+  border-bottom-width: 3.5px;
+  border-left-width: 3.5px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 10px;
+}
+
+.qr-corner.bottom-right {
+  bottom: -2px;
+  right: -2px;
+  border-bottom-width: 3.5px;
+  border-right-width: 3.5px;
+  border-bottom-right-radius: 10px;
+}
+
+.qr-laser-line {
+  position: absolute;
+  top: 8px;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #2ec4b6, #52b788, #ffd166, transparent);
+  box-shadow: 0 0 12px #2ec4b6, 0 0 4px #ffd166;
+  border-radius: 3px;
+  animation: qrLaserScan 2s ease-in-out infinite alternate;
+}
+
+@keyframes qrLaserScan {
+  0% { top: 10px; opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { top: 165px; opacity: 0.8; }
+}
+
+.qr-status-info {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b7e4c7;
+  text-align: center;
+  min-height: 18px;
+}
+
+.qr-action-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.qr-action-btn {
+  flex: 1;
+  font-size: 11.5px;
+  padding: 10px 6px;
+  white-space: nowrap;
+}
+
+.btn-toggle-view.qr-scan-tab {
+  background: rgba(224, 169, 109, 0.2);
+  border: 1.5px solid #e0a96d;
+  color: #ffd166;
+}
+.btn-toggle-view.qr-scan-tab:hover {
+  background: rgba(224, 169, 109, 0.35);
+  box-shadow: 0 0 12px rgba(224, 169, 109, 0.5);
+}
+
+/* ==========================================================
+   10. ETAP ARASI 3 SORULUK DOĞA VE BİLİM YARIŞMASI
+========================================================== */
+.quiz-modal-content {
+  max-height: 94vh;
+  overflow-y: auto;
+  gap: 12px;
+}
+
+.quiz-step-badge {
+  background: rgba(82, 183, 136, 0.2);
+  border: 1px solid #52b788;
+  color: #d8f3dc;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+
+.quiz-progress-track {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 0 6px;
+  position: relative;
+}
+
+.quiz-progress-track::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 1;
+}
+
+.quiz-step-indicator {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0d2217;
+  border: 2px solid #2d6a4f;
+  color: #74c69d;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.quiz-step-indicator.active {
+  background: #2a9d8f;
+  border-color: #ffd166;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+  transform: scale(1.15);
+}
+
+.quiz-step-indicator.completed {
+  background: #52b788;
+  border-color: #52b788;
+  color: #081c15;
+}
+
+.quiz-question-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.quiz-category-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #ffd166;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.quiz-question-text {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.quiz-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(16, 47, 32, 0.95), rgba(8, 26, 17, 0.95));
+  border: 2px solid rgba(82, 183, 136, 0.45);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.quiz-option-btn:hover {
+  border-color: #ffd166;
+  background: linear-gradient(135deg, rgba(27, 67, 50, 0.95), rgba(16, 47, 32, 0.95));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.opt-letter {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 209, 102, 0.2);
+  border: 1.5px solid #ffd166;
+  color: #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.opt-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8f9fa;
+  line-height: 1.35;
+  flex: 1;
+}
+
+.quiz-option-btn.correct {
+  background: linear-gradient(135deg, #1b4332, #2d6a4f) !important;
+  border-color: #52b788 !important;
+  box-shadow: 0 0 16px rgba(82, 183, 136, 0.7) !important;
+  animation: quizCorrectPulse 0.4s ease-out;
+}
+
+.quiz-option-btn.correct .opt-letter {
+  background: #52b788;
+  color: #081c15;
+  border-color: #52b788;
+}
+
+.quiz-option-btn.wrong {
+  background: linear-gradient(135deg, #590d22, #800f2f) !important;
+  border-color: #e63946 !important;
+  box-shadow: 0 0 14px rgba(230, 57, 70, 0.6) !important;
+  animation: quizWrongShake 0.35s ease-in-out;
+}
+
+.quiz-option-btn.wrong .opt-letter {
+  background: #e63946;
+  color: #ffffff;
+  border-color: #e63946;
+}
+
+@keyframes quizCorrectPulse {
+  0% { transform: scale(0.96); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes quizWrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.quiz-feedback-box {
+  background: rgba(45, 106, 79, 0.28);
+  border: 1.5px solid #52b788;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  animation: fadeIn 0.22s ease-out;
+}
+
+.quiz-feedback-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.quiz-feedback-text {
+  font-size: 12px;
+  color: #d8f3dc;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Sonuç Ekranı */
+.quiz-summary-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 10px 4px;
+}
+
+.summary-trophy-icon {
+  font-size: 46px;
+  animation: trophyBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes trophyBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.summary-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffd166;
+}
+
+.summary-desc {
+  font-size: 13.5px;
+  color: #d8f3dc;
+  font-weight: 600;
+}
+
+.summary-rewards-badge {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1.5px solid #ffd166;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  color: #ffd166;
+}
+
+/* ==========================================================
+   11. AHŞAP KAŞİF GARDIROBU & KOSTÜM SANDIĞI (ORMAN TEMALI)
+========================================================== */
+.costume-wardrobe-box {
+  width: 100%;
+  margin-top: 14px;
+  background: linear-gradient(145deg, rgba(38, 22, 14, 0.92) 0%, rgba(16, 38, 25, 0.92) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.45);
+  border-radius: 18px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.wardrobe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 209, 102, 0.2);
+}
+
+.wardrobe-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.wardrobe-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(45, 106, 79, 0.6);
+  border: 1px solid rgba(82, 183, 136, 0.5);
+  color: #d8f3dc;
+  transition: all 0.2s ease;
+}
+
+.wardrobe-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.wardrobe-item-btn {
+  background: linear-gradient(180deg, rgba(46, 26, 17, 0.85) 0%, rgba(28, 15, 9, 0.92) 100%);
+  border: 1.5px solid rgba(180, 130, 60, 0.35);
+  border-radius: 12px;
+  padding: 7px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.wardrobe-item-btn:hover {
+  transform: translateY(-2px);
+  border-color: #ffd166;
+  background: linear-gradient(180deg, rgba(62, 36, 24, 0.92) 0%, rgba(36, 20, 12, 0.95) 100%);
+  box-shadow: 0 4px 12px rgba(255, 209, 102, 0.25);
+}
+
+.wardrobe-item-btn:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.wardrobe-item-btn.active {
+  border-color: #ffd166;
+  background: linear-gradient(180deg, rgba(45, 106, 79, 0.95) 0%, rgba(20, 56, 38, 0.98) 100%);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.wardrobe-item-btn.active .w-icon {
+  transform: scale(1.18);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.wardrobe-item-btn.active .w-label {
+  color: #ffd166;
+  font-weight: 800;
+}
+
+.wardrobe-item-btn .w-icon {
+  font-size: 19px;
+  transition: transform 0.2s ease;
+}
+
+.wardrobe-item-btn .w-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #e2d9c8;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   12. ANA MENÜ ÜST BAR (KAŞİF PROFİL ROZETİ & HIZLI BUTONLAR)
+========================================================== */
+.menu-profile-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(38, 22, 14, 0.92) 0%, rgba(18, 45, 28, 0.92) 100%);
+  border: 1.5px solid #ffd166;
+  border-radius: 24px;
+  padding: 4px 12px 4px 6px;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.menu-profile-pill:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(255, 209, 102, 0.35);
+  border-color: #ffe082;
+}
+
+.profile-pill-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.profile-pill-content {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.profile-pill-sub {
+  font-size: 8px;
+  font-weight: 800;
+  color: #a7c4bc;
+  letter-spacing: 0.8px;
+}
+
+.profile-pill-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffd166;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  max-width: 105px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-pill-edit {
+  font-size: 11px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.menu-profile-pill:hover .profile-pill-edit {
+  opacity: 1;
+}
+
+.menu-top-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+}
+
+.menu-action-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, rgba(38, 22, 14, 0.88) 0%, rgba(20, 50, 32, 0.88) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  border-radius: 20px;
+  padding: 6px 10px;
+  color: #ffd166;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.menu-action-pill:hover {
+  transform: translateY(-2px) scale(1.04);
+  border-color: #ffd166;
+  background: linear-gradient(135deg, rgba(54, 30, 18, 0.95) 0%, rgba(28, 68, 44, 0.95) 100%);
+  box-shadow: 0 6px 16px rgba(255, 209, 102, 0.3);
+}
+
+.menu-action-pill .pill-icon {
+  font-size: 14px;
+}
+
+.menu-action-pill .pill-label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* ==========================================================
+   13. KAŞİF KAYIT & ONBOARDING MODALI
+========================================================== */
+.onboarding-content {
+  background: radial-gradient(circle at 50% 10%, #1e4530 0%, #10281b 60%, #06150c 100%) !important;
+  border: 2px solid #ffd166 !important;
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.onboarding-label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffd166;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.onboarding-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.onboarding-input {
+  width: 100%;
+  background: rgba(14, 34, 22, 0.9);
+  border: 2px solid rgba(212, 175, 55, 0.6);
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.onboarding-input:focus {
+  border-color: #ffd166;
+  background: rgba(20, 48, 32, 0.95);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.3), inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.onboarding-heroes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.onboarding-hero-card {
+  background: linear-gradient(180deg, rgba(40, 22, 14, 0.85) 0%, rgba(20, 12, 7, 0.9) 100%);
+  border: 1.5px solid rgba(180, 140, 60, 0.4);
+  border-radius: 14px;
+  padding: 8px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.onboarding-hero-card:hover {
+  transform: translateY(-2px) scale(1.04);
+  border-color: #ffd166;
+}
+
+.onboarding-hero-card.active {
+  border-color: #ffd166;
+  background: linear-gradient(180deg, rgba(45, 106, 79, 0.95) 0%, rgba(18, 48, 32, 0.98) 100%);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ob-hero-avatar {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  transition: transform 0.2s ease;
+}
+
+.onboarding-hero-card.active .ob-hero-avatar {
+  transform: scale(1.15);
+}
+
+.ob-hero-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.onboarding-hero-card.active .ob-hero-name {
+  color: #ffd166;
+}
+
+.ob-hero-trait {
+  font-size: 8px;
+  color: #d8f3dc;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* ==========================================================
+   14. CANLI PUAN TABLOSU (LEADERBOARD) STİLLERİ (ORMAN TEMASI)
+========================================================== */
+.leaderboard-modal-content {
+  background: radial-gradient(circle at 50% 10%, #153825 0%, #0c2317 65%, #05140b 100%) !important;
+  border: 2px solid #ffd166 !important;
+}
+
+.leaderboard-tabs-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lb-tab-btn {
+  flex: 1;
+  background: rgba(14, 38, 26, 0.85);
+  border: 1.5px solid rgba(82, 183, 136, 0.35);
+  border-radius: 12px;
+  padding: 7px 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #d8f3dc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lb-tab-btn.active {
+  background: linear-gradient(135deg, #2d6a4f, #1b4332);
+  border-color: #ffd166;
+  color: #ffd166;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+}
+
+/* Oyuncunun Sıralama Özeti Şeridi (Ahşap Altın Plaka) */
+.my-leaderboard-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(46, 26, 16, 0.95) 0%, rgba(18, 48, 30, 0.96) 100%);
+  border: 2px solid #ffd166;
+  border-radius: 16px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  gap: 8px;
+}
+
+.my-lb-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.my-lb-rank-num {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffd166;
+  width: 30px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.my-lb-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
+  border: 1.5px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.my-lb-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.my-lb-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-lb-sub {
+  font-size: 10px;
+  color: #a7c4bc;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-lb-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 75px;
+}
+
+.my-lb-score {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #ffd166;
+  white-space: nowrap;
+}
+
+.my-lb-coins {
+  font-size: 10.5px;
+  color: #52b788;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Liderlik Listesi Kaydırma Alanı */
+.leaderboard-scroll-area {
+  max-height: 230px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.leaderboard-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+.leaderboard-scroll-area::-webkit-scrollbar-thumb {
+  background: #2d6a4f;
+  border-radius: 10px;
+}
+
+/* Sıralama Satırı (Tam Hizalı Sütun Düzeni) */
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(14, 34, 22, 0.88);
+  border: 1.5px solid rgba(82, 183, 136, 0.28);
+  border-radius: 14px;
+  padding: 7px 10px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.leaderboard-row:hover {
+  background: rgba(20, 48, 32, 0.95);
+  border-color: rgba(255, 209, 102, 0.5);
+  transform: translateX(2px);
+}
+
+.leaderboard-row.is-me {
+  border: 1.5px solid #ffd166;
+  background: linear-gradient(135deg, rgba(46, 26, 16, 0.9) 0%, rgba(20, 52, 34, 0.9) 100%);
+}
+
+.lb-rank-badge {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  width: 30px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.lb-rank-badge.top-1 { color: #ffd700; font-size: 16px; }
+.lb-rank-badge.top-2 { color: #e0e0e0; font-size: 15px; }
+.lb-rank-badge.top-3 { color: #cd7f32; font-size: 14px; }
+.lb-rank-badge.other { color: #a7c4bc; font-size: 12px; }
+
+.lb-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.lb-user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
+  border: 1px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.lb-user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lb-user-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-row.is-me .lb-user-name {
+  color: #ffd166;
+}
+
+.lb-user-rank-title {
+  font-size: 9.5px;
+  color: #a7c4bc;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 72px;
+}
+
+.lb-score-val {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffd166;
+  white-space: nowrap;
+}
+
+.lb-level-tag {
+  font-size: 9.5px;
+  color: #52b788;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   15. ÖDÜL EKRANI (REWARDS) & KUPON MODALI STİLLERİ
+========================================================== */
+.rewards-modal-content {
+  background: radial-gradient(circle at 50% 10%, #1b4332 0%, #0d281a 65%, #05140b 100%) !important;
+  border: 2px solid #ffd166 !important;
+}
+
+.rewards-points-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(38, 22, 14, 0.95) 0%, rgba(20, 52, 34, 0.95) 100%);
+  border: 1.5px solid #ffd166;
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  width: 100%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.points-banner-content {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.points-banner-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #a7c4bc;
+  letter-spacing: 0.8px;
+}
+
+.points-banner-value {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffd166;
+}
+
+.points-banner-badge {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #ffd166;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd166;
+}
+
+.rewards-scroll-area {
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rewards-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+.rewards-scroll-area::-webkit-scrollbar-thumb {
+  background: #2d6a4f;
+  border-radius: 10px;
+}
+
+/* Ödül Kartı (Doğal Ahşap & Orman Temalı Hizalama) */
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 36, 24, 0.9);
+  border: 1.5px solid rgba(82, 183, 136, 0.3);
+  border-radius: 14px;
+  padding: 7px 10px;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.reward-card:hover {
+  background: rgba(20, 52, 34, 0.95);
+  border-color: #ffd166;
+  transform: translateX(2px);
+}
+
+.reward-card.is-unlocked {
+  border-color: #ffd166;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.25);
+}
+
+.reward-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f 0%, #0c2317 100%);
+  border: 1.5px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.reward-info-col {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.reward-biz-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #52b788;
+  letter-spacing: 0.3px;
+}
+
+.reward-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 1px 0 3px;
+}
+
+.reward-card.is-unlocked .reward-name {
+  color: #ffd166;
+}
+
+.reward-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.reward-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #52b788, #ffd166);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.reward-action-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.reward-target-text {
+  font-size: 10px;
+  font-weight: 800;
+  color: #d8f3dc;
+}
+
+.reward-claim-btn {
+  background: linear-gradient(180deg, #ffd166 0%, #e09f3e 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #1b263b;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
+}
+
+.reward-claim-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(255, 209, 102, 0.5);
+}
+
+.reward-lock-badge {
+  font-size: 10px;
+  color: #a7c4bc;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+/* Kupon Detay Modalı (Barkod & QR) */
+.voucher-popup-content {
+  background: radial-gradient(circle at 50% 15%, #2a1b12 0%, #14281b 70%, #06150c 100%) !important;
+  border: 2px solid #ffd166 !important;
+  text-align: center;
+}
+
+.voucher-ticket-frame {
+  background: #fffdf5;
+  border: 2px dashed #b48a3c;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 12px 0 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.voucher-ticket-qr {
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.voucher-ticket-code {
+  font-family: 'Fredoka', monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: #1b4332;
+  letter-spacing: 2px;
+  margin: 10px 0 4px;
+}
+
+.voucher-ticket-note {
+  font-size: 11px;
+  color: #495057;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 250px;
+}
+
+/* ==========================================================================
+   16. KAŞİF GELİŞİM, BAŞARI & SIRALAMA MERKEZİ (HUB MASTER TABS - ORMAN TEMASI)
+   ========================================================================== */
+
+.hub-master-modal {
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: radial-gradient(circle at 50% 15%, #163a27 0%, #0c2317 65%, #05140b 100%) !important;
+  border: 2px solid #ffd166 !important;
+}
+
+/* Hub Master Header Bar (Doğal Ahşap & Orman Kimliği) */
+.hub-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(32, 18, 10, 0.95) 0%, rgba(14, 38, 25, 0.95) 100%);
+  border: 1.5px solid #d4af37;
+  border-radius: 14px;
+  padding: 7px 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 3px 10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+.hub-brand-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.hub-forest-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #52b788;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-forest-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14.5px;
+  font-weight: 900;
+  color: #ffd166;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.hub-status-col {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Cihaz Canlı Ağ ve Mobil Veri Durumu Rozeti (Gerçek Cihaz Verisi) */
+.device-network-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(10, 32, 20, 0.92);
+  border: 1.5px solid #52b788;
+  color: #d8f3dc;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.device-network-badge.is-online {
+  border-color: #52b788;
+  color: #b7e4c7;
+  background: rgba(16, 48, 30, 0.9);
+}
+
+.device-network-badge.is-offline {
+  border-color: #e63946;
+  color: #ffb4a2;
+  background: rgba(48, 16, 16, 0.9);
+}
+
+/* 3 Sekmeli Gezinme Butonları (Doğal Ahşap / Orman Teması) */
+.hub-tabs-row {
+  display: flex;
+  gap: 5px;
+  background: rgba(8, 24, 16, 0.92);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hub-tab-btn {
+  flex: 1;
+  background: rgba(14, 38, 26, 0.7);
+  border: 1px solid rgba(82, 183, 136, 0.25);
+  color: #a7c4bc;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 7px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.hub-tab-btn.active {
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+  color: #ffd166;
+  border: 1.5px solid #ffd166;
+  box-shadow: 0 2px 8px rgba(255, 209, 102, 0.3);
+}
+
+.hub-tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 209, 102, 0.3);
+}
+
+.hub-view-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  animation: fadeInHub 0.22s ease-out;
+}
+
+@keyframes fadeInHub {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   17. GELİŞMİŞ GELİŞİM VADİSİ & KAMP GÜÇLENDİRMELERİ
+   ========================================================================== */
+
+.camp-upgrades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.camp-perk-card {
+  background: linear-gradient(135deg, rgba(16, 44, 30, 0.92), rgba(10, 28, 19, 0.94));
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 14px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.camp-perk-card:hover {
+  border-color: #ffd166;
+  transform: translateY(-1px);
+}
+
+.camp-perk-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.camp-perk-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: radial-gradient(circle, #2d6a4f, #0f2c1c);
+  border: 1.5px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.2);
+}
+
+.camp-perk-stars {
+  font-size: 8.5px;
+  letter-spacing: 0.5px;
+  color: #ffd166;
+}
+
+.camp-perk-info-col {
+  flex: 1;
+  text-align: left;
+}
+
+.camp-perk-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.camp-perk-benefit {
+  font-size: 11px;
+  font-weight: 800;
+  color: #4ade80;
+  margin: 1px 0;
+}
+
+.camp-perk-details {
+  font-size: 10px;
+  color: #a7c4bc;
+  line-height: 1.25;
+}
+
+.camp-perk-action-col {
+  flex-shrink: 0;
+}
+
+.btn-camp-upgrade {
+  background: linear-gradient(135deg, #e6b143, #b48a3c);
+  border: 1.5px solid #fffdf5;
+  border-radius: 12px;
+  color: #1b263b;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 7px 11px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-camp-upgrade:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #ffd166, #e6b143);
+}
+
+.btn-camp-upgrade.maxed {
+  background: rgba(45, 106, 79, 0.6);
+  border-color: #52b788;
+  color: #d8f3dc;
+  cursor: default;
+  transform: none;
+}
+
+/* ==========================================================================
+   18. OYUN İÇİ AKTİF KAMP GÜÇLENDİRMELERİ ŞERİDİ (HUD-PERKS-BAR)
+   ========================================================================== */
+
+.hud-perks-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.perk-tag {
+  background: rgba(10, 32, 22, 0.88);
+  border: 1px solid rgba(255, 209, 102, 0.6);
+  border-radius: 12px;
+  padding: 3px 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ffd166;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  animation: perkPulse 2.5s infinite alternate;
+}
+
+@keyframes perkPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.04); border-color: #4ade80; }
+}
+
+/* ==========================================================================
+   19. KAHRAMAN ÖNİZLEME ANİMASYON TUVALİ & KİLİT ROZETİ
+   ========================================================================== */
+
+.hero-avatar-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-avatar-canvas, .hero-preview-animated-img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 3px solid #ffd166;
+  background: radial-gradient(circle at 50% 40%, #1e4530 0%, #0d281a 65%, #05150c 100%);
+  box-shadow: 0 0 24px rgba(255, 209, 102, 0.45), inset 0 0 16px rgba(0, 0, 0, 0.6);
+  image-rendering: auto;
+  object-fit: contain;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-avatar-canvas:hover, .hero-preview-animated-img:hover {
+  transform: scale(1.03);
+  border-color: #ffe6a7;
+  box-shadow: 0 0 30px rgba(255, 209, 102, 0.65);
+}
+
+.hero-lock-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(38, 20, 10, 0.95), rgba(18, 10, 5, 0.98));
+  border: 1.5px solid #ffd166;
+  border-radius: 20px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: lockGlow 2s infinite alternate;
+}
+
+.hero-lock-badge.hidden {
+  display: none !important;
+}
+
+@keyframes lockGlow {
+  0% { box-shadow: 0 0 8px rgba(255, 209, 102, 0.3); }
+  100% { box-shadow: 0 0 16px rgba(255, 209, 102, 0.7); }
+}
+
+.hero-profile-sync-hint {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  color: #a7c4bc;
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.85;
+}
+
+/* Gardırop Kostüm Kilitli Durumu */
+.wardrobe-item-btn.locked {
+  opacity: 0.65;
+  filter: grayscale(0.25);
+  position: relative;
+}
+
+.wardrobe-item-btn.locked::after {
+  content: "🔒";
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 10px;
+}
+
+/* ==========================================================================
+   20. İLK ETAP KOŞU EĞİTİMİ (TUTORIAL MODALI)
+   ========================================================================== */
+
+.tutorial-modal-content {
+  background: radial-gradient(circle at 50% 10%, #1e4530 0%, #10281b 60%, #06150c 100%) !important;
+  border: 2px solid #ffd166 !important;
+  max-width: 440px !important;
+  padding: 22px 20px !important;
+}
+
+.tutorial-steps-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tutorial-step-card {
+  background: linear-gradient(135deg, rgba(46, 26, 17, 0.88) 0%, rgba(24, 14, 8, 0.94) 100%);
+  border: 1.5px solid rgba(255, 209, 102, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  text-align: left;
+}
+
+.tutorial-step-card .step-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: rgba(45, 106, 79, 0.8);
+  border: 1px solid #52b788;
+  border-radius: 8px;
+  color: #d8f3dc;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+}
+
+.tutorial-step-card .step-visual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+}
+
+.tutorial-step-card .step-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffd166;
+}
+
+.tutorial-step-card .step-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  color: #e2d9c8;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.tutorial-step-card .step-text strong {
+  color: #4ade80;
+}
+
+/* ==========================================================================
+   21. OYUN AYARLARI MODALI (CROSS-PLATFORM, SES & VERİ YÖNETİMİ)
+   ========================================================================== */
+.settings-modal-content {
+  background: radial-gradient(circle at 50% 10%, #1e4530 0%, #10281b 60%, #06150c 100%) !important;
+  border: 2px solid #ffd166 !important;
+  max-width: 440px !important;
+}
+
+.settings-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(14, 34, 23, 0.85);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 16px;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+.settings-label-col {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.settings-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.settings-label-col strong {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  color: #ffffff;
+  display: block;
+}
+
+.settings-hint {
+  font-size: 10.5px;
+  color: #a7c4bc;
+  line-height: 1.25;
+}
+
+.settings-toggle-btn {
+  background: rgba(230, 57, 70, 0.2);
+  border: 1.5px solid #e63946;
+  color: #ffb4a2;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.settings-toggle-btn.active {
+  background: rgba(42, 157, 143, 0.25);
+  border-color: #2a9d8f;
+  color: #52b788;
+  box-shadow: 0 0 10px rgba(42, 157, 143, 0.4);
+}
+
+.settings-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+.settings-badge-val {
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid #ffd166;
+  color: #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.settings-reset-btn {
+  background: rgba(230, 57, 70, 0.25);
+  border: 1.5px solid #e63946;
+  color: #ff8fa3;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-reset-btn:hover {
+  background: #e63946;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* ==========================================================
+   22. KIYAFET GEÇİCİ GÜÇLERİ & KARAKTER GİYİM KATMANLARI
+   ========================================================== */
+.runner-player-sprite-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 76px;
+  height: 76px;
+  pointer-events: none;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center bottom;
+  touch-action: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+.runner-player-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+}
+
+/* Karakter Üzerine Giyilen Kıyafet Katmanları (Vücut ve Kafaya Birebir Oturan Ölçek) */
+.runner-wear-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+}
+
+.runner-wear-overlay.hidden {
+  display: none !important;
+}
+
+/* 🧢 Şapka: Kulakların tam üstünde konumlanan, yüzü ve burnu asla kapatmayan şapka */
+.runner-wear-overlay.wear-hat {
+  top: 10px;
+  left: 34px;
+  font-size: 11px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+  transform: rotate(-8deg);
+}
+
+/* 🦺 Yelek: Tilkinin yatay/yan duran gövdesine tam oturan orman muhafız yeleği */
+.runner-wear-overlay.wear-vest {
+  top: 24px;
+  left: 23px;
+  font-size: 13px;
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.7));
+  transform: scaleX(1.15) rotate(2deg);
+}
+
+/* 👖 Pantolon: Tilkinin ayaklarına dikey ve gövde altına giydirilen izci pantolonu */
+.runner-wear-overlay.wear-pants {
+  top: 36px;
+  left: 17px;
+  font-size: 12px;
+  filter: drop-shadow(0 0 5px rgba(255, 209, 102, 0.7));
+  transform: scaleY(1.2) scaleX(1.1);
+}
+
+/* Maymun ve Kaplan İçin Özel Vücut Oranları */
+.runner-player-sprite-wrap.hero-maymun .runner-wear-overlay.wear-hat,
+.runner-player-sprite-wrap.hero-monkey .runner-wear-overlay.wear-hat {
+  top: 6px;
+  left: 32px;
+  font-size: 11px;
+  transform: rotate(-4deg);
+}
+.runner-player-sprite-wrap.hero-maymun .runner-wear-overlay.wear-vest,
+.runner-player-sprite-wrap.hero-monkey .runner-wear-overlay.wear-vest {
+  top: 22px;
+  left: 28px;
+  font-size: 12px;
+}
+.runner-player-sprite-wrap.hero-maymun .runner-wear-overlay.wear-pants,
+.runner-player-sprite-wrap.hero-monkey .runner-wear-overlay.wear-pants {
+  top: 38px;
+  left: 24px;
+  font-size: 12px;
+}
+
+.runner-player-sprite-wrap.hero-kaplan .runner-wear-overlay.wear-hat,
+.runner-player-sprite-wrap.hero-tiger .runner-wear-overlay.wear-hat {
+  top: 14px;
+  left: 38px;
+  font-size: 11px;
+  transform: rotate(-6deg);
+}
+.runner-player-sprite-wrap.hero-kaplan .runner-wear-overlay.wear-vest,
+.runner-player-sprite-wrap.hero-tiger .runner-wear-overlay.wear-vest {
+  top: 26px;
+  left: 24px;
+  font-size: 13px;
+}
+.runner-player-sprite-wrap.hero-kaplan .runner-wear-overlay.wear-pants,
+.runner-player-sprite-wrap.hero-tiger .runner-wear-overlay.wear-pants {
+  top: 34px;
+  left: 15px;
+  font-size: 12px;
+}
+
+/* ==========================================================
+   KAHRAMAN SEÇİM EKRANI KOSTÜM ÖNİZLEME KATMANLARI
+   ========================================================== */
+.hero-avatar-wrap {
+  position: relative;
+}
+
+.preview-wear-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.preview-wear-overlay.hidden {
+  display: none !important;
+}
+
+.preview-wear-overlay.wear-hat {
+  top: 16px;
+  left: 56%;
+  transform: translateX(-50%) rotate(-6deg);
+  font-size: 22px;
+}
+
+.preview-wear-overlay.wear-vest {
+  top: 48px;
+  left: 45%;
+  transform: translateX(-50%) scaleX(1.2);
+  font-size: 26px;
+}
+
+.preview-wear-overlay.wear-pants {
+  top: 76px;
+  left: 38%;
+  transform: translateX(-50%) scaleY(1.2);
+  font-size: 22px;
+}
+
+/* ==========================================================
+   BÖLÜM ÖNCESİ EKİPMAN BOOSTER MAĞAZASI (MODAL LEVEL INFO)
+   ========================================================== */
+.level-equipment-shop {
+  background: rgba(14, 38, 26, 0.95);
+  border: 1.5px solid #ffd166;
+  border-radius: 16px;
+  padding: 10px;
+  margin: 10px 0 14px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.level-equipment-shop .shop-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #ffd166;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.equip-btn {
+  background: linear-gradient(180deg, #1b4332 0%, #0d281a 100%);
+  border: 2px solid #52b788;
+  border-radius: 12px;
+  padding: 6px 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  touch-action: manipulation;
+}
+
+.equip-btn:hover {
+  transform: translateY(-2px);
+  border-color: #ffd166;
+}
+
+.equip-btn:active {
+  transform: scale(0.95);
+}
+
+.equip-btn.equipped {
+  background: linear-gradient(180deg, #d4af37 0%, #8c6d12 100%);
+  border-color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.8);
+}
+
+.equip-btn.equipped .equip-name,
+.equip-btn.equipped .equip-desc {
+  color: #11281c !important;
+  font-weight: 900;
+}
+
+.equip-btn.equipped .equip-cost-tag {
+  background: #11281c;
+  color: #ffd166;
+  border-color: #ffd166;
+}
+
+.equip-btn .equip-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.equip-btn .equip-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.equip-btn .equip-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.equip-btn .equip-desc {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: #b7e4c7;
+  line-height: 1.1;
+  margin-top: 1px;
+}
+
+.equip-cost-tag {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: #11281c;
+  background: #ffd166;
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-top: 2px;
+}
+
+/* Aktif Kıyafet Güçleri HUD Şeridi */
+.hud-clothing-bar {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  z-index: 55;
+  width: 92%;
+  max-width: 480px;
+  pointer-events: none;
+}
+
+.clothing-buff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  animation: buffSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clothing-buff-pill.hidden {
+  display: none !important;
+}
+
+.clothing-buff-pill.hat {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.95), rgba(15, 35, 90, 0.95));
+  border: 1.5px solid #60a5fa;
+  color: #eff6ff;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.5);
+}
+
+.clothing-buff-pill.hat b {
+  color: #ffd166;
+}
+
+.clothing-buff-pill.vest {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.95), rgba(124, 45, 18, 0.95));
+  border: 1.5px solid #fb923c;
+  color: #fff7ed;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.5);
+}
+
+.clothing-buff-pill.vest b {
+  color: #ffd166;
+}
+
+.clothing-buff-pill.pants {
+  background: linear-gradient(135deg, rgba(45, 106, 79, 0.95), rgba(18, 48, 35, 0.95));
+  border: 1.5px solid #4ade80;
+  color: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.5);
+}
+
+.clothing-buff-pill.pants b {
+  color: #ffd166;
+}
+
+@keyframes buffSlideIn {
+  0% { transform: translateY(-8px) scale(0.9); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Canlı İlerleme Çubuğu & HUD Skor */
+.hud-progress-wrap {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 480px;
+  background: linear-gradient(135deg, rgba(24, 15, 9, 0.92) 0%, rgba(12, 32, 20, 0.92) 100%);
+  border: 1.5px solid rgba(255, 209, 102, 0.55);
+  border-radius: 16px;
+  padding: 5px 12px 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  z-index: 52;
+  box-sizing: border-box;
+}
+
+.hud-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd166;
+  margin-bottom: 4px;
+}
+
+.hud-progress-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 209, 102, 0.25);
+}
+
+.hud-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2d6a4f 0%, #52b788 50%, #ffd166 100%);
+  border-radius: 8px;
+  transition: width 0.25s linear;
+}
+
+.hud-progress-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 17px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+  transition: left 0.25s linear;
+  pointer-events: none;
+}
+
+.hud-pill-score {
+  font-size: clamp(10px, 2.8vw, 13px);
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   23. TABLET & MOBİL CİHAZ TAM UYUMLU DİNAMİK BUTON VE HUD DÜZENİ
+   (Oyun Alanını ve Kahramanı Asla Kapatmayan Kompakt Düzen)
+   ========================================================== */
+/* ==========================================================
+   23. TABLET & MOBİL CİHAZ TAM UYUMLU DİNAMİK BUTON VE HUD DÜZENİ
+   (Alt Bannerda Tam Ortalanmış Başparmak Ergonomisi & İki Buton Arası Mesaj)
+   ========================================================== */
+.game-action-buttons.centered-bottom-dock {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px; /* 90 piksellik derin toprak zemin tabakasının tam içi */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 65;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+
+.btn-touch-action {
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 50%;
+  border: 2.5px solid #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 1.5px 0 rgba(255, 255, 255, 0.4);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.btn-touch-action span {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.btn-touch-jump {
+  background: linear-gradient(180deg, #2a9d8f 0%, #1b4332 100%);
+  border-color: #52b788;
+}
+
+.btn-touch-jump:active {
+  transform: scale(0.92);
+  background: linear-gradient(180deg, #1b4332 0%, #0d281a 100%);
+  border-color: #ffd166;
+}
+
+.btn-touch-slide {
+  background: linear-gradient(180deg, #e76f51 0%, #a43a22 100%);
+  border-color: #f4a261;
+}
+
+.btn-touch-slide:active {
+  transform: scale(0.92);
+  background: linear-gradient(180deg, #a43a22 0%, #6e2010 100%);
+  border-color: #ffd166;
+}
+
+/* İki Buton Arasındaki Mesaj Kapsülü */
+.touch-control-hint.inline-center-hint {
+  position: static;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14, 38, 26, 0.9);
+  border: 1.5px solid rgba(255, 209, 102, 0.65);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ffd166;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  line-height: 1.2;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 55;
+  white-space: nowrap;
+}
+
+/* Tablet Görünümü Optimizasyonu (Geniş Ekranlar & iPad) */
+@media (min-width: 600px) {
+  .game-action-buttons.centered-bottom-dock {
+    gap: 20px;
+  }
+  .btn-touch-action {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 10.5px;
+  }
+  .btn-touch-action span {
+    font-size: 19px;
+  }
+  .touch-control-hint.inline-center-hint {
+    padding: 6px 14px;
+    font-size: 10.5px;
+  }
+  .hud-progress-wrap {
+    top: 54px;
+    padding: 7px 16px 8px;
+  }
+  .hud-clothing-bar {
+    top: 96px;
+  }
+}
+
+/* ==========================================================
+   24. BÖLÜM EKİPMANLARI & SAĞ BOOSTER DOKU (ÖZELLİK KULLANIMI)
+   ========================================================== */
+.level-equipment-shop {
+  margin: 10px 0 14px;
+  background: rgba(10, 26, 17, 0.88);
+  border: 1.5px solid rgba(255, 209, 102, 0.5);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.level-equipment-shop .shop-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffd166;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.equip-btn {
+  background: linear-gradient(180deg, rgba(32, 22, 14, 0.9) 0%, rgba(16, 10, 6, 0.95) 100%);
+  border: 1.5px solid rgba(180, 140, 60, 0.45);
+  border-radius: 12px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.equip-btn:hover {
+  transform: translateY(-2px);
+  border-color: #ffd166;
+}
+
+.equip-btn.equipped {
+  background: linear-gradient(180deg, rgba(45, 106, 79, 0.95) 0%, rgba(18, 48, 32, 0.98) 100%);
+  border-color: #ffd166;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.equip-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.equip-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.equip-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.equip-desc {
+  font-size: 8.5px;
+  color: #a7d0b5;
+  white-space: nowrap;
+}
+
+.equip-cost-tag {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #ffd166;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 2px;
+  border: 1px solid rgba(255, 209, 102, 0.3);
+}
+
+.equip-btn.equipped .equip-cost-tag {
+  background: #ffd166;
+  color: #1a0f00;
+  border-color: #ffffff;
+}
+
+/* Ekranın Sağındaki Küçük Aktif Booster İkonları (Oyun İçi Hızlı Dokunma) */
+.game-boosters-dock {
+  position: absolute;
+  right: 12px;
+  bottom: 105px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  z-index: 60;
+  pointer-events: auto;
+}
+
+.in-game-booster-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid #ffd166;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: boosterPulse 2s infinite ease-in-out;
+  touch-action: manipulation;
+}
+
+.in-game-booster-btn.hidden {
+  display: none !important;
+}
+
+.in-game-booster-btn:active {
+  transform: scale(0.9);
+}
+
+.in-game-booster-btn .booster-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.in-game-booster-btn .booster-tag {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 7.5px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+.in-game-booster-btn.hat {
+  background: radial-gradient(circle, #2563eb 0%, #1e3a8a 100%);
+  border-color: #60a5fa;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.65);
+}
+
+.in-game-booster-btn.vest {
+  background: radial-gradient(circle, #ea580c 0%, #7c2d12 100%);
+  border-color: #fb923c;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.65);
+}
+
+.in-game-booster-btn.pants {
+  background: radial-gradient(circle, #16a34a 0%, #14532d 100%);
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.65);
+}
+
+@keyframes boosterPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 209, 102, 0.4); }
+  50% { transform: scale(1.06); box-shadow: 0 0 16px rgba(255, 209, 102, 0.8); }
+}
+
+
+

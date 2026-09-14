@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "217979667804",
+    "project_id": "kentormanimaceraparki",
+    "storage_bucket": "kentormanimaceraparki.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217979667804:android:be2c3333a165c0a32a2d99",
+        "android_client_info": {
+          "package_name": "com.zekaoformani.macera"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbRSPYR-EgXMXdRbeMyzR-8feXviFLQ8Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217979667804:android:7e4ceb6ada43c4372a2d99",
+        "android_client_info": {
+          "package_name": "com.zekaoformani.macera.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbRSPYR-EgXMXdRbeMyzR-8feXviFLQ8Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

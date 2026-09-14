@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="forest_green_primary">#2E7D32</color>
+    <color name="forest_green_dark">#1B5E20</color>
+    <color name="wood_brown">#6D4C41</color>
+    <color name="wood_brown_dark">#4E342E</color>
+    <color name="amber_gold">#FFB300</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

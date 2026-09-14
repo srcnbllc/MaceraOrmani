@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <defs>
+    <radialGradient id="owlGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#52b788" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#081c15" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="owlFeather" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a3b32"/>
+      <stop offset="50%" stop-color="#3d2817"/>
+      <stop offset="100%" stop-color="#241408"/>
+    </linearGradient>
+    <linearGradient id="owlChest" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fdf0d5"/>
+      <stop offset="100%" stop-color="#d4a373"/>
+    </linearGradient>
+    <radialGradient id="owlEye" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ffee32"/>
+      <stop offset="70%" stop-color="#ff9f1c"/>
+      <stop offset="100%" stop-color="#d46a00"/>
+    </radialGradient>
+    <filter id="owlDrop" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <circle cx="80" cy="80" r="74" fill="url(#owlGlow)"/>
+
+  <!-- Tünediği Ahşap Dal -->
+  <g filter="url(#owlDrop)">
+    <path d="M 20 134 Q 80 138 140 132 Q 138 142 80 144 Q 22 142 20 134 Z" fill="#582f0e"/>
+    <!-- Yeşil Meşe Yaprağı -->
+    <path d="M 38 132 C 30 120, 48 114, 52 126 C 54 132, 42 136, 38 132 Z" fill="#2d6a4f"/>
+    <path d="M 34 128 L 48 124" stroke="#52b788" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Kanatlar (Geniş Orman Kanatları) -->
+  <g filter="url(#owlDrop)">
+    <!-- Sol Kanat -->
+    <path d="M 44 80 C 32 95, 34 122, 54 126 C 50 114, 52 94, 60 84 Z" fill="#362419"/>
+    <!-- Sağ Kanat -->
+    <path d="M 116 80 C 128 95, 126 122, 106 126 C 110 114, 108 94, 100 84 Z" fill="#362419"/>
+  </g>
+
+  <!-- Gövde -->
+  <g filter="url(#owlDrop)">
+    <ellipse cx="80" cy="98" rx="34" ry="32" fill="url(#owlFeather)"/>
+    <!-- Göğüs Tüyleri (Kalp biçimli benekli desen) -->
+    <ellipse cx="80" cy="102" rx="22" ry="24" fill="url(#owlChest)"/>
+    <!-- Göğüs Tüy V-Çizgileri -->
+    <path d="M 74 94 L 80 100 L 86 94" stroke="#8c5835" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M 68 106 L 74 112 L 80 106 L 86 112 L 92 106" stroke="#8c5835" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M 74 118 L 80 122 L 86 118" stroke="#8c5835" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Pençeler (Ahşap Dala Tutunan Pençeler) -->
+  <g fill="#ffd166">
+    <ellipse cx="68" cy="132" rx="4" ry="6"/>
+    <ellipse cx="74" cy="133" rx="4" ry="6"/>
+    <ellipse cx="86" cy="133" rx="4" ry="6"/>
+    <ellipse cx="92" cy="132" rx="4" ry="6"/>
+  </g>
+
+  <!-- Kafa ve Kulak Püskülleri (Boynuzlu Bilge Baykuş) -->
+  <g filter="url(#owlDrop)">
+    <!-- Kulak Tüyleri -->
+    <path d="M 52 50 L 46 26 C 54 30, 62 42, 60 52 Z" fill="#3d2817"/>
+    <path d="M 108 50 L 114 26 C 106 30, 98 42, 100 52 Z" fill="#3d2817"/>
+
+    <!-- Kafa Şekli -->
+    <ellipse cx="80" cy="58" rx="32" ry="26" fill="url(#owlFeather)"/>
+
+    <!-- Yüz Diski (Göz Yuvaları Çevresi) -->
+    <ellipse cx="64" cy="58" rx="15" ry="16" fill="#fdf0d5"/>
+    <ellipse cx="96" cy="58" rx="15" ry="16" fill="#fdf0d5"/>
+
+    <!-- Büyük Bilge Gece Gözleri -->
+    <circle cx="64" cy="58" r="11" fill="url(#owlEye)"/>
+    <circle cx="96" cy="58" r="11" fill="url(#owlEye)"/>
+
+    <!-- Göz Bebekleri -->
+    <circle cx="66" cy="58" r="6" fill="#111111"/>
+    <circle cx="94" cy="58" r="6" fill="#111111"/>
+
+    <!-- Göz Işıltıları (Bilgelik Işığı) -->
+    <circle cx="68" cy="55" r="2.2" fill="#ffffff"/>
+    <circle cx="92" cy="55" r="2.2" fill="#ffffff"/>
+
+    <!-- Kavisli Gaga -->
+    <path d="M 76 60 Q 80 58 84 60 L 80 75 Z" fill="#ff9f1c"/>
+    <path d="M 77 62 L 80 73 L 83 62 Z" fill="#e07a5f"/>
+  </g>
+</svg>
