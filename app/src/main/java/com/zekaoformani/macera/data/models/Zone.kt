@@ -14,5 +14,10 @@ data class Zone(
     val qrSecretCode: String = "",
     val orderIndex: Int = 1,
     val isUnlockedByDefault: Boolean = false,
-    val activeSponsorCoupon: SponsorCoupon? = null
+    val activeSponsorCoupon: SponsorCoupon? = null,
+    val xPercent: Double = 0.0,
+    val yPercent: Double = 0.0,
+    val facilities: String = "",
+    val fact: String = "",
+    val targetScore: Int = 1000
 )

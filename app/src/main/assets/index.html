@@ -218,6 +218,10 @@
       <div class="hud-pill hud-pill-score">
         <span id="game-hud-score">⭐ 0 / 1.000 Maks</span>
       </div>
+      <button id="btn-game-pause" class="hud-wood-pause-btn" type="button" onclick="if(window.pauseOrReturnGame)window.pauseOrReturnGame();" title="Ana Menüye Dön">
+        <span>🏠</span>
+        <span class="pause-label">Menü</span>
+      </button>
     </div>
 
     <!-- Canlı Etap İlerleme ve Kalan Süre Çubuğu (2:00 Dakikalık Koşu Parkuru) -->
@@ -273,19 +277,22 @@
 
     <canvas id="game-canvas"></canvas>
 
-    <!-- Ekranın Sağında Küçük Aktif Booster İkonları (Kullanıcı basarak bonusu aktif edebilir) -->
+    <!-- Ekranın Sağında Altın Toplandıkça Açılan Kıyafet Booster İkonları (Ahşap Tasarım) -->
     <div id="game-active-boosters-dock" class="game-boosters-dock">
-      <button type="button" id="in-game-booster-hat" class="in-game-booster-btn hat hidden" onclick="window.activateInGameBooster('hat')" title="İBB Şapka Koruması">
+      <button type="button" id="in-game-booster-hat" class="in-game-booster-btn wood-booster-btn hat hidden" onclick="window.activateInGameBooster('hat')" title="İBB Şapka Koruması">
         <span class="booster-icon">🧢</span>
         <span class="booster-tag">KORUMA</span>
+        <span class="booster-touch-prompt">DOKUN</span>
       </button>
-      <button type="button" id="in-game-booster-vest" class="in-game-booster-btn vest hidden" onclick="window.activateInGameBooster('vest')" title="İBB Çelik Zırhı">
+      <button type="button" id="in-game-booster-vest" class="in-game-booster-btn wood-booster-btn vest hidden" onclick="window.activateInGameBooster('vest')" title="İBB Çelik Zırhı">
         <span class="booster-icon">🦺</span>
         <span class="booster-tag">ZIRH</span>
+        <span class="booster-touch-prompt">DOKUN</span>
       </button>
-      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="İBB Çeviklik & Mıknatıs">
+      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn wood-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="İBB Çeviklik & Mıknatıs">
         <span class="booster-icon">👖</span>
         <span class="booster-tag">MIKNATIS</span>
+        <span class="booster-touch-prompt">DOKUN</span>
       </button>
     </div>
 
@@ -431,14 +438,29 @@
     </div>
   </div>
 
-  <!-- Game Over Modalı -->
+  <!-- Game Over Modalı (Canlar Bitince Başlangıç Ekranına Dönüş) -->
   <div id="modal-gameover" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header-tag" style="color: #ffd166;">🦊 HAYDİ TEKRAR DENE!</div>
+    <div class="modal-content wood-gameover-card">
+      <div class="modal-header-tag" style="color: #ffd166;">🦊 CANLAR BİTTİ — GAYET İYİ GİTTİN!</div>
       <h3 class="modal-title">Vazgeçmek Yok Küçük Kaşif!</h3>
-      <p class="modal-desc">Orman seni bekliyor! Zıplayarak ve eğilerek patikaları fethedebilirsin.</p>
-      <button id="btn-gameover-retry" class="btn-main">TEKRAR DENE 🦊</button>
-      <button id="btn-gameover-map" class="btn-secondary">Haritaya Dön</button>
+      <p class="modal-desc">Orman seni bekliyor! Biraz dinlenip maceraya baştan başlayabilirsin.</p>
+      
+      <div class="wood-gameover-timer-badge">
+        <span>⏱️</span>
+        <span id="gameover-timer-text">Başlangıç ekranına dönülüyor: 3s</span>
+      </div>
+
+      <div class="wood-gameover-buttons-stack">
+        <button id="btn-gameover-menu" class="btn-main wood-btn-main wood-btn-gameover-primary" type="button">
+          <span>🏠</span> BAŞLANGIÇ EKRANI
+        </button>
+        <button id="btn-gameover-retry" class="btn-secondary wood-btn-secondary" type="button">
+          <span>🔄</span> TEKRAR DENE
+        </button>
+        <button id="btn-gameover-map" class="btn-secondary wood-btn-secondary" type="button">
+          <span>🗺️</span> BÖLÜMLER HARİTASI
+        </button>
+      </div>
     </div>
   </div>
 

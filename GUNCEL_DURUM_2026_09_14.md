@@ -1,4 +1,4 @@
-﻿# Kemerburgaz Kent Ormanı Oyunu — Güncel Durum ve Devam Kaydı
+# Kemerburgaz Kent Ormanı Oyunu — Güncel Durum ve Devam Kaydı
 **Kayıt Tarihi:** 14 Eylül 2026  
 **Durum:** Mobil Uygulama (Android APK & iOS) ile Zengin Web/HTML5 Oyun Motoru Arasında %100 Görsel ve Fonksiyonel Eşitlik (Visual & Functional Parity) Tamamlandı. Canlı Firebase/Firestore (`kentormanimaceraparki`) entegrasyonu, Donanım Hızlandırmalı WebView Container, Çift Başparmak Zemin Kontrolleri (🟠 Eğil & 🟢 Zıpla), Otomatik Kalkan Kurtarma (Auto-Shield Rescue) ve Çevrimdışı (Offline) Desteği başarıyla devreye alındı.  
 **Sürüm:** `v2.5.0` (Tag: `v2.5.0`)  
@@ -34,14 +34,20 @@
 - **Pozitif ve Cesaretlendirici Oyun Sonu:**
   - Hayal kırıklığı yaratan ifadeler yerine *"🦊 HAYDİ TEKRAR DENE! — Vazgeçmek Yok Küçük Kaşif! Orman seni bekliyor."* mesajı ve pozitif ahşap butonlar eklendi.
 
-### D. iOS Desteği (`iosApp/ContentView.swift`)
-- iOS tarafında `WKWebView` ile tam ekran, donanım hızlandırmalı ve `WKScriptMessageHandler` köprüsü ile donatılmış konteyner oluşturuldu.
-- `index.html` ve varlıklar iOS uygulama demetinden (bundle) sıfır gecikmeyle okunacak şekilde bağlandı.
+### E. Canlı Firebase Firestore Yönetimi & Gerçek Zamanlı Dinleyiciler (Real-Time Snapshot)
+- **Harita Koordinatları (`xPercent`, `yPercent`):** Firebase panelinden koordinatlar değiştirildiği anda harita pinleri uygulamayı yeniden başlatmaya gerek kalmadan canlı olarak yeni yerine taşınır.
+- **Canlı Liderlik Tablosu (`leaderboard` koleksiyonu):** Firestore konsolundan puan ve sıralamalar anlık düzenlenebilir. Oyuncunun kazandığı puan ve altınlar `submitScore` köprüsü ile anında Firestore'a yazılır.
+- **10 Resmi Etap Veritabanı:** `facilities`, `fact`, `targetScore`, `qrSecretCode` ve işletme isimleri Firestore üzerinde eksiksiz tanımlanmıştır.
+- **Kotlin Katmanı:** `ZoneRepository.kt` ve `LeaderboardRepository.kt` içerisine `addSnapshotListener` dinleyicileri entegre edilmiştir.
+
+### F. Donma (Freeze), Loop ve Arayüz Çakışmalarının Giderilmesi
+- **Tekil Animasyon Kare Takibi (`gameLoopId`):** Menü geçişleri ve oyun sonu durumlarında döngülerin üst üste binmesi ve donmalar engellenmiştir.
+- **Kademeli Çocuk Dostu Akış (1 -> 10):** 1. etaptan 10. etaba kadar hız (2.10 -> 3.65), parkur süresi (60s -> 150s), engel sıklığı ve puan hedefleri kademeli olarak dengelenmiştir.
+- **Çıkmaz Sokaksız Süreklilik:** Herhangi bir etabı bitiren oyuncu için sonraki etap otomatik açılır; saha QR kodu ile ücretsiz açma alternatifi korunmuştur.
 
 ---
 
-## 📱 2. Canlı Android Emülatör Doğrulaması (Pixel 7 / API 34)
-Uygulama derlenerek `emulator-5554` üzerinde canlı test edildi ve ekran görüntüleriyle doğrulandı:
+## 📱 2. Canlı Android Emülatör & Cihaz Uyumluluğu
 1. **Kaşif Kayıt Modalı**: Açılışta ahşap temalı kaşif adı ve maskot seçimi ekranı.
 2. **Ana Menü**: 3D Mağlova Su Kemeri manzarası, ahşap butonlar (Maceraya Başla, Bölümler, Başarımlar, Gelişim Vadisi), altın ve puan sayacı, sevimli tilki maskotu.
 3. **Bölümler & Park Haritası**: `NewMap.png` 3D hava fotoğrafı üzerinde 10 adet yapraklı ahşap etap iğnesi, işletme isimleri ve QR tara sekmesi.
@@ -51,6 +57,8 @@ Uygulama derlenerek `emulator-5554` üzerinde canlı test edildi ve ekran görü
 ---
 
 ## 🛠️ 3. Derleme & Sürüm Bilgisi
-- **Derleme Komutu:** `gradlew.bat assembleDebug` (37 actionable tasks, 0 hata, 0 uyarı)
+- **Derleme Komutu:** `gradlew.bat assembleDebug`
 - **Üretilen APK:** `app/build/outputs/apk/debug/app-debug.apk` (v2.5.0, versionCode 6)
 - **Git Etiketi:** `v2.5.0`
+- **GitHub Deposu:** `https://github.com/srcnbllc/MaceraOrmaniFoxAdventure`
+

@@ -1,4 +1,4 @@
-﻿package com.zekaoformani.macera
+package com.zekaoformani.macera
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -16,11 +16,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.zekaoformani.macera.bridge.AndroidFirebaseBridge
 import com.zekaoformani.macera.data.repository.CampaignRepository
+import com.zekaoformani.macera.data.repository.LeaderboardRepository
 import com.zekaoformani.macera.data.repository.ZoneRepository
 
 class MainActivity : ComponentActivity() {
     private val zoneRepository = ZoneRepository()
     private val campaignRepository = CampaignRepository()
+    private val leaderboardRepository = LeaderboardRepository()
+    private var bridge: AndroidFirebaseBridge? = null
     private lateinit var webView: WebView
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -81,16 +84,18 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val bridge = AndroidFirebaseBridge(
+        val firebaseBridge = AndroidFirebaseBridge(
             context = this,
             webView = webView,
             zoneRepository = zoneRepository,
             campaignRepository = campaignRepository,
+            leaderboardRepository = leaderboardRepository,
             coroutineScope = lifecycleScope
         )
+        bridge = firebaseBridge
 
-        webView.addJavascriptInterface(bridge, "AndroidFirebaseBridge")
-        webView.addJavascriptInterface(bridge, "AndroidBridge")
+        webView.addJavascriptInterface(firebaseBridge, "AndroidFirebaseBridge")
+        webView.addJavascriptInterface(firebaseBridge, "AndroidBridge")
 
         setContentView(webView)
         webView.loadUrl("file:///android_asset/index.html")
@@ -121,6 +126,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        bridge?.cleanup()
+        bridge = null
         if (::webView.isInitialized) {
             webView.destroy()
         }

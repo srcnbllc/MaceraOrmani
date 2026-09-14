@@ -695,6 +695,7 @@ class SoundService {
   constructor() {
     this.sfxEnabled = true;
     this.musicEnabled = true;
+    this.audioCtx = null;
 
     try {
       this.jumpSound = new Audio("Assets/Audio/jump.wav");
@@ -705,6 +706,21 @@ class SoundService {
       this.bgMusic.volume = 0.35;
     } catch (e) {
       console.warn("Ses yüklenemedi:", e);
+    }
+  }
+
+  getAudioCtx() {
+    try {
+      if (!this.audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) this.audioCtx = new AudioContextClass();
+      }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      return this.audioCtx;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -753,6 +769,38 @@ class SoundService {
     } catch (e) {}
   }
 
+  playHit() {
+    if (!this.sfxEnabled) return;
+    try {
+      // 1. Web Audio API ile çocuk dostu yumuşak darbe / tokmak sesi
+      const ctx = this.getAudioCtx();
+      if (ctx) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.17);
+        return;
+      }
+    } catch (e) {}
+
+    // Fallback: Jump sesini pes tonla çal
+    try {
+      if (this.jumpSound) {
+        this.jumpSound.currentTime = 0;
+        this.jumpSound.playbackRate = 0.5;
+        this.jumpSound.play().catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   playMusic() {
     if (!this.musicEnabled || !this.bgMusic) return;
     try {
@@ -767,7 +815,16 @@ class SoundService {
   }
 }
 
-const sounds = new SoundService();
+// Güvenli Ses Proxy'si: Herhangi bir tanımsız ses çağrısı asla oyunu durduramaz/kilitletemez
+const rawSoundService = new SoundService();
+const sounds = new Proxy(rawSoundService, {
+  get(target, prop) {
+    if (prop in target) {
+      return typeof target[prop] === 'function' ? target[prop].bind(target) : target[prop];
+    }
+    return () => {};
+  }
+});
 
 // ============================================================================
 // 4. TOAST NOTIFICATION SERVICE
@@ -1296,27 +1353,32 @@ function openLevelModal(idx) {
   const qrBtn = document.getElementById("btn-modal-qr-unlock");
 
   if (state === 0) {
-    if (idx >= 2) {
-      // 3. Bölüm ve sonrası: Orman işletmelerinde QR okutularak tamamen ücretsiz açılır!
-      descEl.innerHTML = `${etap.desc}<br><br>📍 <strong>Saha Keşfi:</strong> Bu etap <strong>${etap.business}</strong> noktasındadır. Sahada konumlu QR kodu okutarak etabı <strong>ÜCRETSİZ</strong> olarak açabilirsiniz.`;
-      startBtn.textContent = "🔒 İŞLETME QR KODU GEREKİR";
+    const isPrevCompleted = idx > 0 && GameState.getLevelState(idx - 1) === 3;
+    if (isPrevCompleted) {
+      // Önceki etap tamamlandıysa bu etabı otomatik aç
+      GameState.setLevelState(idx, 2);
+      descEl.textContent = etap.desc;
+      startBtn.disabled = false;
+      startBtn.style.opacity = "1";
+      startBtn.textContent = "OYUNA BAŞLA";
+      if (qrBtn) qrBtn.style.display = "none";
+      startBtn.onclick = () => {
+        document.getElementById("modal-level-info").classList.remove("active");
+        startRunnerGame(activeLevelIndex + 1);
+      };
+    } else {
+      descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Önceki ${idx}. etabı başarıyla tamamlayarak VEYA <strong>${etap.business}</strong> noktasındaki QR kodu okutarak <strong>ÜCRETSİZ</strong> açabilirsiniz.`;
+      startBtn.textContent = "🔒 KİLİTLİ (Önceki Etabı Tamamla)";
       startBtn.disabled = true;
       startBtn.style.opacity = "0.6";
 
       if (qrBtn) {
         qrBtn.style.display = "flex";
-        qrBtn.textContent = `📷 ${etap.business} QR Kodunu Oku (Ücretsiz Aç)`;
+        qrBtn.textContent = `📷 ${etap.business} QR Kodu ile Hemen Aç`;
         qrBtn.onclick = () => {
           openQRScannerModal(idx);
         };
       }
-    } else {
-      // 1. veya 2. Bölüm kilitliyse (normal ısınma akışı)
-      descEl.textContent = etap.desc;
-      startBtn.textContent = "🔒 KİLİTLİ (Önceki Bölümü Tamamla)";
-      startBtn.disabled = true;
-      startBtn.style.opacity = "0.5";
-      if (qrBtn) qrBtn.style.display = "none";
     }
   } else {
     descEl.textContent = etap.desc;
@@ -1424,19 +1486,26 @@ function activateInGameBooster(type) {
     });
   }
 
+  // Kıyafeti kalıcı olarak oyuncunun gardırobuna da ekle
+  try {
+    GameState.unlockCostume(type);
+  } catch (e) {}
+
   if (type === "hat") {
     activeClothingBuffs.hat = 20;
-    showToast("🧢 İBB Kaşif Şapkası Aktif Edildi! Yüksek engellerden korur!", "success");
+    showToast("🧢 İBB Kaşif Şapkası Kuşanıldı! Yüksek engellerden korur!", "success");
   } else if (type === "vest") {
     activeClothingBuffs.vest = 20;
-    showToast("🦺 İBB Muhafız Yeleği Aktif Edildi! Çelik zırh koruması başladı!", "success");
+    showToast("🦺 İBB Muhafız Yeleği Kuşanıldı! Çelik zırh darbe koruması başladı!", "success");
   } else if (type === "pants") {
     activeClothingBuffs.pants = 20;
-    showToast("👖 İBB İzcisi Pantolonu Aktif Edildi! Çift zıplama ve mıknatıs başladı!", "success");
+    showToast("👖 İBB İzcisi Pantolonu Kuşanıldı! Çift zıplama ve mıknatıs başladı!", "success");
   }
 
+  sounds.playCollect();
+
   // Havalı parıltı parçacıkları patlat
-  for (let k = 0; k < 15; k++) {
+  for (let k = 0; k < 18; k++) {
     particles.push({
       x: player.x + player.w / 2,
       y: player.y + player.h / 2,
@@ -1451,6 +1520,43 @@ function activateInGameBooster(type) {
   updateClothingHUD();
 }
 window.activateInGameBooster = activateInGameBooster;
+
+// Koşu İçi Altın Topladıkça Kıyafet Ödüllerini Açma Sistemi
+let coinsCollectedInRun = 0;
+let unlockedInRun = { hat: false, vest: false, pants: false };
+
+function unlockInGameBoosterReward(type) {
+  inGameReadyBoosters[type] = true;
+  const btn = document.getElementById(`in-game-booster-${type}`);
+  if (btn) {
+    btn.classList.remove("hidden");
+  }
+  const names = {
+    hat: "🧢 İBB Kaşif Şapkası (Koruma)",
+    vest: "🦺 İBB Muhafız Yeleği (Çelik Zırh)",
+    pants: "👖 İBB İzcisi Pantolonu (Mıknatıs)"
+  };
+  showToast(`🎉 Ödül Açıldı: ${names[type] || 'Kıyafet'}! Sağdaki ikona DOKUN ve aktif et!`, "success");
+  sounds.playCollect();
+}
+window.unlockInGameBoosterReward = unlockInGameBoosterReward;
+
+function checkInRunClothingRewards(runCoins) {
+  // 12 Altında Şapka, 25 Altında Yelek, 40 Altında Pantolon ödülü açılır
+  if (runCoins >= 12 && !unlockedInRun.hat && activeClothingBuffs.hat <= 0 && !inGameReadyBoosters.hat) {
+    unlockedInRun.hat = true;
+    unlockInGameBoosterReward("hat");
+  }
+  if (runCoins >= 25 && !unlockedInRun.vest && activeClothingBuffs.vest <= 0 && !inGameReadyBoosters.vest) {
+    unlockedInRun.vest = true;
+    unlockInGameBoosterReward("vest");
+  }
+  if (runCoins >= 40 && !unlockedInRun.pants && activeClothingBuffs.pants <= 0 && !inGameReadyBoosters.pants) {
+    unlockedInRun.pants = true;
+    unlockInGameBoosterReward("pants");
+  }
+}
+window.checkInRunClothingRewards = checkInRunClothingRewards;
 
 // ============================================================================
 // 7.5 SAHA CANLI QR KOD TARAYICI MOTORU (KAMERA, HTML5-QRCODE & DOĞRULAMA)
@@ -2089,6 +2195,7 @@ function initNatureQuizEvents() {
 
 let canvas, ctx;
 let gameRunning = false;
+let gameLoopId = null;
 let currentLevelNumber = 1;
 let score = 0;
 let targetScore = 400;
@@ -2156,6 +2263,13 @@ let bgScrollX = 0;
 let spawnCooldown = 120;
 
 function startRunnerGame(levelId) {
+  // Önceki loop veya geri sayımları temizle (çakışma ve donmayı önleme)
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+  clearGameOverCountdown();
+
   currentLevelNumber = levelId;
   showScreen("screen-game");
 
@@ -2165,39 +2279,39 @@ function startRunnerGame(levelId) {
   canvas.height = canvas.parentElement.clientHeight || 840;
   ctx = canvas.getContext("2d");
 
-  // Kullanıcı Talebi: Tam 2:00 Dakika Oynanış (120 saniye) & Seviye Maksimum Puanı
+  // 🌲 Kademeli & Süreklilik Arz Eden Çocuk Dostu Parkur Süresi (1. Etap: 60sn ısınma, 10. Etap: 150sn büyük final)
   score = 0;
   coinsCollected = 0;
-  levelTotalDurationSeconds = 120;
+  const STAGE_DURATIONS = [60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
+  levelTotalDurationSeconds = STAGE_DURATIONS[levelId - 1] || (60 + (levelId - 1) * 10);
   levelTimeElapsed = 0;
   currentMaxStageScore = MAX_STAGE_SCORES[levelId - 1] || 1000;
-  // Ekipman Güçlendiricileri: Sadece satın alınanlar parkurda çıkar veya sağdaki butonla aktif edilir!
+  // Ekipman & Kıyafetler: Kahraman oyuna tamamen SIFIRDAN başlar (hiçbir kıyafet kuşanılmamış)
+  // Kıyafetler koşarken altın topladıkça (12, 25, 40) açılır ve sağdaki ikona dokununca giyilir!
   activeClothingBuffs = { hat: 0, vest: 0, pants: 0 };
-  inGameReadyBoosters = {
-    hat: !!pendingLevelBoosters.hat,
-    vest: !!pendingLevelBoosters.vest,
-    pants: !!pendingLevelBoosters.pants
-  };
-  
-  // Parkurda havada zıplayarak toplanmak üzere sıraya koy (Bölüm başında sırayla çıkar)
+  inGameReadyBoosters = { hat: false, vest: false, pants: false };
   boosterSpawnQueue = [];
-  if (pendingLevelBoosters.hat) boosterSpawnQueue.push({ type: "hat", spawnAtTime: 4 });
-  if (pendingLevelBoosters.vest) boosterSpawnQueue.push({ type: "vest", spawnAtTime: 16 });
-  if (pendingLevelBoosters.pants) boosterSpawnQueue.push({ type: "pants", spawnAtTime: 28 });
+  coinsCollectedInRun = 0;
+  unlockedInRun = { hat: false, vest: false, pants: false };
+  pendingLevelBoosters = { hat: false, vest: false, pants: false };
 
-  // Ekranın sağındaki butonları göster
+  // Ekranın sağındaki butonları başlangıçta tamamen gizle
   ['hat', 'vest', 'pants'].forEach(t => {
     const b = document.getElementById(`in-game-booster-${t}`);
-    if (b) {
-      if (inGameReadyBoosters[t]) b.classList.remove("hidden");
-      else b.classList.add("hidden");
-    }
+    if (b) b.classList.add("hidden");
   });
 
-  // Tüketilir, sonraki bölümlerde tekrar kilitlenir (kullanıcı isterse yeniden kuşanır)
-  pendingLevelBoosters = { hat: false, vest: false, pants: false };
+  // Runner üzerindeki tüm kıyafetleri başlangıçta gizle (sıfırdan başlangıç)
+  const wearHat = document.getElementById("runner-wear-hat");
+  const wearVest = document.getElementById("runner-wear-vest");
+  const wearPants = document.getElementById("runner-wear-pants");
+  if (wearHat) wearHat.classList.add("hidden");
+  if (wearVest) wearVest.classList.add("hidden");
+  if (wearPants) wearPants.classList.add("hidden");
+
   lastSpawnedObstacleType = "none";
-  gameSpeed = 3.2 + ((levelId - 1) * 0.22); // 1: 3.20, 2: 3.42, 3: 3.64, 4: 3.86, ... 10: 5.18
+  // Çocuk dostu aşamalı başlangıç hızı: 1. Seviye 2.10 sakin ısınma, 10. Seviye 3.65 heyecanlı final
+  gameSpeed = 2.10 + ((levelId - 1) * 0.17);
   updateClothingHUD();
 
   const heroId = GameState.getSelectedHero();
@@ -2275,13 +2389,15 @@ function startRunnerGame(levelId) {
     gameRunning = false;
     openTutorialModal(() => {
       gameRunning = true;
-      requestAnimationFrame(gameLoop);
+      if (gameLoopId) cancelAnimationFrame(gameLoopId);
+      gameLoopId = requestAnimationFrame(gameLoop);
     });
     return;
   }
 
   gameRunning = true;
-  requestAnimationFrame(gameLoop);
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoopId = requestAnimationFrame(gameLoop);
 }
 
 function openTutorialModal(onComplete) {
@@ -2309,18 +2425,18 @@ function handleSpawning() {
   if (spawnCooldown <= 0) {
     const groundY = canvas.height - 90;
 
-    // Engel çıkma olasılığı (1. Bölümde sakin, ilerledikçe kademeli artar)
-    const spawnChance = Math.min(0.70, 0.52 + (currentLevelNumber * 0.018));
+    // Kademeli Engel Yoğunluğu: 1. Etap %42 sakin -> 10. Etap %68 yoğun
+    const spawnChance = Math.min(0.68, 0.42 + (currentLevelNumber * 0.026));
     const spawnTypeRoll = Math.random();
 
     if (spawnTypeRoll < spawnChance) {
-      // ENGEL OLUŞTURMA: Zemin veya Asılı Altından Kayma Engeli
-      const slideProb = currentLevelNumber === 1 ? 0.30 : Math.min(0.48, 0.32 + (currentLevelNumber * 0.016));
+      // ENGEL OLUŞTURMA: Zemin (Zıpla) veya Asılı (Eğil/Kay)
+      // 1. Etapta daha çok zıplama (%22 kayma), ilerledikçe zengin denge (%45 kayma)
+      const slideProb = currentLevelNumber === 1 ? 0.22 : Math.min(0.46, 0.22 + (currentLevelNumber * 0.024));
       const isSlideObstacle = Math.random() < slideProb;
 
       if (isSlideObstacle) {
         // YÜKSEK ASILI ENGEL: Macera Parkı Halatı veya Asılı Ahşap Kütük (ALTINDAN SÜZÜLEREK GEÇİLİR)
-        // Zemin ile engel altı arasında 54px net ferah boşluk (Ayakta 60px çarpar, kayınca 34px süzülür - ezilme yok!)
         const isLog = Math.random() < 0.5;
         const obsH = 26;
         const clearance = 54;
@@ -2328,7 +2444,7 @@ function handleSpawning() {
           type: isLog ? "overhead_log" : "rope",
           x: canvas.width + 20,
           y: groundY - (clearance + obsH), // groundY - 80px
-          w: isLog ? 68 : 58,
+          w: isLog ? (currentLevelNumber <= 3 ? 58 : 68) : (currentLevelNumber <= 3 ? 50 : 60),
           h: obsH,
           passed: false
         });
@@ -2348,7 +2464,8 @@ function handleSpawning() {
       } else {
         // ZEMİN ENGELİ: Kütük veya Kaya (ÜZERİNDEN ZIPLANMASI GEREKİR)
         const isRock = Math.random() < 0.5;
-        const size = currentLevelNumber === 1 ? 34 : Math.min(46, 34 + Math.floor(currentLevelNumber * 1.2));
+        // 1. Etapta 30px sevimli küçük kaya, 10. etapta 44px sağlam orman kütüğü
+        const size = currentLevelNumber === 1 ? 30 : Math.min(44, 30 + Math.floor(currentLevelNumber * 1.4));
         obstacles.push({
           type: "ground",
           x: canvas.width + 20,
@@ -2373,13 +2490,13 @@ function handleSpawning() {
         }
       }
 
-      // ENGELLER İLE KAHRAMAN ARASINDAKİ UYUMLU VE ADİL MESAFE HESABI:
-      // Zıplama 38 frame sürer; iniş ve tepki için güvenli boşluk sağlanır (Asla imkansız sıklıkta gelmez)
-      // 1. Bölüm: 125-150 frame (~2.2 - 2.6 sn), 10. Bölüm: 75-90 frame (~1.3 - 1.5 sn)
-      const baseGap = Math.max(75, 126 - (currentLevelNumber * 5.0));
-      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber === 1 ? 26 : 16));
+      // ÇOCUK DOSTU TEPKİ PAYI VE ADİL ENGEL ARALIĞI:
+      // 1. Etap: ~140-165 frame (2.4 - 2.8 saniye güvenli tepki payı)
+      // 10. Etap: ~80-100 frame (1.3 - 1.6 saniye dinamik akış)
+      const baseGap = Math.max(76, 142 - (currentLevelNumber * 6.2));
+      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 24 : 16));
       if (lastSpawnedObstacleType === "overhead") {
-        extraBuffer += 18; // Kaymadan sonra doğrulmak için ilave pay
+        extraBuffer += 16; // Kaymadan sonra doğrulmak için ilave pay
       }
       spawnCooldown = Math.floor(baseGap + extraBuffer);
     } else {
@@ -2468,10 +2585,16 @@ function handleSpawning() {
 function gameLoop() {
   if (!gameRunning) return;
 
-  updatePhysics();
-  renderCanvas();
+  try {
+    updatePhysics();
+    renderCanvas();
+  } catch (err) {
+    console.error("GameLoop frame error:", err);
+  }
 
-  requestAnimationFrame(gameLoop);
+  if (gameRunning) {
+    gameLoopId = requestAnimationFrame(gameLoop);
+  }
 }
 
 function updatePhysics() {
@@ -2589,7 +2712,11 @@ function updatePhysics() {
 
     // Çocuk Dostu Hassas Çarpışma Kontrolü (Geniş Paylar)
     if (player.invulnerable <= 0 && checkCollision(player, obs)) {
-      playerTakesDamage();
+      try {
+        playerTakesDamage();
+      } catch (err) {
+        console.warn("playerTakesDamage safe catch:", err);
+      }
     }
 
     if (obs.x < -70) obstacles.splice(i, 1);
@@ -2671,25 +2798,10 @@ function updatePhysics() {
           });
         }
       } else if (coin.type === "clothing_crate") {
-        // 🎁 İBB KAŞİF HAVADAN TOPLANAN KIYAFET ÖZELLİĞİ (Şapka, Yelek, Pantolon)
+        // 🎁 İBB KAŞİF HAVADAN TOPLANAN KIYAFET SANDIĞI (Sağdaki Buton Açılır)
         const cId = coin.clothingId;
         score = Math.min(currentMaxStageScore, score + 50);
-
-        // Sağ kenardaki dokunmatik butonu da tüket ve gizle (zaten alındı)
-        inGameReadyBoosters[cId] = false;
-        const boosterBtn = document.getElementById(`in-game-booster-${cId}`);
-        if (boosterBtn) boosterBtn.classList.add("hidden");
-
-        if (cId === "hat") {
-          activeClothingBuffs.hat = 20;
-          showToast("🧢 İBB Kaşif Şapkası Havada Yakalandı! (20 sn Yüksek Engel Koruması)", "success");
-        } else if (cId === "vest") {
-          activeClothingBuffs.vest = 20;
-          showToast("🦺 İBB Muhafız Yeleği Havada Yakalandı! (20 sn Çelik Zırh & Koruma)", "success");
-        } else if (cId === "pants") {
-          activeClothingBuffs.pants = 20;
-          showToast("👖 İBB İzcisi Pantolonu Havada Yakalandı! (20 sn Çift Zıplama & Mıknatıs)", "success");
-        }
+        unlockInGameBoosterReward(cId);
 
         // Parıltı patlaması (Kendi renginde)
         for (let k = 0; k < 15; k++) {
@@ -2703,10 +2815,11 @@ function updatePhysics() {
             color: cId === "hat" ? "#38bdf8" : (cId === "vest" ? "#fb923c" : "#4ade80")
           });
         }
-        updateClothingHUD();
       } else {
         const mult = fireLevel >= 3 ? 3 : (fireLevel >= 2 ? 2 : 1);
         coinsCollected += mult;
+        coinsCollectedInRun += mult;
+        checkInRunClothingRewards(coinsCollectedInRun);
         score = Math.min(currentMaxStageScore, score + (75 * mult));
         GameState.addCoins(mult);
 
@@ -3000,7 +3113,7 @@ function renderCanvas() {
     const drawW = 76;
     const drawH = 76;
     const posX = player.x + (player.w - drawW) / 2;
-    const posY = player.y + player.h - drawH;
+    const posY = player.y + player.h - drawH + 4;
 
     let transform = `translate3d(${posX}px, ${posY}px, 0)`;
     if (player.isSliding) {
@@ -4338,12 +4451,17 @@ function playerSlide() {
 // Zafer ve Bitiş
 function onLevelVictory() {
   gameRunning = false;
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
   sounds.playCollect();
 
   GameState.updateHighScore(score);
 
   // Bölüm Tamamlandı Kaydı & Sonraki Bölüm Kilidi Açılışı
   const currentIndex = currentLevelNumber - 1;
+  const nextIndex = currentIndex + 1;
   GameState.setLevelState(currentIndex, 3); // 3=Completed
 
   // Kaşif XP Ödülü & Firebase Senkronizasyonu
@@ -4362,13 +4480,13 @@ function onLevelVictory() {
   LeaderboardService.syncMyScore();
 
   // Kilit Açma Mantığı:
-  // Sadece 1. Bölüm bittiğinde 2. Bölüm otomatik açılır (Isınma / Başlangıç).
-  if (currentLevelNumber === 1) {
-    if (GameState.getLevelState(1) === 0) {
-      GameState.setLevelState(1, 2); // 2=Unlocked
+  // Bölüm başarıyla tamamlandığında sonraki bölüm otomatik açılır (süreklilik ve çocuk dostu akış)
+  // Sahadaki QR kod okutulduğunda ise ara bölümler beklemeden anında ücretsiz açılabilir!
+  if (nextIndex <= 9) {
+    if (GameState.getLevelState(nextIndex) === 0) {
+      GameState.setLevelState(nextIndex, 2); // 2 = Açık / Oynanabilir
     }
   }
-  // 2. Bölüm ve sonrasında sonraki etaplar ormandaki işletmelerde QR okutulunca ÜCRETSİZ açılır!
 
   // 🏆 KAHRAMAN & İBB KOSTÜM ETAP KİLİT AÇMA SİSTEMİ
   if (currentLevelNumber >= 2) {
@@ -4422,9 +4540,6 @@ function onLevelVictory() {
   const quizBtn = document.getElementById("btn-victory-quiz");
   document.getElementById("victory-coins-earned").textContent = `+${coinsCollected} 🪙 (+120 XP ⭐)`;
 
-  const nextIndex = currentIndex + 1;
-  const isNextUnlocked = nextIndex <= 9 && GameState.getLevelState(nextIndex) !== 0;
-
   const proceedToNextFlow = () => {
     if (nextIndex <= 9) {
       showScreen("screen-map");
@@ -4432,6 +4547,7 @@ function onLevelVictory() {
       setTimeout(() => openLevelModal(nextIndex), 250);
     } else {
       showScreen("screen-map");
+      renderMapScreen();
     }
   };
 
@@ -4442,47 +4558,25 @@ function onLevelVictory() {
     };
   }
 
-  if (currentLevelNumber === 2) {
-    // 2. Bölüm Özel Zafer Penceresi: Isınma bitti, işletme QR keşfi başlıyor!
-    document.getElementById("victory-title").textContent = "2. Etap Tamamlandı! 🎠 Isınma Bitti!";
-    document.getElementById("victory-fact").innerHTML = `
-      🌟 <strong>Tebrikler!</strong> 1. ve 2. giriş etaplarını başarıyla geçtin.<br><br>
-      📍 <strong>Saha Keşfi Başlıyor:</strong> 3. Etap ve sonraki tüm bölümler Kemerburgaz Kent Ormanı'ndaki resmi işletmelerde konumlanmıştır. Sıradaki etaba geçmek için <strong>Ahşap Oyun Parkı & Good Mood Cafe</strong> noktasındaki QR kodu okutarak etabı <strong>ÜCRETSİZ</strong> açabilirsin!
-    `;
-    nextBtn.textContent = "🗺️ 3. ETAP QR KODUNA GİT";
+  document.getElementById("victory-title").textContent = `${currentLevelNumber}. Etap Başarıyla Geçildi!`;
+  document.getElementById("victory-fact").textContent = etap.fact;
+
+  if (nextIndex <= 9) {
+    nextBtn.textContent = `SONRAKİ BÖLÜME GEÇ (${nextIndex + 1}. ETAP) ⏩`;
     nextBtn.onclick = () => {
       document.getElementById("modal-victory").classList.remove("active");
       startNatureQuiz(currentIndex, () => {
         showScreen("screen-map");
         renderMapScreen();
-        setTimeout(() => openLevelModal(2), 250);
+        setTimeout(() => openLevelModal(nextIndex), 250);
       });
     };
   } else {
-    document.getElementById("victory-title").textContent = `${currentLevelNumber}. Etap Başarıyla Geçildi!`;
-    document.getElementById("victory-fact").textContent = etap.fact;
-
-    if (nextIndex <= 9 && !isNextUnlocked) {
-      nextBtn.textContent = `📍 ${nextIndex + 1}. ETAP QR İLE AÇ`;
-      nextBtn.onclick = () => {
-        document.getElementById("modal-victory").classList.remove("active");
-        startNatureQuiz(currentIndex, () => {
-          showScreen("screen-map");
-          renderMapScreen();
-          setTimeout(() => openLevelModal(nextIndex), 250);
-        });
-      };
-    } else {
-      nextBtn.textContent = "SONRAKİ BÖLÜM ⏩";
-      nextBtn.onclick = () => {
-        document.getElementById("modal-victory").classList.remove("active");
-        startNatureQuiz(currentIndex, () => {
-          showScreen("screen-map");
-          renderMapScreen();
-          setTimeout(() => openLevelModal(nextIndex), 250);
-        });
-      };
-    }
+    nextBtn.textContent = "🏆 BÜYÜK ŞAMPİYONLUK KEMERİ";
+    nextBtn.onclick = () => {
+      document.getElementById("modal-victory").classList.remove("active");
+      document.getElementById("modal-grand-victory").classList.add("active");
+    };
   }
 
   const btnVictoryLb = document.getElementById("btn-victory-lb");
@@ -4495,12 +4589,90 @@ function onLevelVictory() {
   document.getElementById("modal-victory").classList.add("active");
 }
 
+let gameOverTimerId = null;
+
+function clearGameOverCountdown() {
+  if (gameOverTimerId) {
+    clearInterval(gameOverTimerId);
+    gameOverTimerId = null;
+  }
+}
+
+function returnToStartScreen() {
+  clearGameOverCountdown();
+  gameRunning = false;
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+  
+  // Modalleri kapat
+  const modals = ["modal-gameover", "modal-victory", "modal-grand-victory", "modal-level-info"];
+  modals.forEach(id => {
+    const m = document.getElementById(id);
+    if (m) m.classList.remove("active");
+  });
+
+  // Runner ekranını gizle, ana menü ekranını aç
+  showScreen("screen-menu");
+  
+  // Ana menü müziğini başlat/sürdür
+  if (sounds && sounds.bgm) {
+    try {
+      sounds.bgm.currentTime = 0;
+      sounds.playBGM();
+    } catch(e) {}
+  }
+}
+
+function pauseOrReturnGame() {
+  gameRunning = false;
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+  if (confirm("⏸️ Oyun Duraklatıldı!\n\nAna menü başlangıç ekranına dönmek istiyor musunuz?")) {
+    returnToStartScreen();
+  } else {
+    gameRunning = true;
+    if (gameLoopId) cancelAnimationFrame(gameLoopId);
+    gameLoopId = requestAnimationFrame(gameLoop);
+  }
+}
+
 function onGameOver() {
   gameRunning = false;
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
   sounds.playGameOver();
   GameState.updateHighScore(score);
   LeaderboardService.syncMyScore();
-  document.getElementById("modal-gameover").classList.add("active");
+  
+  const modal = document.getElementById("modal-gameover");
+  if (modal) modal.classList.add("active");
+  
+  // 3 saniye geri sayım ile otomatik başlangıç ekranına dönüş
+  clearGameOverCountdown();
+  let remainingSeconds = 3;
+  const timerTextEl = document.getElementById("gameover-timer-text");
+  if (timerTextEl) {
+    timerTextEl.textContent = `Başlangıç ekranına dönülüyor: ${remainingSeconds}s`;
+  }
+  
+  gameOverTimerId = setInterval(() => {
+    remainingSeconds--;
+    if (timerTextEl) {
+      timerTextEl.textContent = remainingSeconds > 0 
+        ? `Başlangıç ekranına dönülüyor: ${remainingSeconds}s` 
+        : "Başlangıç ekranına dönülüyor...";
+    }
+    if (remainingSeconds <= 0) {
+      clearGameOverCountdown();
+      returnToStartScreen();
+    }
+  }, 1000);
 }
 
 // ============================================================================
@@ -4725,9 +4897,14 @@ function initSettingsEvents() {
   const resetBtn = document.getElementById("btn-setting-reset-data");
   if (resetBtn) {
     resetBtn.onclick = () => {
-      if (confirm("⚠️ Tüm oyun ilerlemeniz, toplanan altınlar ve kaşif kaydınız sıfırlanacak!\nEmin misiniz?")) {
-        localStorage.clear();
-        showToast("Tüm veriler sıfırlandı. Yeniden başlatılıyor...", "warning");
+      if (confirm("⚠️ Tüm oyun ilerlemeniz, toplanan altınlar, kıyafetler ve kaşif kaydınız sıfırlanacak!\nEmin misiniz?")) {
+        try {
+          localStorage.clear();
+          localStorage.setItem("selected_costume", "none");
+          localStorage.setItem("unlocked_costumes", JSON.stringify(["none"]));
+          sessionStorage.clear();
+        } catch(e) {}
+        showToast("Tüm veriler sıfırlandı. Kahraman baştan başlıyor...", "warning");
         setTimeout(() => location.reload(), 800);
       }
     };
@@ -4811,9 +4988,17 @@ function initNavigationEvents() {
   }
 
   // Game Over Butonları
+  const btnGoMenu = document.getElementById("btn-gameover-menu");
+  if (btnGoMenu) {
+    btnGoMenu.onclick = () => {
+      returnToStartScreen();
+    };
+  }
+
   const btnGoRetry = document.getElementById("btn-gameover-retry");
   if (btnGoRetry) {
     btnGoRetry.onclick = () => {
+      clearGameOverCountdown();
       const modal = document.getElementById("modal-gameover");
       if (modal) modal.classList.remove("active");
       showScreen("screen-map");
@@ -4825,10 +5010,18 @@ function initNavigationEvents() {
   const btnGoMap = document.getElementById("btn-gameover-map");
   if (btnGoMap) {
     btnGoMap.onclick = () => {
+      clearGameOverCountdown();
       const modal = document.getElementById("modal-gameover");
       if (modal) modal.classList.remove("active");
       showScreen("screen-map");
       renderMapScreen();
+    };
+  }
+
+  const btnGamePause = document.getElementById("btn-game-pause");
+  if (btnGamePause) {
+    btnGamePause.onclick = () => {
+      pauseOrReturnGame();
     };
   }
 
@@ -5380,8 +5573,16 @@ const SAHA_KASIFLERI = [
 ];
 
 let currentLeaderboardTab = "all"; // "all" veya "weekly"
+let firestoreLeaderboardCache = null;
 
 class LeaderboardService {
+  static setRemoteLeaderboard(data) {
+    if (Array.isArray(data) && data.length > 0) {
+      firestoreLeaderboardCache = data;
+      this.render();
+    }
+  }
+
   static getFullLeaderboardData(tab = "all") {
     // Aktif Oyuncu Verisi
     const myName = GameState.getExplorerName() || "Sen (Kaşif)";
@@ -5407,32 +5608,52 @@ class LeaderboardService {
       isMe: true
     };
 
-    // Saha Kaşifleri Listesi
-    const list = SAHA_KASIFLERI.map(k => {
-      let sc = k.baseScore;
-      if (tab === "weekly") sc = Math.floor(sc * 0.45);
-      return {
-        id: k.id,
-        name: k.name,
-        heroId: k.heroId,
-        rankTitle: k.rankTitle,
-        stages: k.stages,
-        score: sc,
-        coins: k.coins,
-        isMe: false
-      };
-    });
+    // Saha Kaşifleri Listesi (Firestore'dan gelen gerçek canlı veriler veya varsayılanlar)
+    let sourceList = [];
+    if (firestoreLeaderboardCache && firestoreLeaderboardCache.length > 0) {
+      sourceList = firestoreLeaderboardCache.map((item, idx) => {
+        let sc = item.score !== undefined ? item.score : (item.baseScore || 0);
+        if (tab === "weekly") sc = Math.floor(sc * 0.45);
+        return {
+          id: item.id || `fb_${idx}`,
+          name: item.name || "Orman Kaşifi",
+          heroId: item.heroId || 1,
+          rankTitle: item.rankTitle || "Doğa Kaşifi",
+          stages: item.stages !== undefined ? item.stages : 1,
+          score: sc,
+          coins: item.coins !== undefined ? item.coins : 0,
+          isMe: false
+        };
+      });
+    } else {
+      sourceList = SAHA_KASIFLERI.map(k => {
+        let sc = k.baseScore;
+        if (tab === "weekly") sc = Math.floor(sc * 0.45);
+        return {
+          id: k.id,
+          name: k.name,
+          heroId: k.heroId,
+          rankTitle: k.rankTitle,
+          stages: k.stages,
+          score: sc,
+          coins: k.coins,
+          isMe: false
+        };
+      });
+    }
 
     if (tab === "weekly") {
       myEntry.score = Math.floor(myEntry.score * 0.52);
     }
 
-    list.push(myEntry);
+    // Aktif oyuncu listede mükerrer olmasın
+    sourceList = sourceList.filter(item => item.name !== myEntry.name);
+    sourceList.push(myEntry);
 
     // Puana göre sırala
-    list.sort((a, b) => b.score - a.score);
+    sourceList.sort((a, b) => b.score - a.score);
 
-    return list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+    return sourceList.map((item, idx) => ({ ...item, rank: idx + 1 }));
   }
 
   static render() {
@@ -5491,7 +5712,125 @@ class LeaderboardService {
 
   static syncMyScore() {
     DeviceNetworkService.triggerSaveFeedback();
+
+    const myName = GameState.getExplorerName() || "Sen (Kaşif)";
+    const myProfileHeroId = GameState.getProfileHero();
+    const myTotalPoints = GameState.getTotalExplorerPoints();
+    const myCoins = GameState.getCoins();
+    let completedCount = 0;
+    for (let i = 0; i < 10; i++) {
+      if (GameState.getLevelState(i) === 3) completedCount++;
+    }
+
+    // 1. Android Native Firebase Bridge ile Firestore'a kaydet
+    const bridge = window.AndroidFirebaseBridge || window.AndroidBridge;
+    if (bridge && typeof bridge.submitScore === 'function') {
+      try {
+        bridge.submitScore(myName, myTotalPoints, myProfileHeroId, completedCount, myCoins);
+      } catch(e) {
+        console.warn("bridge.submitScore error:", e);
+      }
+    } else if (bridge && typeof bridge.postMessage === 'function') {
+      try {
+        bridge.postMessage(JSON.stringify({
+          event: "SUBMIT_SCORE",
+          name: myName,
+          score: myTotalPoints,
+          heroId: myProfileHeroId,
+          stages: completedCount,
+          coins: myCoins
+        }));
+      } catch(e) {
+        console.warn("bridge.postMessage error:", e);
+      }
+    } else {
+      // 2. Web Fallback: Firestore REST API ile direkt skor kaydı / güncelleme
+      try {
+        const safeName = (myName || "player").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
+        const docId = `user_${safeName}`;
+        const firestoreUrl = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard/${docId}`;
+        fetch(firestoreUrl, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fields: {
+              name: { stringValue: myName },
+              score: { integerValue: myTotalPoints.toString() },
+              heroId: { integerValue: myProfileHeroId.toString() },
+              stages: { integerValue: completedCount.toString() },
+              coins: { integerValue: myCoins.toString() },
+              rankTitle: { stringValue: FirebaseSimService.getPlayerRank().title },
+              updatedAt: { timestampValue: new Date().toISOString() }
+            }
+          })
+        }).then(res => res.json()).then(resData => {
+          console.log("🌐 Web Firestore leaderboard score synced:", resData);
+        }).catch(err => {
+          console.warn("Web Firestore leaderboard sync failed:", err);
+        });
+      } catch(e) {}
+    }
+
     this.render();
+  }
+
+  static fetchWebLeaderboard() {
+    if (window.AndroidFirebaseBridge || window.AndroidBridge) return;
+    try {
+      fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.documents && Array.isArray(data.documents)) {
+            const list = data.documents.map(doc => {
+              const f = doc.fields || {};
+              const id = doc.name ? doc.name.split("/").pop() : "unknown";
+              return {
+                id: id,
+                name: f.name ? f.name.stringValue : "Kaşif",
+                score: f.score ? parseInt(f.score.integerValue || f.score.doubleValue || "0", 10) : 0,
+                heroId: f.heroId ? parseInt(f.heroId.integerValue || "1", 10) : 1,
+                stages: f.stages ? parseInt(f.stages.integerValue || "0", 10) : 0,
+                coins: f.coins ? parseInt(f.coins.integerValue || "0", 10) : 0,
+                rankTitle: f.rankTitle ? f.rankTitle.stringValue : "Doğa Kaşifi"
+              };
+            });
+            LeaderboardService.setRemoteLeaderboard(list);
+          }
+        })
+        .catch(e => console.warn("Web Firestore leaderboard fetch error:", e));
+    } catch(e) {}
+  }
+
+  static fetchWebZones() {
+    if (window.AndroidFirebaseBridge || window.AndroidBridge) return;
+    try {
+      fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/parks/kemerburgaz/zones")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.documents && Array.isArray(data.documents)) {
+            const remoteZones = data.documents.map(doc => {
+              const f = doc.fields || {};
+              return {
+                id: doc.name ? doc.name.split("/").pop() : "",
+                name: f.name ? f.name.stringValue : "",
+                orderIndex: f.orderIndex ? parseInt(f.orderIndex.integerValue || "1", 10) : 1,
+                businessName: f.businessName ? f.businessName.stringValue : "",
+                description: f.description ? f.description.stringValue : "",
+                facilities: f.facilities ? f.facilities.stringValue : "",
+                fact: f.fact ? f.fact.stringValue : "",
+                targetScore: f.targetScore ? parseInt(f.targetScore.integerValue || "1000", 10) : 1000,
+                qrSecretCode: f.qrSecretCode ? f.qrSecretCode.stringValue : "",
+                xPercent: f.xPercent ? parseFloat(f.xPercent.doubleValue || f.xPercent.integerValue || "50") : null,
+                yPercent: f.yPercent ? parseFloat(f.yPercent.doubleValue || f.yPercent.integerValue || "50") : null
+              };
+            });
+            if (typeof window.onFirebaseDataReady === 'function') {
+              window.onFirebaseDataReady(remoteZones, []);
+            }
+          }
+        })
+        .catch(e => console.warn("Web Firestore zones fetch error:", e));
+    } catch(e) {}
   }
 }
 
@@ -5818,19 +6157,25 @@ const CrossPlatformBridge = {
           if (zonesStr) {
             const remoteZones = JSON.parse(zonesStr);
             if (Array.isArray(remoteZones) && remoteZones.length > 0) {
-              remoteZones.forEach(rz => {
-                const idx = (rz.orderIndex || 1) - 1;
-                if (RESMI_ETAPLAR[idx]) {
-                  if (rz.name) RESMI_ETAPLAR[idx].title = `${rz.orderIndex}. Orman Etabı: ${rz.name}`;
-                  if (rz.businessName) RESMI_ETAPLAR[idx].business = rz.businessName;
-                  if (rz.description) RESMI_ETAPLAR[idx].desc = rz.description;
-                  if (rz.qrSecretCode) RESMI_ETAPLAR[idx].qrCode = rz.qrSecretCode;
-                }
-              });
+              window.onFirebaseDataReady(remoteZones, []);
               console.log("🌲 Firebase Firestore zones synced into game!");
             }
           }
         }
+        if (typeof bridge.getLeaderboardJson === 'function') {
+          const lbStr = bridge.getLeaderboardJson();
+          if (lbStr) {
+            const remoteLb = JSON.parse(lbStr);
+            if (Array.isArray(remoteLb) && remoteLb.length > 0) {
+              window.onFirebaseLeaderboardReady(remoteLb);
+              console.log("🏆 Firebase Firestore leaderboard synced into game!");
+            }
+          }
+        }
+      } else {
+        // Web tarayıcı ortamı: REST API ile senkronize et
+        LeaderboardService.fetchWebZones();
+        LeaderboardService.fetchWebLeaderboard();
       }
     } catch(e) {
       console.warn("syncFirebaseData error:", e);
@@ -5866,17 +6211,44 @@ window.onFirebaseDataReady = function(zones, campaigns) {
       zones.forEach(rz => {
         const idx = (rz.orderIndex || 1) - 1;
         if (RESMI_ETAPLAR[idx]) {
-          if (rz.name) RESMI_ETAPLAR[idx].title = `${rz.orderIndex}. Orman Etabı: ${rz.name}`;
+          if (rz.name) RESMI_ETAPLAR[idx].title = `${rz.orderIndex || (idx + 1)}. Orman Etabı: ${rz.name}`;
           if (rz.businessName) RESMI_ETAPLAR[idx].business = rz.businessName;
           if (rz.description) RESMI_ETAPLAR[idx].desc = rz.description;
+          if (rz.facilities) RESMI_ETAPLAR[idx].facilities = rz.facilities;
+          if (rz.fact) RESMI_ETAPLAR[idx].fact = rz.fact;
+          if (rz.targetScore) RESMI_ETAPLAR[idx].targetScore = rz.targetScore;
           if (rz.qrSecretCode) RESMI_ETAPLAR[idx].qrCode = rz.qrSecretCode;
         }
+        if (PIN_COORDINATES[idx]) {
+          if (rz.xPercent !== undefined && rz.xPercent !== null && !isNaN(rz.xPercent)) {
+            PIN_COORDINATES[idx].x = Number(rz.xPercent);
+          }
+          if (rz.yPercent !== undefined && rz.yPercent !== null && !isNaN(rz.yPercent)) {
+            PIN_COORDINATES[idx].y = Number(rz.yPercent);
+          }
+        }
       });
-      console.log("🌲 Live onFirebaseDataReady received with " + zones.length + " zones!");
+      console.log("🌲 Live onFirebaseDataReady received with " + zones.length + " zones & coordinates updated!");
       if (typeof renderMapScreen === 'function') renderMapScreen();
+      const modalInfo = document.getElementById("modal-level-info");
+      if (modalInfo && modalInfo.classList.contains("active") && typeof activeLevelIndex === 'number') {
+        openLevelModal(activeLevelIndex);
+      }
     }
   } catch(e) {
     console.warn("onFirebaseDataReady error:", e);
+  }
+};
+
+window.onFirebaseLeaderboardReady = function(lbData) {
+  try {
+    const list = typeof lbData === 'string' ? JSON.parse(lbData) : lbData;
+    if (Array.isArray(list) && list.length > 0) {
+      LeaderboardService.setRemoteLeaderboard(list);
+      console.log("🏆 Live onFirebaseLeaderboardReady received with " + list.length + " scores!");
+    }
+  } catch(e) {
+    console.warn("onFirebaseLeaderboardReady error:", e);
   }
 };
 
