@@ -1,34 +1,56 @@
-import SwiftUI
-import UIKit
+﻿import SwiftUI
+import WebKit
 
-// Compose Multiplatform UIViewController Köprüsü
-struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        let vc = UIViewController()
-        vc.view.backgroundColor = UIColor(red: 0.05, green: 0.22, blue: 0.08, alpha: 1.0)
-        
-        let label = UILabel()
-        label.text = "🌲 Kemerburgaz Kent Ormanı — Macera Ormanı 🦊"
-        label.textColor = UIColor(red: 1.0, green: 0.7, blue: 0.0, alpha: 1.0)
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        
-        vc.view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: vc.view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: vc.view.centerYAnchor)
-        ])
-        
-        return vc
+// iOS Native WKWebView Container for Macera Ormanı
+struct GameWebView: UIViewRepresentable {
+    func makeUIView(context: Context) -> WKWebView {
+        let preferences = WKWebpagePreferences()
+        preferences.allowsContentJavaScript = true
+
+        let configuration = WKWebViewConfiguration()
+        configuration.defaultWebpagePreferences = preferences
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+
+        let contentController = WKUserContentController()
+        contentController.add(context.coordinator, name: "gameBridge")
+        configuration.userContentController = contentController
+
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.isOpaque = false
+        webView.backgroundColor = UIColor(red: 0.03, green: 0.08, blue: 0.05, alpha: 1.0)
+        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.bounces = false
+
+        if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html") {
+            webView.loadFileURL(indexURL, allowingReadAccessTo: Bundle.main.bundleURL)
+        } else if let assetPath = Bundle.main.path(forResource: "index", ofType: "html") {
+            let url = URL(fileURLWithPath: assetPath)
+            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
+
+        return webView
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    class Coordinator: NSObject, WKScriptMessageHandler {
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "gameBridge" {
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
+            }
+        }
+    }
 }
 
 struct ContentView: View {
     var body: some View {
-        ComposeView()
+        GameWebView()
             .ignoresSafeArea(.all)
     }
 }

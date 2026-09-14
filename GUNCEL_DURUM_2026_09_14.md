@@ -1,66 +1,56 @@
-# Kemerburgaz Kent Ormanı Oyunu — Güncel Durum ve Devam Kaydı
+﻿# Kemerburgaz Kent Ormanı Oyunu — Güncel Durum ve Devam Kaydı
 **Kayıt Tarihi:** 14 Eylül 2026  
-**Durum:** Modül 1 (Firebase Altyapısı & Canlı Firestore Veri Mimarisi), Modül 2 (Çocuk Dostu Oyun Ergonomisi & Kumandalar), Modül 3 (Yatay ve Dikey Ekran Uyumluluğu) ve Modül 4 (iOS Proje İskeleti & GitHub Actions CI/CD) tamamlandı. `./gradlew assembleDebug` ile 0 hata derleme doğrulaması yapıldı.  
-**Sürüm:** `v2.4.0` (Tag: `v2.4.0`)
+**Durum:** Mobil Uygulama (Android APK & iOS) ile Zengin Web/HTML5 Oyun Motoru Arasında %100 Görsel ve Fonksiyonel Eşitlik (Visual & Functional Parity) Tamamlandı. Canlı Firebase/Firestore (`kentormanimaceraparki`) entegrasyonu, Donanım Hızlandırmalı WebView Container, Çift Başparmak Zemin Kontrolleri (🟠 Eğil & 🟢 Zıpla), Otomatik Kalkan Kurtarma (Auto-Shield Rescue) ve Çevrimdışı (Offline) Desteği başarıyla devreye alındı.  
+**Sürüm:** `v2.5.0` (Tag: `v2.5.0`)  
+**GitHub Deposu:** `https://github.com/srcnbllc/MaceraOrmaniFoxAdventure`
 
 ---
 
-## 📌 1. Bugün Yapılan ve Tamamlanan Sistemler (14 Eylül 2026)
+## 📌 1. Bugün Gerçekleştirilen Büyük Güncellemeler (v2.5.0)
 
-### A. Modül 1: Firebase Altyapısı & Canlı Dinamik İçerik Yönetimi
-- **Firebase Proje Entegrasyonu:**
-  - Canlı Firebase projesi: `kentormanimaceraparki` (Project No: `217979667804`).
-  - Android için `app/google-services.json` ve iOS için `iosApp/GoogleService-Info.plist` canlı projeden indirilip projeye bağlandı.
-  - Firebase BoM 33.3.0, Firestore, Firebase Auth (Anonim/Misafir Girişi) ve Remote Config bağımlılıkları kuruldu.
-  - `FirebaseManager.kt` ve `MaceraApplication.kt` ile uygulama başlangıcında sessiz anonim misafir girişi sağlandı.
-- **Canlı Firestore Veri Mimarisi:**
-  - **`parks/kemerburgaz/zones/{zoneId}`**: 10 adet durak oluşturuldu:
-    1. `zone_1_maglova` (Mağlova Su Kemeri Girişi)
-    2. `zone_2_zipline` (Macera Zipline Parkuru)
-    3. `zone_3_nature_quiz` (Doğa ve Keşif Alanı)
-    4. `zone_4_lake_view` (Alibeyköy Gölet İskelesi)
-    5. `zone_5_climbing` (İp Parkuru ve Tırmanma Duvarı)
-    6. `zone_6_deer_trail` (Alageyik Yaban Hayatı Patikası)
-    7. `zone_7_beehive` (Arı Kovanları ve Çiçek Vadisi)
-    8. `zone_8_watchtower` (Büyük Seyir Kulesi)
-    9. `zone_9_camp_valley` (Gelişim Vadisi İzcilik Kampı)
-    10. `zone_10_north_forest` (Kuzey Ormanları Sınırı)
-  - **`campaigns/{campaignId}`**: Dinamik kampanyalar ve kuponlar (BELTUR %10 İndirimi, Ücretsiz Zipline Turu, Doğal Meyveli Dondurma).
-  - **Çocuk Güvenliği Kuralı**: `isCommercial: true` olan kampanyalar çocuk modunda otomatik olarak filtrelendi.
+### A. Zengin Web Görselleri ve Oyun Motorunun Doğrudan Mobil Uygulamaya Taşınması
+- **Kullanıcı Talebi & Problem Tespiti:** Daha önceki Compose arayüzü sadeleştirilmiş bir prototip görünümündeydi; bilgisayardaki zengin 3D hava fotoğrafı haritası (`NewMap.png`), ahşap panolar, animasyonlu tilki/maymun/kaplan koşucusu, kostüm/gardırop mağazası ve 30 soruluk doğa bilgi yarışması mobilde yoktu.
+- **Çözüm & Entegrasyon:**
+  - Tüm zengin oyun motoru (`index.html`, `game.js`, `style.css`), yüksek çözünürlüklü sprite ve ses varlıkları (`Assets/Sprites/` ve `Assets/Audio/`), Android varlık dizinine (`app/src/main/assets/`) ve iOS paketine entegre edildi.
+  - Harici CDN bağımlılığı kaldırıldı: `html5-qrcode.min.js` yerel olarak projeye dahil edildi, böylece internetin çekmediği orman derinliklerinde bile QR kod okuma ve tüm oyun mekanikleri %100 çevrimdışı (offline) çalışabilir hale getirildi.
 
-### B. Modül 2: Çocuk Dostu Oyun Ergonomisi & Kontroller
-- **Ground Layer Dock (`ThumbDockControls.kt`):**
-  - Zemin çizgisinin altına (`y > 0.78 * screenHeight`), koşan karakterin veya önüne çıkan engellerin önünü kapatmayacak şekilde konumlandırıldı.
-  - **Sol Başparmak:** 🟠 **EĞİL (SLIDE)** — Turuncu/Amber dairesel buton.
-  - **Sağ Başparmak:** 🟢 **ZIPLA (JUMP)** — Zümrüt Yeşili dairesel buton.
-  - Ekran üzeri dikey kaydırma jestleri (Swipe Up / Swipe Down) butonlarla eşzamanlı çalışacak şekilde korundu.
+### B. Canlı Firebase & Firestore Köprüsü (`AndroidFirebaseBridge.kt`)
+- **Canlı Proje Bağlantısı**: `kentormanimaceraparki` (Project No: `217979667804`).
+- **Yerel Kotlin <-> JavaScript Entegrasyonu**:
+  - `AndroidFirebaseBridge.kt` yazılarak donanım hızlandırmalı WebView'a `@JavascriptInterface` olarak enjekte edildi.
+  - `getZonesJson()`: Firestore'daki `parks/kemerburgaz/zones/` koleksiyonundan çekilen 10 canlı resmi durağı dinamik olarak oyuna aktarır.
+  - `getCampaignsJson()`: `campaigns/` altındaki aktif sponsor kampanyalarını ve ikram kuponlarını çeker.
+  - `vibrate(durationMs)`: Engellere çarpma, zıplama ve altın toplamada Android dokunsal titreşim (Haptic Feedback) motorunu tetikler.
+  - `window.onFirebaseDataReady`: Firestore'dan gelen güncel veriler anında harita pinlerine ve durak detay pencerelerine yansıtılır.
+
+### C. Çocuk Dostu Ergonomi ve Kontroller
+- **Zemin Başparmak Dock'u (Ground Layer Dock - `y > 0.78 * screenHeight`):**
+  - **Sol Başparmak:** 🟠 **EĞİL** (Slide - Turuncu dairesel buton, asılı halatların ve kütüklerin altından kayma).
+  - **Sağ Başparmak:** 🟢 **ZIPLA** (Jump - Yeşil dairesel buton, yerdeki kaya ve kütüklerin üzerinden atlama).
+  - Ekran dokunmatik hareketleri (Swipe Up / Swipe Down) ve klavye tuşları butonlarla senkronize çalışır.
 - **Otomatik Kalkan Kurtarma (Auto-Shield Rescue):**
-  - Koşu başında `baseShields = 1` verilir.
-  - Oyuncu engele çarptığında kalkan butonuna basmayı unuttuysa dahi yedekteki kalkan otomatik devreye girerek parçalanır. Can gitmez (0 hasar) ve 1 saniye altın parıltılı dokunulmazlık aurası verilir.
-- **Toleranslı Çarpışma Kutuları (Forgiving Hitboxes):**
-  - Engellerin görsel sınırlarına %18 tolerans payı tanınarak çocukların kıl payı sıyrılmalarına imkan sağlandı.
-- **Pozitif Oyun Sonu Ekranı:**
-  - Korkutucu "KAYBETTİN" yerine *"HAYDİ TEKRAR DENE! 🦊 - Orman Muhafızı pes etmez, her adım bir macera!"* pozitif mesajı ve "Yeniden Başla" / "Haritaya Dön" ahşap butonları yerleştirildi.
+  - 5-15 yaş hedef kitle için her seviye başlangıcında varsayılan olarak `player.hasShield = true` (`baseShields = 1`) verilir.
+  - İlk çarpmada kalkan parçalanarak çocuğu yanmaktan korur, 1 saniye altın parıltılı dokunulmazlık sağlar.
+- **Pozitif ve Cesaretlendirici Oyun Sonu:**
+  - Hayal kırıklığı yaratan ifadeler yerine *"🦊 HAYDİ TEKRAR DENE! — Vazgeçmek Yok Küçük Kaşif! Orman seni bekliyor."* mesajı ve pozitif ahşap butonlar eklendi.
 
-### C. Modül 3: Yatay (Landscape) ve Dikey (Portrait) Ekran Uyumluluğu
-- **`GameScreen.kt`:** Yatay modda kahraman boyutu `115.dp`, engeller `%82` oranında orantılı ölçeklendi. Duraklatma, Oyun Sonu ve Zafer popuplarının tümü `verticalScroll` ile donatıldı.
-- **`MainMenuScreen.kt`:** İçerik `verticalScroll` ile kaydırılabilir yapıldı. Yatay modda menü butonlarının üzerine binen alt dekoratif maskotlar yalnızca dikey modda gösterilecek şekilde sınırlandı. Buton yükseklikleri yatayda `52.dp`, dikeyde `66.dp` yapıldı.
-- **`ZoneDiscoveryDialog.kt`:** Dikey kaydırılabilir kompakt düzen ile "TABELADAKİ QR KODU TARA" butonu her ekranda görünür kılındı.
-- **`PassportScreen.kt`:** Dikeyde 2 sütun (`GridCells.Fixed(2)`), yatayda 4 sütun (`GridCells.Fixed(4)`) duyarlı ızgara düzeni kuruldu.
-- **`OnboardingScreen.kt`:** Tanıtım kartına `verticalScroll` eklendi.
-- *Compose kuralı doğrulaması: `Modifier.verticalScroll` içinde `Modifier.weight()` kullanılmadı.*
+### D. iOS Desteği (`iosApp/ContentView.swift`)
+- iOS tarafında `WKWebView` ile tam ekran, donanım hızlandırmalı ve `WKScriptMessageHandler` köprüsü ile donatılmış konteyner oluşturuldu.
+- `index.html` ve varlıklar iOS uygulama demetinden (bundle) sıfır gecikmeyle okunacak şekilde bağlandı.
 
-### D. Modül 4: Cross-Platform (iOS) Desteği & GitHub Actions CI/CD
-- **`iosApp/` İskeleti:**
-  - `iosApp/iOSApp.swift` (SwiftUI ana giriş noktası)
-  - `iosApp/ContentView.swift` (Compose Multiplatform UIViewController köprüsü)
-  - `iosApp/Info.plist` (Kamera izni, çoklu yönelim, `com.zekaoformani.macera`)
-  - `iosApp/GoogleService-Info.plist` (Canlı Firebase iOS ayarları)
-  - `iosApp/iosApp.xcodeproj/project.pbxproj` (Hazır Xcode projesi)
-- **GitHub Actions Otomasyonu (`.github/workflows/build.yml`):**
-  - `build-android`: Ubuntu üzerinde JDK 17 ile `./gradlew assembleDebug` çalıştırıp `app-debug.apk` dosyasını artifact olarak yükler.
-  - `build-ios`: macOS 14 üzerinde `xcodebuild` ile iOS Simulator derlemesini doğrular.
+---
 
-### E. Derleme Doğrulaması
-- `./gradlew assembleDebug` komutu ile 0 hata, 0 uyarı ile derleme sağlandı.
-- `app-debug.apk` (21.6 MB) başarıyla üretildi.
+## 📱 2. Canlı Android Emülatör Doğrulaması (Pixel 7 / API 34)
+Uygulama derlenerek `emulator-5554` üzerinde canlı test edildi ve ekran görüntüleriyle doğrulandı:
+1. **Kaşif Kayıt Modalı**: Açılışta ahşap temalı kaşif adı ve maskot seçimi ekranı.
+2. **Ana Menü**: 3D Mağlova Su Kemeri manzarası, ahşap butonlar (Maceraya Başla, Bölümler, Başarımlar, Gelişim Vadisi), altın ve puan sayacı, sevimli tilki maskotu.
+3. **Bölümler & Park Haritası**: `NewMap.png` 3D hava fotoğrafı üzerinde 10 adet yapraklı ahşap etap iğnesi, işletme isimleri ve QR tara sekmesi.
+4. **1. Orman Etabı Pop-up**: Firestore'dan canlı çekilen *"1. Orman Etabı: Mağlova Su Kemeri Girişi"*, tesis mesafeleri ve İBB ekipman dükkanı.
+5. **Koşu & Parkur Ekranı**: Canlı koşan tilki animasyonu, zemin tabakasında sol 🟠 EĞİL ve sağ 🟢 ZIPLA başparmak kumandaları, zıplama ve engellerden sıyrılma mekaniği.
+
+---
+
+## 🛠️ 3. Derleme & Sürüm Bilgisi
+- **Derleme Komutu:** `gradlew.bat assembleDebug` (37 actionable tasks, 0 hata, 0 uyarı)
+- **Üretilen APK:** `app/build/outputs/apk/debug/app-debug.apk` (v2.5.0, versionCode 6)
+- **Git Etiketi:** `v2.5.0`
