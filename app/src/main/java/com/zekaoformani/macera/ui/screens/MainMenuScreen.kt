@@ -82,36 +82,19 @@ fun MainMenuScreen(
                 .padding(horizontal = if (isLandscape) 40.dp else 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // İBB & Boğaziçi Yönetim Kurumsal Üst Başlık Barı
+            // Boğaziçi Yönetim Kurumsal Üst Başlık Barı (Şeffaf & Beyaz)
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color.Black.copy(alpha = 0.45f))
-                    .border(1.dp, AmberGold.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                    .background(Color.Transparent)
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "İBB",
-                        color = AmberGold,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 12.sp
-                    )
-                    Text(text = " • ", color = SoftCream, fontSize = 12.sp)
-                    Text(
-                        text = "BOĞAZİÇİ YÖNETİM",
-                        color = SoftCream,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    )
-                    Text(text = " • ", color = SoftCream, fontSize = 12.sp)
-                    Text(
-                        text = "KEMERBURGAZ KENT ORMANI",
-                        color = EmeraldGreen,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    )
-                }
+                Text(
+                    text = "Boğaziçi Yönetim",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))

@@ -182,8 +182,8 @@ class ZoneRepository {
             ),
             Zone(
                 id = "zone_4_lake_view",
-                name = "İBB BELTUR Restoran & Kafe",
-                businessName = "İBB BELTUR Kafe & Restoran",
+                name = "BELTUR Restoran & Kafe",
+                businessName = "BELTUR Kafe & Restoran",
                 description = "Orman manzaralı BELTUR. 1. Büyük Aile Dinlenme Molası: Sıcak çay, yemek ve dinlenme.",
                 qrSecretCode = "BOLUM_4",
                 orderIndex = 4,
@@ -191,7 +191,7 @@ class ZoneRepository {
                 activeSponsorCoupon = SponsorCoupon("%10", "BELTUR10", "2026-12-31"),
                 xPercent = 52.0,
                 yPercent = 58.0,
-                facilities = "☕ İBB BELTUR Kafe & Restoran: 0m | 🎭 İBB Sahne: 50m | 🚻 WC & Bebek Bakım: 30m",
+                facilities = "☕ BELTUR Kafe & Restoran: 0m | 🎭 Etkinlik Sahnesi: 50m | 🚻 WC & Bebek Bakım: 30m",
                 fact = "BELTUR kafelerinde kendi mataranı kullanarak doğaya sıfır plastik atık bırakabilirsin.",
                 targetScore = 1600
             ),

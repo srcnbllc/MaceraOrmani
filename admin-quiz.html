@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boğaziçi Yönetim • Soru Yönetim Paneli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #081c15;
+      --card-bg: #1b4332;
+      --card-border: rgba(212, 175, 55, 0.35);
+      --gold: #ffd166;
+      --gold-hover: #ffe494;
+      --green-light: #52b788;
+      --green-accent: #74c69d;
+      --text-main: #f8f9fa;
+      --text-muted: #b7e4c7;
+      --danger: #ef476f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Nunito', -apple-system, sans-serif;
+      background: radial-gradient(circle at 50% 15%, #1b4332 0%, #081c15 80%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: rgba(27, 67, 50, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-titles h1 {
+      font-family: 'Fredoka', cursive;
+      font-size: 24px;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-titles p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .cloud-pill {
+      background: rgba(82, 183, 136, 0.2);
+      border: 1px solid var(--green-light);
+      color: #d8f3dc;
+      padding: 8px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ffd166, #e09f3e);
+      color: #1b4332;
+      box-shadow: 0 4px 15px rgba(255, 209, 102, 0.3);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ffe494, #ffd166);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--green-light);
+    }
+
+    .stage-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .stage-nav::-webkit-scrollbar {
+      height: 6px;
+    }
+    .stage-nav::-webkit-scrollbar-thumb {
+      background: rgba(255, 209, 102, 0.3);
+      border-radius: 4px;
+    }
+
+    .stage-tab {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #b7e4c7;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .stage-tab:hover {
+      background: rgba(82, 183, 136, 0.2);
+      color: #fff;
+    }
+    .stage-tab.active {
+      background: var(--gold);
+      color: #1b4332;
+      border-color: var(--gold);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.25);
+    }
+
+    .stage-header-card {
+      background: rgba(27, 67, 50, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stage-header-card h2 {
+      font-family: 'Fredoka', cursive;
+      font-size: 18px;
+      color: var(--gold);
+    }
+
+    .question-card {
+      background: rgba(18, 48, 36, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      position: relative;
+    }
+    .question-card-badge {
+      font-size: 11px;
+      font-weight: 800;
+      background: rgba(255, 209, 102, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.2);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 54px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .correct-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .correct-select-wrap select {
+      max-width: 220px;
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1b4332;
+      border: 1px solid var(--gold);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="header-titles">
+        <h1>🌲 Boğaziçi Yönetim</h1>
+        <p>Kemerburgaz Kent Ormanı — Doğa Yarışması Soru ve İçerik Yönetim Paneli</p>
+      </div>
+      <div class="cloud-pill">
+        <span>☁️ Firestore REST API Bağlantısı: Aktif</span>
+      </div>
+    </header>
+
+    <!-- Hızlı Eylemler -->
+    <div class="action-bar">
+      <button class="btn-primary" type="button" onclick="saveToFirestore()">
+        <span>🚀 Firestore'a Kaydet &amp; Canlıya Al</span>
+      </button>
+      <button class="btn-secondary" type="button" onclick="loadFromFirestore()">
+        <span>🔄 Firestore'dan Getir</span>
+      </button>
+      <button class="btn-secondary" type="button" onclick="resetToDefaults()">
+        <span>📦 Varsayılan Havuzu Yükle</span>
+      </button>
+      <button class="btn-secondary" type="button" onclick="exportJsonBackup()">
+        <span>💾 JSON Yedek İndir</span>
+      </button>
+      <label class="btn-secondary" style="cursor: pointer; margin-bottom: 0;">
+        <span>📂 JSON Yükle</span>
+        <input type="file" accept=".json" onchange="importJsonBackup(event)" style="display: none;">
+      </label>
+    </div>
+
+    <!-- 10 Etap Gezinme Çubuğu -->
+    <div class="stage-nav" id="stage-nav-bar"></div>
+
+    <!-- Aktif Etap Kartı -->
+    <div class="stage-header-card">
+      <div>
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 800;">ETAP SEÇİMİ</span>
+        <h2 id="current-stage-title">1. Etap: Mağlova Kapısı</h2>
+      </div>
+      <div style="font-size: 12px; color: var(--gold); font-weight: 700;">
+        <span>3 Soru / 3 Açıklama</span>
+      </div>
+    </div>
+
+    <!-- Sorular Listesi -->
+    <div id="questions-container"></div>
+  </div>
+
+  <div id="status-toast" class="status-toast"></div>
+
+  <script src="game.js"></script>
+  <script>
+    let activeStageIndex = 0;
+    let quizPool = [];
+
+    const STAGE_NAMES = [
+      "1. Etap: Mağlova Kapısı & Karşılama Alanı",
+      "2. Etap: Seyir Terası & Vadi Manzarası",
+      "3. Etap: Çocuk Oyun Köyü & Macera Parkı",
+      "4. Etap: BELTUR & Sıfır Atık Alanı",
+      "5. Etap: Yürüyüş & Ekolojik Koşu Parkuru",
+      "6. Etap: Orman Kütüphanesi & Kitap Bahçesi",
+      "7. Etap: Doğal Gölet & Su Kuşları Koridoru",
+      "8. Etap: Spor Parkı & Fitness Meydanı",
+      "9. Etap: Sanat Atölyesi & Etkinlik Sahnesi",
+      "10. Etap: Tarihi Mağlova Su Kemeri Zirvesi"
+    ];
+
+    function initPanel() {
+      // Önce localStorage önbelleği veya varsayılan havuz
+      let saved = null;
+      try {
+        saved = localStorage.getItem("bogazici_remote_quiz_pool_v1");
+        if (saved) quizPool = JSON.parse(saved);
+      } catch(e) {}
+
+      if (!quizPool || quizPool.length < 10) {
+        quizPool = JSON.parse(JSON.stringify(DOGA_SORU_HAVUZU));
+      }
+
+      renderStageNav();
+      renderStageQuestions();
+    }
+
+    function renderStageNav() {
+      const nav = document.getElementById("stage-nav-bar");
+      nav.innerHTML = "";
+      STAGE_NAMES.forEach((name, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `stage-tab ${idx === activeStageIndex ? 'active' : ''}`;
+        btn.textContent = `${idx + 1}. Etap`;
+        btn.onclick = () => {
+          activeStageIndex = idx;
+          renderStageNav();
+          renderStageQuestions();
+        };
+        nav.appendChild(btn);
+      });
+    }
+
+    function renderStageQuestions() {
+      document.getElementById("current-stage-title").textContent = STAGE_NAMES[activeStageIndex];
+      const container = document.getElementById("questions-container");
+      container.innerHTML = "";
+
+      const stageQuestions = quizPool[activeStageIndex] || [];
+
+      stageQuestions.forEach((q, qIdx) => {
+        const card = document.createElement("div");
+        card.className = "question-card";
+        card.innerHTML = `
+          <span class="question-card-badge">SORU ${qIdx + 1} / 3</span>
+          <div class="form-group">
+            <label>Kategori &amp; Başlık İkonu</label>
+            <input type="text" value="${escapeHtml(q.category || '')}" onchange="updateField(${qIdx}, 'category', this.value)" placeholder="Örn: 💧 Matara Kültürü">
+          </div>
+          <div class="form-group">
+            <label>Soru Metni</label>
+            <textarea onchange="updateField(${qIdx}, 'q', this.value)" placeholder="Soruyu yazın...">${escapeHtml(q.q || '')}</textarea>
+          </div>
+          <div class="options-grid">
+            <div class="form-group">
+              <label>A Seçeneği</label>
+              <input type="text" value="${escapeHtml(q.optA || '')}" onchange="updateField(${qIdx}, 'optA', this.value)">
+            </div>
+            <div class="form-group">
+              <label>B Seçeneği</label>
+              <input type="text" value="${escapeHtml(q.optB || '')}" onchange="updateField(${qIdx}, 'optB', this.value)">
+            </div>
+          </div>
+          <div class="form-group correct-select-wrap">
+            <label style="margin-bottom:0;">Doğru Cevap:</label>
+            <select onchange="updateField(${qIdx}, 'correct', this.value)">
+              <option value="A" ${q.correct === 'A' ? 'selected' : ''}>A Seçeneği Doğru</option>
+              <option value="B" ${q.correct === 'B' ? 'selected' : ''}>B Seçeneği Doğru</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-top: 14px;">
+            <label>Öğretici Bilgi &amp; Açıklama (Cevaplandıktan sonra çocuklara gösterilir)</label>
+            <textarea onchange="updateField(${qIdx}, 'fact', this.value)" placeholder="Açıklayıcı doğru bilgiyi yazın...">${escapeHtml(q.fact || '')}</textarea>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateField(qIdx, field, val) {
+      if (!quizPool[activeStageIndex]) quizPool[activeStageIndex] = [];
+      if (!quizPool[activeStageIndex][qIdx]) quizPool[activeStageIndex][qIdx] = {};
+      quizPool[activeStageIndex][qIdx][field] = val;
+      // Yerel önbelleğe anında yaz
+      localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("status-toast");
+      toast.textContent = msg;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 3500);
+    }
+
+    async function saveToFirestore() {
+      showToast("⏳ Firestore'a kaydediliyor...");
+      try {
+        const payload = {
+          fields: {
+            questionsJson: { stringValue: JSON.stringify(quizPool) },
+            updatedAt: { stringValue: new Date().toISOString() },
+            updatedBy: { stringValue: "Boğaziçi Yönetim Admin" }
+          }
+        };
+
+        const url = "https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/quizzes/stage_pool";
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+          showToast("✅ Başarıyla Firestore'a kaydedildi! Oyuncular yeni soruları otomatik görecek.");
+        } else {
+          // REST API fallback: yerel önbellek koruması
+          localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+          showToast("💾 Yerel önbelleğe kaydedildi. (Firestore bağlantı yanıtı: " + res.status + ")");
+        }
+      } catch (err) {
+        localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+        showToast("⚠️ Ağ bağlantısı hatası, yerel önbelleğe kaydedildi.");
+      }
+    }
+
+    async function loadFromFirestore() {
+      showToast("⏳ Canlı Firestore verisi çekiliyor...");
+      try {
+        const url = "https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/quizzes/stage_pool";
+        const res = await fetch(url, { cache: "no-cache" });
+        if (res.ok) {
+          const doc = await res.json();
+          if (doc && doc.fields && doc.fields.questionsJson && doc.fields.questionsJson.stringValue) {
+            quizPool = JSON.parse(doc.fields.questionsJson.stringValue);
+            localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+            renderStageQuestions();
+            showToast("✅ Canlı Firestore soruları yüklendi!");
+            return;
+          }
+        }
+        showToast("ℹ️ Firestore'da özel soru bulunamadı, mevcut havuz korunuyor.");
+      } catch(e) {
+        showToast("⚠️ Firestore'a erişilemedi.");
+      }
+    }
+
+    function resetToDefaults() {
+      if (confirm("Tüm 10 etabın sorularını orijinal varsayılan soru havuzuna döndürmek istiyor musunuz?")) {
+        quizPool = JSON.parse(JSON.stringify(DOGA_SORU_HAVUZU));
+        localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+        renderStageQuestions();
+        showToast("📦 Varsayılan soru havuzu yüklendi.");
+      }
+    }
+
+    function exportJsonBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quizPool, null, 2));
+      const dlAnchor = document.createElement("a");
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `bogazici_kent_ormani_soru_havuzu_${new Date().toISOString().slice(0,10)}.json`);
+      dlAnchor.click();
+      showToast("💾 JSON yedek indirildi.");
+    }
+
+    function importJsonBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed) && parsed.length >= 10) {
+            quizPool = parsed;
+            localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
+            renderStageQuestions();
+            showToast("📂 JSON soru havuzu başarıyla yüklendi!");
+          } else {
+            alert("Hata: Geçersiz soru havuzu JSON dosyası! En az 10 etap dizisi bekleniyor.");
+          }
+        } catch(err) {
+          alert("Dosya okunamadı: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    window.onload = initPanel;
+  </script>
+</body>
+</html>

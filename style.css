@@ -107,24 +107,25 @@ body.is-native-app #app-container {
 }
 
 /* ==========================================================
-   0. KURUMSAL ÜST BANT (İBB • BOĞAZİÇİ YÖNETİM)
+   0. KURUMSAL ÜST BAŞLIK (BOĞAZİÇİ YÖNETİM)
 ========================================================== */
 .top-branding-bar {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 24px;
+  height: 26px;
   padding: 0 10px;
   padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(4, 18, 12, 0.88);
-  backdrop-filter: blur(4px);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: none !important;
   pointer-events: none;
   overflow: hidden;
   box-sizing: border-box;
@@ -134,43 +135,18 @@ body.is-native-app #app-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(4px, 1.2vw, 8px);
   font-family: 'Fredoka', 'Outfit', sans-serif;
   white-space: nowrap;
   max-width: 100%;
 }
 
-.branding-badge {
-  background: linear-gradient(135deg, #ffd166 0%, #d4af37 100%);
-  color: #07150e;
-  font-weight: 900;
-  font-size: clamp(8px, 2.2vw, 9.5px);
-  padding: 1px 5px;
-  border-radius: 6px;
-  letter-spacing: 0.3px;
-  flex-shrink: 0;
-}
-
-.branding-sep {
-  color: rgba(212, 175, 55, 0.6);
-  font-size: 8px;
-  flex-shrink: 0;
-}
-
 .branding-corp {
-  color: #f8f9fa;
-  font-weight: 800;
-  font-size: clamp(8px, 2.2vw, 9.5px);
-  letter-spacing: 0.3px;
-  flex-shrink: 1;
-}
-
-.branding-title {
-  color: #ffd166;
-  font-weight: 800;
-  font-size: clamp(8px, 2.2vw, 9.5px);
-  letter-spacing: 0.3px;
-  flex-shrink: 1;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: clamp(10px, 2.6vw, 12.5px);
+  letter-spacing: 0.6px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
+  opacity: 0.95;
 }
 
 /* Legacy watermark compatibility fallback */
@@ -1183,45 +1159,55 @@ body.is-native-app #app-container {
 /* .game-action-buttons ve .btn-touch-action stilleri Bölüm 23 altında optimize edilmiştir */
 
 /* ==========================================================
-   6. TOAST NOTIFICATION SERVICE
+   6. TOAST NOTIFICATION SERVICE (Zarif, Mikro Üst Başlık Uyarıları)
 ========================================================== */
 #toast-container {
   position: absolute;
-  top: 40px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  z-index: 9999;
+  width: auto;
+  max-width: 86%;
+  z-index: 10005;
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
 }
 
 .toast {
-  background: rgba(10, 30, 20, 0.95);
-  border: 1.5px solid var(--border-gold);
-  padding: 10px 16px;
+  background: rgba(8, 26, 17, 0.90);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  padding: 3px 12px;
   border-radius: 14px;
-  font-size: 12.5px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #ffffff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-  display: flex;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  animation: slideToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: opacity 0.3s, transform 0.3s;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: slideToastMicro 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
-@keyframes slideToast {
-  from { opacity: 0; transform: translateY(-15px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes slideToastMicro {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.toast.success { border-color: #2ec4b6; }
-.toast.warning { border-color: #f4a261; }
-.toast.error { border-color: #e63946; }
+.toast.success { border-color: rgba(46, 196, 182, 0.75); color: #e8f5e9; }
+.toast.warning { border-color: rgba(244, 162, 97, 0.75); color: #fff3e0; }
+.toast.error { border-color: rgba(230, 57, 70, 0.75); color: #ffebee; }
 
 /* ==========================================================
    7. İKİLİ GÖRÜNÜM (HARİTA & LİSTE) VE İNTERAKTİF PİNLER
@@ -3259,8 +3245,8 @@ body.is-native-app #app-container {
 }
 
 .camp-perk-stars {
-  font-size: 8.5px;
-  letter-spacing: 0.5px;
+  font-size: 11px;
+  letter-spacing: 2px;
   color: #ffd166;
 }
 
@@ -3319,6 +3305,23 @@ body.is-native-app #app-container {
   border-color: #52b788;
   color: #d8f3dc;
   cursor: default;
+  transform: none;
+}
+
+.btn-camp-upgrade.locked-upgrade {
+  background: rgba(40, 40, 55, 0.75);
+  border-color: #555566;
+  color: #8888aa;
+  cursor: pointer;
+  transform: none;
+  opacity: 0.85;
+  position: relative;
+}
+
+.btn-camp-upgrade.locked-upgrade:hover {
+  background: rgba(55, 40, 40, 0.85);
+  border-color: #ff6b6b;
+  color: #ffaaaa;
   transform: none;
 }
 

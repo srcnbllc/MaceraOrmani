@@ -16,14 +16,10 @@
 
 <div id="app-container">
 
-  <!-- Kurumsal Üst Başlık Barı (İBB • Boğaziçi Yönetim) -->
+  <!-- Kurumsal Üst Başlık (Boğaziçi Yönetim) -->
   <header class="top-branding-bar" id="top-branding-bar">
     <div class="branding-content">
-      <span class="branding-badge">İBB</span>
-      <span class="branding-sep">•</span>
-      <span class="branding-corp">BOĞAZİÇİ YÖNETİM</span>
-      <span class="branding-sep">•</span>
-      <span class="branding-title">KEMERBURGAZ KENT ORMANI</span>
+      <span class="branding-corp">Boğaziçi Yönetim</span>
     </div>
   </header>
 
@@ -133,7 +129,7 @@
       <!-- Ahşap Kaşif Gardırobu (Kostüm & Ekipman Sandığı) -->
       <div class="costume-wardrobe-box">
         <div class="wardrobe-header">
-          <span class="wardrobe-title">🪵 Kaşif Sandığı &amp; İBB Kostümleri</span>
+          <span class="wardrobe-title">🪵 Kaşif Sandığı &amp; Özel Kostümler</span>
           <span id="active-costume-badge" class="wardrobe-badge">🌿 Doğal</span>
         </div>
         <div class="wardrobe-grid">
@@ -141,17 +137,17 @@
             <span class="w-icon">🌿</span>
             <span class="w-label">Doğal</span>
           </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="hat" title="İBB Orman Kaşif Şapkası">
+          <button type="button" class="wardrobe-item-btn" data-costume="hat" title="Orman Kaşif Şapkası">
             <span class="w-icon">🧢</span>
-            <span class="w-label">İBB Şapkası</span>
+            <span class="w-label">Kaşif Şapkası</span>
           </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="vest" title="İBB Muhafız Yeleği">
+          <button type="button" class="wardrobe-item-btn" data-costume="vest" title="Muhafız Yeleği">
             <span class="w-icon">🦺</span>
-            <span class="w-label">İBB Yeleği</span>
+            <span class="w-label">Muhafız Yeleği</span>
           </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="pants" title="İBB İzcisi Pantolonu">
+          <button type="button" class="wardrobe-item-btn" data-costume="pants" title="İzci Pantolonu">
             <span class="w-icon">👖</span>
-            <span class="w-label">İBB Pantolonu</span>
+            <span class="w-label">İzci Pantolonu</span>
           </button>
         </div>
       </div>
@@ -218,9 +214,9 @@
       <div class="hud-pill hud-pill-score">
         <span id="game-hud-score">⭐ 0 / 1.000 Maks</span>
       </div>
-      <button id="btn-game-pause" class="hud-wood-pause-btn" type="button" onclick="if(window.pauseOrReturnGame)window.pauseOrReturnGame();" title="Ana Menüye Dön">
-        <span>🏠</span>
-        <span class="pause-label">Menü</span>
+      <button id="btn-game-pause" class="hud-wood-pause-btn" type="button" onclick="if(window.pauseOrReturnGame)window.pauseOrReturnGame();" title="Oyunu Duraklat">
+        <span>⏸️</span>
+        <span class="pause-label">Durdur</span>
       </button>
     </div>
 
@@ -253,7 +249,7 @@
 
     <!-- Saha Bilgi & Mola Kartı (Bölüm Başında 3.5 sn Gözükür) -->
     <div id="game-spot-card" class="in-game-spot-card hidden">
-      <div class="spot-tag">İBB • BOĞAZİÇİ YÖNETİM A.Ş. • SAHA REHBERİ</div>
+      <div class="spot-tag">BOĞAZİÇİ YÖNETİM A.Ş. • SAHA REHBERİ</div>
       <div id="spot-card-title" class="spot-name">1. Bölüm: Mağlova Kapısı</div>
       <div id="spot-card-desc" class="spot-info">Kemerburgaz Kent Ormanı A Kapısı karşılama meydanı.</div>
       <div id="spot-card-amenities" class="spot-amenities">ℹ️ Danışma: 30m | 🚲 Bisiklet: 40m | 🚻 WC: 50m</div>
@@ -261,15 +257,15 @@
 
     <div id="runner-player-sprite-wrap" class="runner-player-sprite-wrap">
       <img id="runner-player-gif" src="Assets/Sprites/fox.gif" alt="Koşucu Karakter" class="runner-player-gif">
-      <div id="runner-wear-hat" class="runner-wear-overlay wear-hat hidden" title="İBB Kaşif Şapkası">
+      <div id="runner-wear-hat" class="runner-wear-overlay wear-hat hidden" title="Kaşif Şapkası">
         <span class="cloth-icon">🧢</span>
         <span class="cloth-glow"></span>
       </div>
-      <div id="runner-wear-vest" class="runner-wear-overlay wear-vest hidden" title="İBB Muhafız Yeleği">
+      <div id="runner-wear-vest" class="runner-wear-overlay wear-vest hidden" title="Muhafız Yeleği">
         <span class="cloth-icon">🦺</span>
         <span class="cloth-glow"></span>
       </div>
-      <div id="runner-wear-pants" class="runner-wear-overlay wear-pants hidden" title="İBB İzcisi Pantolonu">
+      <div id="runner-wear-pants" class="runner-wear-overlay wear-pants hidden" title="İzci Pantolonu">
         <span class="cloth-icon">👖</span>
         <span class="cloth-glow"></span>
       </div>
@@ -279,17 +275,17 @@
 
     <!-- Ekranın Sağında Altın Toplandıkça Açılan Kıyafet Booster İkonları (Ahşap Tasarım) -->
     <div id="game-active-boosters-dock" class="game-boosters-dock">
-      <button type="button" id="in-game-booster-hat" class="in-game-booster-btn wood-booster-btn hat hidden" onclick="window.activateInGameBooster('hat')" title="İBB Şapka Koruması">
+      <button type="button" id="in-game-booster-hat" class="in-game-booster-btn wood-booster-btn hat hidden" onclick="window.activateInGameBooster('hat')" title="Şapka Koruması">
         <span class="booster-icon">🧢</span>
         <span class="booster-tag">KORUMA</span>
         <span class="booster-touch-prompt">DOKUN</span>
       </button>
-      <button type="button" id="in-game-booster-vest" class="in-game-booster-btn wood-booster-btn vest hidden" onclick="window.activateInGameBooster('vest')" title="İBB Çelik Zırhı">
+      <button type="button" id="in-game-booster-vest" class="in-game-booster-btn wood-booster-btn vest hidden" onclick="window.activateInGameBooster('vest')" title="Çelik Zırhı">
         <span class="booster-icon">🦺</span>
         <span class="booster-tag">ZIRH</span>
         <span class="booster-touch-prompt">DOKUN</span>
       </button>
-      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn wood-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="İBB Çeviklik & Mıknatıs">
+      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn wood-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="Çeviklik &amp; Mıknatıs">
         <span class="booster-icon">👖</span>
         <span class="booster-tag">MIKNATIS</span>
         <span class="booster-touch-prompt">DOKUN</span>
@@ -327,7 +323,7 @@
           <button type="button" class="equip-btn" id="btn-buy-hat" onclick="window.toggleLevelBooster('hat')">
             <span class="equip-icon">🧢</span>
             <div class="equip-meta">
-              <span class="equip-name">İBB Şapkası</span>
+              <span class="equip-name">Kaşif Şapkası</span>
               <span class="equip-desc">Engel Koruması</span>
             </div>
             <span class="equip-cost-tag" id="tag-cost-hat">20 🪙</span>
@@ -335,7 +331,7 @@
           <button type="button" class="equip-btn" id="btn-buy-vest" onclick="window.toggleLevelBooster('vest')">
             <span class="equip-icon">🦺</span>
             <div class="equip-meta">
-              <span class="equip-name">İBB Yeleği</span>
+              <span class="equip-name">Muhafız Yeleği</span>
               <span class="equip-desc">Çelik Zırh (+1 Can)</span>
             </div>
             <span class="equip-cost-tag" id="tag-cost-vest">30 🪙</span>
@@ -343,7 +339,7 @@
           <button type="button" class="equip-btn" id="btn-buy-pants" onclick="window.toggleLevelBooster('pants')">
             <span class="equip-icon">👖</span>
             <div class="equip-meta">
-              <span class="equip-name">İBB Pantolonu</span>
+              <span class="equip-name">İzci Pantolonu</span>
               <span class="equip-desc">Çift Zıpla &amp; Çekim</span>
             </div>
             <span class="equip-cost-tag" id="tag-cost-pants">25 🪙</span>
@@ -368,7 +364,6 @@
         <span>Kazanılan Altın: </span>
         <strong id="victory-coins-earned">+0 🪙</strong>
       </div>
-      <button id="btn-victory-quiz" class="btn-main" style="background: linear-gradient(135deg, #2d6a4f, #1b4332); border: 2px solid #ffd166; color: #ffd166;">🌿 DOĞA YARIŞMASINA BAŞLA (3 SORU) ⭐</button>
       <button id="btn-victory-next" class="btn-main">SONRAKİ BÖLÜM ⏩</button>
       <button id="btn-victory-lb" class="btn-secondary" style="border-color: #ffd166; color: #ffd166;" type="button">🏆 Puan Tablosunu Gör</button>
       <button id="btn-victory-map" class="btn-secondary">Haritaya Dön</button>
@@ -382,6 +377,10 @@
     <div class="modal-content quiz-modal-content">
       <div class="modal-header-tag" style="display:flex; justify-content:space-between; align-items:center;">
         <span>🌿 DOĞA VE BİLİM YARIŞMASI</span>
+        <div style="font-size:12px; margin-left:10px;">
+          <span style="color:#52b788;">Doğru: <span id="quiz-stat-correct">0</span></span> | 
+          <span style="color:#e07a5f;">Yanlış: <span id="quiz-stat-wrong">0</span></span>
+        </div>
         <span id="quiz-step-counter" class="quiz-step-badge">Soru 1 / 3</span>
       </div>
 
@@ -415,6 +414,7 @@
       <div id="quiz-feedback-box" class="quiz-feedback-box hidden">
         <div id="quiz-feedback-icon" class="quiz-feedback-icon">🌟</div>
         <div id="quiz-feedback-text" class="quiz-feedback-text">Açıklama</div>
+        <button id="btn-quiz-next-question" class="btn-main" style="margin-top:10px; width:100%;">Sonraki Soruya Geç ⏩</button>
       </div>
 
       <!-- Sonuç Ekranı -->
@@ -435,6 +435,33 @@
       <button id="btn-quiz-skip" class="btn-secondary" style="font-size: 11px; padding: 6px; opacity: 0.8; margin-top: 4px;">
         Yarışmayı Geç ⏭️
       </button>
+    </div>
+  </div>
+
+  <!-- Oyun Duraklatma Modalı -->
+  <div id="modal-pause" class="modal-overlay">
+    <div class="modal-content pause-modal-content" style="max-width: 360px; text-align: center;">
+      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM • KEMERBURGAZ KENT ORMANI</div>
+      <h3 class="modal-title" style="color: #ffd166; font-size: 19px; margin-top: 6px;">⏸️ OYUN DURAKLATILDI</h3>
+      <p class="modal-desc" style="font-size: 12px; margin-bottom: 8px;">Kısa bir mola! Hazır olduğunda kaldığın yerden devam edebilir veya ana menüye dönebilirsin.</p>
+      
+      <div class="pause-stats-card" style="background: rgba(0,0,0,0.35); border-radius: 10px; padding: 10px 14px; margin: 12px 0; border: 1px solid rgba(212,175,55,0.25); display: flex; justify-content: space-around; font-size: 13px;">
+        <div><span>📍 Bölüm:</span> <strong id="pause-level-num" style="color:#ffd166;">1</strong></div>
+        <div><span>⭐ Puan:</span> <strong id="pause-score-num" style="color:#52b788;">0</strong></div>
+        <div><span>🪙 Altın:</span> <strong id="pause-coins-num" style="color:#ffd166;">0</strong></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+        <button id="btn-pause-resume" class="btn-main wood-btn-main" type="button" onclick="if(window.resumeGame)window.resumeGame();" style="font-size: 14px; padding: 11px;">
+          ▶️ KALDIĞI YERDEN DEVAM ET
+        </button>
+        <button id="btn-pause-restart" class="btn-secondary wood-btn-secondary" type="button" onclick="if(window.restartCurrentLevel)window.restartCurrentLevel();" style="font-size: 13px;">
+          🔄 BÖLÜMÜ YENİDEN BAŞLAT
+        </button>
+        <button id="btn-pause-quit" class="btn-secondary wood-btn-secondary" type="button" onclick="if(window.returnToStartScreen)window.returnToStartScreen();" style="border-color: rgba(220,53,69,0.5); color: #ffadad; font-size: 13px;">
+          🏠 ANA MENÜYE DÖN
+        </button>
+      </div>
     </div>
   </div>
 
@@ -467,7 +494,7 @@
   <!-- 10. Bölüm Büyük Şampiyonluk & Mağlova Kemeri Modalı -->
   <div id="modal-grand-victory" class="modal-overlay">
     <div class="modal-content">
-      <div class="modal-header-tag">İBB & BOĞAZİÇİ YÖNETİM A.Ş.</div>
+      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş.</div>
       <h3 class="modal-title" style="color: #ffd166;">MAĞLOVA SU KEMERİ BÜYÜK ŞAMPİYONLUĞU</h3>
       <img src="Assets/Sprites/mağlovakemeri.jpg" alt="Mağlova Su Kemeri" class="victory-photo">
       <p id="grand-certificate-text" class="modal-desc" style="font-size: 12px; line-height: 1.45;">
@@ -583,11 +610,11 @@
   <div id="modal-camp" class="modal-overlay">
     <div class="modal-content modal-content-large camp-modal-content">
       <div class="modal-header-tag" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>İBB • GELİŞİM VADİSİ DİNLENME KAMPI</span>
-        <span id="camp-cloud-indicator" class="cloud-sync-badge">⛺ Kaşif Üssü</span>
+        <span>BOĞAZİÇİ YÖNETİM • GELİŞİM VADİSİ</span>
+        <span id="camp-cloud-indicator" class="cloud-sync-badge">⛺ Gelişim Vadisi</span>
       </div>
-      <h3 class="modal-title" style="color:#ffd166;">Gelişim Vadisi &amp; Kaşif Üssü</h3>
-      <p class="modal-desc">Kampını geliştirerek koşularda avantaj sağla, yeteneklerini güçlendir ve rekorları kır!</p>
+      <h3 class="modal-title" style="color:#ffd166;">Gelişim Vadisi</h3>
+      <p class="modal-desc">Yeteneklerini geliştirerek koşularda can, süre ve mıknatıs avantajı kazan!</p>
 
       <!-- Kaşif Seviye & Profil Kartı -->
       <div class="camp-profile-box">
@@ -597,21 +624,13 @@
           <div class="camp-xp-track">
             <div id="camp-xp-fill" class="camp-xp-fill" style="width: 50%;"></div>
           </div>
-          <div id="camp-xp-stat" style="font-size: 11px; color: #b7e4c7;">500 / 1000 XP • Bulut Senkronize: Aktif</div>
+          <div id="camp-xp-stat" style="font-size: 11px; color: #b7e4c7;">500 / 1000 XP • Seviye İlerlemesi</div>
         </div>
       </div>
 
-      <!-- Kupa & Rozet Vitrini (Ahşap Raf) -->
-      <div class="trophy-shelf-wrap" style="margin-top: 8px;">
-        <div class="shelf-title">🏅 KUPA &amp; MADALYA VİTRİNİ</div>
-        <div id="trophy-shelf-items" class="shelf-items">
-          <!-- Kazanılan kupa ve madalyalar -->
-        </div>
-      </div>
-
-      <!-- 4 Yükseltilebilir Kamp Güçlendirmesi -->
+      <!-- 3 Yükseltilebilir Gelişim Vadisi Güçlendirmesi (3 Yıldızlı / Her Yıldızda +3 Saniye Süre) -->
       <div class="shelf-title" style="margin-top: 10px; display:flex; justify-content:space-between; align-items:center;">
-        <span>⛺ OYUN İÇİ KAMP GELİŞTİRMELERİ &amp; AVANTAJLAR</span>
+        <span>⛺ GELİŞİM VADİSİ GÜÇLENDİRMELERİ</span>
         <span id="camp-user-coins-badge" style="font-size:12px; color:#ffd166; font-weight:800;">🪙 0 Altın</span>
       </div>
 
@@ -620,63 +639,47 @@
         <div class="camp-perk-card" id="camp-card-tent">
           <div class="camp-perk-icon-col">
             <div class="camp-perk-avatar">⛺</div>
-            <div class="camp-perk-stars" id="camp-tent-stars">⭐⭐☆☆☆</div>
+            <div class="camp-perk-stars" id="camp-tent-stars">☆☆☆</div>
           </div>
           <div class="camp-perk-info-col">
             <div class="camp-perk-title">Dinlenme Çadırı</div>
-            <div class="camp-perk-benefit" id="camp-tent-desc">Mevcut: Seviye 0 (3 Can)</div>
-            <div class="camp-perk-details">Koşuya ekstra canla başla. 3. Seviyede ilk çarpmayı savuşturan <strong>'Orman Koruma Kalkanı'</strong> kazandırır!</div>
+            <div class="camp-perk-benefit" id="camp-tent-desc">Mevcut: Seviye 0 (Kalkan Yok)</div>
+            <div class="camp-perk-details">Koşu başında koruma kalkanı süresi sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn kalkan).</div>
           </div>
           <div class="camp-perk-action-col">
-            <button id="btn-upgrade-tent" class="btn-camp-upgrade" type="button">40 🪙 Yükselt</button>
+            <button id="btn-upgrade-tent" class="btn-camp-upgrade" type="button">35 🪙 Yükselt</button>
           </div>
         </div>
 
-        <!-- 2. Kamp Ateşi & Feneri -->
+        <!-- 2. Kamp Ateşi -->
         <div class="camp-perk-card" id="camp-card-fire">
           <div class="camp-perk-icon-col">
             <div class="camp-perk-avatar">🔥</div>
-            <div class="camp-perk-stars" id="camp-fire-stars">⭐☆☆☆☆</div>
+            <div class="camp-perk-stars" id="camp-fire-stars">☆☆☆</div>
           </div>
           <div class="camp-perk-info-col">
-            <div class="camp-perk-title">Kamp Ateşi &amp; Feneri</div>
-            <div class="camp-perk-benefit" id="camp-fire-desc">Mevcut: Seviye 0 (1x Altın)</div>
-            <div class="camp-perk-details">Altın çarpanını artırır. 2. Seviyeden itibaren yakındaki altınları havada karaktere çeken <strong>'Manyetik Çekim'</strong> açar!</div>
+            <div class="camp-perk-title">Kamp Ateşi</div>
+            <div class="camp-perk-benefit" id="camp-fire-desc">Mevcut: Seviye 0 (Mıknatıs Yok)</div>
+            <div class="camp-perk-details">Koşu başında yakındaki altınları toplayan manyetik çekim süresi sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn mıknatıs).</div>
           </div>
           <div class="camp-perk-action-col">
-            <button id="btn-upgrade-fire" class="btn-camp-upgrade" type="button">50 🪙 Yükselt</button>
+            <button id="btn-upgrade-fire" class="btn-camp-upgrade" type="button">40 🪙 Yükselt</button>
           </div>
         </div>
 
-        <!-- 3. Orman İzcisi Botları -->
+        <!-- 3. Orman İzcisi -->
         <div class="camp-perk-card" id="camp-card-boots">
           <div class="camp-perk-icon-col">
             <div class="camp-perk-avatar">👟</div>
-            <div class="camp-perk-stars" id="camp-boots-stars">☆☆☆☆☆</div>
+            <div class="camp-perk-stars" id="camp-boots-stars">☆☆☆</div>
           </div>
           <div class="camp-perk-info-col">
-            <div class="camp-perk-title">Orman İzcisi Botları</div>
+            <div class="camp-perk-title">Orman İzcisi</div>
             <div class="camp-perk-benefit" id="camp-boots-desc">Mevcut: Seviye 0 (Standart)</div>
-            <div class="camp-perk-details">Zıplamayı çevikleştirir, kayma süresini uzatır. 3. Seviyede havada ikinci sıçrama sağlayan <strong>'Çift Zıplama'</strong> açar!</div>
+            <div class="camp-perk-details">Koşu başında hafif süzülme ve zıplama çevikliği sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn süzülme). 3. Yıldızda çift zıplama açar.</div>
           </div>
           <div class="camp-perk-action-col">
             <button id="btn-upgrade-boots" class="btn-camp-upgrade" type="button">45 🪙 Yükselt</button>
-          </div>
-        </div>
-
-        <!-- 4. Kaşif Sırt Çantası -->
-        <div class="camp-perk-card" id="camp-card-pack">
-          <div class="camp-perk-icon-col">
-            <div class="camp-perk-avatar">🎒</div>
-            <div class="camp-perk-stars" id="camp-pack-stars">☆☆☆☆☆</div>
-          </div>
-          <div class="camp-perk-info-col">
-            <div class="camp-perk-title">Kaşif Sırt Çantası</div>
-            <div class="camp-perk-benefit" id="camp-pack-desc">Mevcut: Seviye 0 (Standart)</div>
-            <div class="camp-perk-details">Etap zaferlerinde bonus altın/XP verir. 2. Seviyede oyunda 4 sn dokunulmazlık ve +100 skor veren <strong>'Altın Meşe Palamudu'</strong> doğar!</div>
-          </div>
-          <div class="camp-perk-action-col">
-            <button id="btn-upgrade-pack" class="btn-camp-upgrade" type="button">55 🪙 Yükselt</button>
           </div>
         </div>
       </div>
@@ -733,7 +736,7 @@
   ======================================================== -->
   <div id="modal-tutorial" class="modal-overlay">
     <div class="modal-content modal-content-large tutorial-modal-content">
-      <div class="modal-header-tag">İBB • KEMERBURGAZ ORMAN RESMİ KOŞU EĞİTİMİ</div>
+      <div class="modal-header-tag">KEMERBURGAZ ORMAN RESMİ KOŞU EĞİTİMİ</div>
       <h3 class="modal-title" style="color: #ffd166;">🌲 Nasıl Oynanır? Kaşif Rehberi</h3>
       <p class="modal-desc">
         Orman parkurunda güvenle ilerlemek için temel koşu hareketlerini öğren:
@@ -770,7 +773,7 @@
             <span class="step-obs">🏆</span>
           </div>
           <strong class="step-title">Altın Palamut &amp; Hedef Puan</strong>
-          <p class="step-text">Palamutları topla, hedef puana ulaş! Yeni etaplar, <strong>İBB şapka, yelek, pantolon kostümleri</strong> ve efsanevi kahramanların kilitlerini aç!</p>
+          <p class="step-text">Palamutları topla, hedef puana ulaş! Yeni etaplar, <strong>özel şapka, yelek, pantolon kostümleri</strong> ve efsanevi kahramanların kilitlerini aç!</p>
         </div>
       </div>
 
@@ -785,7 +788,7 @@
   ======================================================== -->
   <div id="modal-onboarding" class="modal-overlay">
     <div class="modal-content modal-content-large onboarding-content">
-      <div class="modal-header-tag">İBB • KEMERBURGAZ KENT ORMANI RESMİ KAŞİF KAYDI</div>
+      <div class="modal-header-tag">KEMERBURGAZ KENT ORMANI RESMİ KAŞİF KAYDI</div>
       <h3 class="modal-title" style="color: #ffd166;">🌲 Maceraya Hoş Geldin Kaşif!</h3>
       <p class="modal-desc">
         Puan tablosunda canlı sıralamanı görmek ve ormandaki ödülleri kazanmak için kaşif adını yaz ve yoldaşını seç:
@@ -833,7 +836,7 @@
   ======================================================== -->
   <div id="modal-settings" class="modal-overlay">
     <div class="modal-content settings-modal-content">
-      <div class="modal-header-tag">İBB • BOĞAZİÇİ YÖNETİM A.Ş.</div>
+      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş.</div>
       <h3 class="modal-title" style="color: #ffd166;">⚙️ Oyun Ayarları</h3>
       <p class="modal-desc">Ses, müzik ve oyun tercihlerinizi buradan kolayca yönetebilirsiniz.</p>
 
