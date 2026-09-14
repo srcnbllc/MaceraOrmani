@@ -193,15 +193,30 @@ class GameState {
     }
     return id;
   }
-  static getTotalExplorerPoints() {
-    let completedStages = 0;
-    for (let i = 0; i < 10; i++) {
-      if (this.getLevelState(i) === 3) completedStages++;
+  static getStageScore(stageIdx) {
+    return parseInt(localStorage.getItem(`StageScore_${stageIdx}`) || "0", 10);
+  }
+  static setStageScore(stageIdx, sc) {
+    const current = this.getStageScore(stageIdx);
+    if (sc > current) {
+      localStorage.setItem(`StageScore_${stageIdx}`, sc.toString());
     }
-    const highScore = this.getHighScore();
-    const xp = parseInt(localStorage.getItem("player_xp") || "150", 10);
-    const coins = this.getCoins();
-    return highScore + (completedStages * 350) + (xp * 2) + (coins * 2);
+    this.updateHighScore(sc);
+  }
+  static getTotalStagePoints() {
+    let sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += this.getStageScore(i);
+    }
+    // Geriye dönük uyum: Eğer hiç StageScore yoksa ama önceden tamamlanmışsa
+    if (sum === 0 && this.getHighScore() > 0 && this.getLevelState(0) === 3) {
+      this.setStageScore(0, this.getHighScore());
+      return this.getHighScore();
+    }
+    return sum;
+  }
+  static getTotalExplorerPoints() {
+    return this.getTotalStagePoints();
   }
   static hasCompletedOnboarding() {
     return !!localStorage.getItem("explorer_name");
@@ -245,7 +260,8 @@ class GameState {
   }
 
   static getCoins() {
-    return parseInt(localStorage.getItem("total_coins") || "50", 10);
+    // Kullanıcı Kuralı: Başlangıçta bedava altın verilmez, kahraman 0 altınla başlar!
+    return parseInt(localStorage.getItem("total_coins") || "0", 10);
   }
   static setCoins(amount) {
     const val = Math.max(0, amount);
@@ -254,6 +270,8 @@ class GameState {
     if (mEl) mEl.textContent = val;
     const hEl = document.getElementById("heroes-coin-count");
     if (hEl) hEl.textContent = val;
+    const cEl = document.getElementById("camp-user-coins-badge");
+    if (cEl) cEl.textContent = `🪙 ${val} Altın`;
   }
   static addCoins(amount) {
     this.setCoins(this.getCoins() + amount);
@@ -350,6 +368,18 @@ class GameState {
     localStorage.setItem(`voucher_used_${rewardId}`, "1");
   }
 }
+
+// Başlangıçtaki haksız 50 bedava altını düzeltme (Tek seferlik geçiş)
+try {
+  if (!localStorage.getItem("coins_unearned_fixed")) {
+    localStorage.setItem("coins_unearned_fixed", "1");
+    if (localStorage.getItem("total_coins")) {
+      const cur = parseInt(localStorage.getItem("total_coins"), 10);
+      const fixed = Math.max(0, cur - 50);
+      localStorage.setItem("total_coins", fixed.toString());
+    }
+  }
+} catch(e) {}
 
 // ============================================================================
 // 2.5 FİREBASE SİMÜLASYONU & GERÇEK İŞLETME İKRAM KUPONLARI
@@ -880,7 +910,7 @@ function updateMenuUI() {
   if (coinEl) coinEl.textContent = GameState.getCoins();
 
   const scoreEl = document.getElementById("menu-high-score");
-  if (scoreEl) scoreEl.textContent = GameState.getHighScore();
+  if (scoreEl) scoreEl.textContent = GameState.getTotalStagePoints();
 
   // Kaşif Profil Rozeti Güncellemesi
   const profileNameEl = document.getElementById("menu-profile-name");
@@ -1541,19 +1571,9 @@ function unlockInGameBoosterReward(type) {
 window.unlockInGameBoosterReward = unlockInGameBoosterReward;
 
 function checkInRunClothingRewards(runCoins) {
-  // 12 Altında Şapka, 25 Altında Yelek, 40 Altında Pantolon ödülü açılır
-  if (runCoins >= 12 && !unlockedInRun.hat && activeClothingBuffs.hat <= 0 && !inGameReadyBoosters.hat) {
-    unlockedInRun.hat = true;
-    unlockInGameBoosterReward("hat");
-  }
-  if (runCoins >= 25 && !unlockedInRun.vest && activeClothingBuffs.vest <= 0 && !inGameReadyBoosters.vest) {
-    unlockedInRun.vest = true;
-    unlockInGameBoosterReward("vest");
-  }
-  if (runCoins >= 40 && !unlockedInRun.pants && activeClothingBuffs.pants <= 0 && !inGameReadyBoosters.pants) {
-    unlockedInRun.pants = true;
-    unlockInGameBoosterReward("pants");
-  }
+  // Kullanıcı Kuralı: Kahramanlar puan ve altınları toplayıp mağaza veya bölüm öncesinden
+  // satın almadan oyun içerisinde otomatik ücretsiz kıyafet ve özellik verilmez!
+  // Tüm kıyafet ve aksesuarlar toplanan altınlarla hak edilmelidir.
 }
 window.checkInRunClothingRewards = checkInRunClothingRewards;
 
@@ -2285,19 +2305,31 @@ function startRunnerGame(levelId) {
   levelTotalDurationSeconds = STAGE_DURATIONS[levelId - 1] || (60 + (levelId - 1) * 10);
   levelTimeElapsed = 0;
   currentMaxStageScore = MAX_STAGE_SCORES[levelId - 1] || 1000;
-  // Ekipman & Kıyafetler: Kahraman oyuna tamamen SIFIRDAN başlar (hiçbir kıyafet kuşanılmamış)
-  // Kıyafetler koşarken altın topladıkça (12, 25, 40) açılır ve sağdaki ikona dokununca giyilir!
+  // Ekipman & Kıyafetler: Kahraman oyuna tamamen SIFIRDAN başlar
+  // Yalnızca kullanıcının altınla satın aldığı özellikler aktif olur!
   activeClothingBuffs = { hat: 0, vest: 0, pants: 0 };
-  inGameReadyBoosters = { hat: false, vest: false, pants: false };
+  
+  // Yalnızca bölüm öncesinde altın harcanarak satın alınmışsa buton aktif olur
+  inGameReadyBoosters = {
+    hat: !!pendingLevelBoosters.hat,
+    vest: !!pendingLevelBoosters.vest,
+    pants: !!pendingLevelBoosters.pants
+  };
+  pendingLevelBoosters = { hat: false, vest: false, pants: false };
   boosterSpawnQueue = [];
   coinsCollectedInRun = 0;
   unlockedInRun = { hat: false, vest: false, pants: false };
-  pendingLevelBoosters = { hat: false, vest: false, pants: false };
 
-  // Ekranın sağındaki butonları başlangıçta tamamen gizle
+  // Ekranın sağındaki butonları yalnızca satın alınmışsa göster
   ['hat', 'vest', 'pants'].forEach(t => {
     const b = document.getElementById(`in-game-booster-${t}`);
-    if (b) b.classList.add("hidden");
+    if (b) {
+      if (inGameReadyBoosters[t]) {
+        b.classList.remove("hidden");
+      } else {
+        b.classList.add("hidden");
+      }
+    }
   });
 
   // Runner üzerindeki tüm kıyafetleri başlangıçta gizle (sıfırdan başlangıç)
@@ -2309,8 +2341,8 @@ function startRunnerGame(levelId) {
   if (wearPants) wearPants.classList.add("hidden");
 
   lastSpawnedObstacleType = "none";
-  // Çocuk dostu aşamalı başlangıç hızı: 1. Seviye 2.10 sakin ısınma, 10. Seviye 3.65 heyecanlı final
-  gameSpeed = 2.10 + ((levelId - 1) * 0.17);
+  // 🚀 Profesyonel ve Akıcı Hız Skalası (Level 1: 2.90 dinamik tempo, Level 10: 4.70 büyük final)
+  gameSpeed = 2.90 + ((levelId - 1) * 0.20);
   updateClothingHUD();
 
   const heroId = GameState.getSelectedHero();
@@ -2326,7 +2358,7 @@ function startRunnerGame(levelId) {
 
   maxLives = 3 + Math.min(3, tentBonus) + heroBonus;
   playerLives = maxLives;
-  player.hasShield = true; // 🛡️ Çocuk Dostu Ergonomi: Auto-Shield Rescue (baseShields = 1)
+  player.hasShield = false; // Kullanıcı Kuralı: Otomatik bedava kalkan YOK! Satın alınmamışsa sıfırdan başlar
   player.canDoubleJump = bootsBonus >= 3; // 3. Seviye Botta Çift Zıplama
   player.hasDoubleJumped = false;
   player.maxSlideTimer = bootsBonus >= 2 ? 56 : 44; // Eğilerek süzülme süresi (rahatça engelin altından geçer)
@@ -2463,8 +2495,8 @@ function handleSpawning() {
       } else {
         // ZEMİN ENGELİ: Kütük veya Kaya (ÜZERİNDEN ZIPLANMASI GEREKİR)
         const isRock = Math.random() < 0.5;
-        // 1. Etapta 30px sevimli küçük kaya, 10. etapta 44px sağlam orman kütüğü
-        const size = currentLevelNumber === 1 ? 30 : Math.min(44, 30 + Math.floor(currentLevelNumber * 1.4));
+        // 1. Etapta 32px dinamik kaya, 10. etapta 46px sağlam orman kütüğü
+        const size = currentLevelNumber === 1 ? 32 : Math.min(46, 32 + Math.floor(currentLevelNumber * 1.5));
         obstacles.push({
           type: "ground",
           x: canvas.width + 20,
@@ -2489,13 +2521,13 @@ function handleSpawning() {
         }
       }
 
-      // ÇOCUK DOSTU TEPKİ PAYI VE ADİL ENGEL ARALIĞI:
-      // 1. Etap: ~140-165 frame (2.4 - 2.8 saniye güvenli tepki payı)
-      // 10. Etap: ~80-100 frame (1.3 - 1.6 saniye dinamik akış)
-      const baseGap = Math.max(76, 142 - (currentLevelNumber * 6.2));
-      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 24 : 16));
+      // PROFESYONEL VE RİTMİK ENGEL ARALIĞI:
+      // 1. Etap: ~90-105 frame (1.5 - 1.8 saniye canlı reaksiyon payı)
+      // 10. Etap: ~55-70 frame (0.9 - 1.2 saniye heyecanlı profesyonel akış)
+      const baseGap = Math.max(52, 92 - (currentLevelNumber * 4.0));
+      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 16 : 10));
       if (lastSpawnedObstacleType === "overhead") {
-        extraBuffer += 16; // Kaymadan sonra doğrulmak için ilave pay
+        extraBuffer += 12; // Kaymadan sonra doğrulmak için ilave pay
       }
       spawnCooldown = Math.floor(baseGap + extraBuffer);
     } else {
@@ -4255,23 +4287,57 @@ function drawPlayerShieldAura(ctx, p) {
   ctx.restore();
 }
 
-// ✨ Kaşif Sırt Çantası Seviye 2+: Altın Meşe Palamudu Çizimi
+// ✨ Altın Meşe Palamudu (Net, Keskin Vektör Tasarım & Canlı Parlaklık)
 function drawGoldenAcornPickup(ctx, c) {
   ctx.save();
   const cx = c.x + c.w * 0.5;
   const cy = c.y + c.h * 0.5;
   const t = Date.now() * 0.006;
+  const bob = Math.sin(t * 2.5) * 3;
 
-  // Parlayan altın aura
-  ctx.fillStyle = "rgba(255, 209, 102, 0.35)";
+  // 1. Canlı Dış Altın Parıltı Halesi
+  ctx.shadowColor = "#ffd166";
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = "rgba(255, 209, 102, 0.45)";
   ctx.beginPath();
-  ctx.arc(cx, cy, 17 + Math.sin(t) * 3, 0, Math.PI * 2);
+  ctx.arc(cx, cy + bob, 18, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.font = "21px Outfit, sans-serif";
+  // 2. Altın Palamut Gövdesi (Keskin Kontur)
+  ctx.fillStyle = "#d97706";
+  ctx.strokeStyle = "#ffd166";
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy + bob + 2, 11, 0, Math.PI);
+  ctx.lineTo(cx - 11, cy + bob - 3);
+  ctx.quadraticCurveTo(cx, cy + bob - 13, cx + 11, cy + bob - 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Şapka / Üst Kubbe
+  ctx.fillStyle = "#78350f";
+  ctx.strokeStyle = "#fef08a";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + bob - 3, 12, 5.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Işık Pırıltısı
+  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.beginPath();
+  ctx.arc(cx - 3, cy + bob + 1, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Net Etiket
+  ctx.font = "bold 8px Fredoka, Outfit, sans-serif";
+  ctx.fillStyle = "#ffd166";
+  ctx.shadowColor = "rgba(0,0,0,0.9)";
+  ctx.shadowBlur = 3;
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("🌰", cx, cy);
+  ctx.fillText("⭐ +120", cx, cy + bob - 15);
+
   ctx.restore();
 }
 
@@ -4472,11 +4538,11 @@ function onLevelVictory() {
   }
   sounds.playCollect();
 
-  GameState.updateHighScore(score);
-
   // Bölüm Tamamlandı Kaydı & Sonraki Bölüm Kilidi Açılışı
   const currentIndex = currentLevelNumber - 1;
   const nextIndex = currentIndex + 1;
+  GameState.setStageScore(currentIndex, score);
+  GameState.updateHighScore(score);
   GameState.setLevelState(currentIndex, 3); // 3=Completed
 
   // Kaşif XP Ödülü & Firebase Senkronizasyonu
@@ -4915,6 +4981,9 @@ function initSettingsEvents() {
       if (confirm("⚠️ Tüm oyun ilerlemeniz, toplanan altınlar, kıyafetler ve kaşif kaydınız sıfırlanacak!\nEmin misiniz?")) {
         try {
           localStorage.clear();
+          localStorage.setItem("total_coins", "0");
+          localStorage.setItem("high_score", "0");
+          localStorage.setItem("coins_unearned_fixed", "1");
           localStorage.setItem("selected_costume", "none");
           localStorage.setItem("unlocked_costumes", JSON.stringify(["none"]));
           sessionStorage.clear();

@@ -1,8 +1,36 @@
 # Kemerburgaz Kent Ormanı Oyunu — Güncel Durum ve Devam Kaydı
 **Kayıt Tarihi:** 14 Eylül 2026  
-**Durum:** Mobil Uygulama (Android APK & iOS) ile Zengin Web/HTML5 Oyun Motoru Arasında %100 Görsel ve Fonksiyonel Eşitlik (Visual & Functional Parity) Tamamlandı. Canlı Firebase/Firestore (`kentormanimaceraparki`) entegrasyonu, Donanım Hızlandırmalı WebView Container, Çift Başparmak Zemin Kontrolleri (🟠 Eğil & 🟢 Zıpla), Otomatik Kalkan Kurtarma (Auto-Shield Rescue) ve Çevrimdışı (Offline) Desteği başarıyla devreye alındı.  
-**Sürüm:** `v2.5.0` (Tag: `v2.5.0`)  
+**Durum:** Canlı Firebase/Firestore (`kentormanimaceraparki`) anlık dinamik yönetim entegrasyonu (Harita Pin Koordinatları & Liderlik Tablosu), Donma/Crash korumaları, Kademeli Çocuk Dostu Akış (1->10) ve WebView eşitliği tamamlandı.  
+**Sürüm:** `v2.6.0` (Tag: `v2.6.0`, Önceki Kararlı Tag: `v2.5.0`)  
 **GitHub Deposu:** `https://github.com/srcnbllc/MaceraOrmaniFoxAdventure`
+
+---
+
+## 📌 1. Sürüm Bilgisi ve Geri Döndürülebilirlik (Rollback Safety)
+
+Bu sürüm Git üzerinde etiketlenerek (`v2.6.0`) güvenli bir dağıtım paketi haline getirilmiştir. İhtiyaç halinde önceki herhangi bir sürüme veya bu sürüme tek komutla dönülebilir:
+
+| Git Etiketi (Tag) | Açıklama & Kapsam | Geri Dönüş Komutu |
+| :--- | :--- | :--- |
+| **`v2.6.0`** *(Güncel)* | Canlı Firebase Koordinatları, Canlı Liderlik Tablosu, Donma/Loop Koruması, Kademeli Zorluk | `git checkout v2.6.0` |
+| **`v2.5.0`** *(Önceki Kararlı)* | Web/Mobil Arayüz Paritesi, Zemin Başparmak Dock'u, Çevrimdışı QR ve Kalkan | `git checkout v2.5.0` |
+| **`v2.4.0`** | İlk hibrit WebView prototipi | `git checkout v2.4.0` |
+
+### Acil Geri Alma (Rollback) Prosedürü:
+- **Test / İnceleme Amaçlı Geçici Dönüş:**
+  ```bash
+  git checkout v2.5.0
+  ```
+- **Kalıcı Olarak Önceki Sürüme Sıfırlama:**
+  ```bash
+  git reset --hard v2.5.0
+  git push origin main --force
+  ```
+- **Tarihçeyi Korumak İçin Güvenli Geri Alma:**
+  ```bash
+  git revert HEAD
+  git push origin main
+  ```
 
 ---
 
@@ -42,8 +70,15 @@
 
 ### F. Donma (Freeze), Loop ve Arayüz Çakışmalarının Giderilmesi
 - **Tekil Animasyon Kare Takibi (`gameLoopId`):** Menü geçişleri ve oyun sonu durumlarında döngülerin üst üste binmesi ve donmalar engellenmiştir.
-- **Kademeli Çocuk Dostu Akış (1 -> 10):** 1. etaptan 10. etaba kadar hız (2.10 -> 3.65), parkur süresi (60s -> 150s), engel sıklığı ve puan hedefleri kademeli olarak dengelenmiştir.
+- **Kademeli Çocuk Dostu Akış (1 -> 10):** 1. etaptan 10. etaba kadar hız, parkur süresi, engel sıklığı ve puan hedefleri kademeli olarak dengelenmiştir.
 - **Çıkmaz Sokaksız Süreklilik:** Herhangi bir etabı bitiren oyuncu için sonraki etap otomatik açılır; saha QR kodu ile ücretsiz açma alternatifi korunmuştur.
+
+### G. Oyun Ekonomisi, Altın ve Puan Standartlaştırması
+- **0 Başlangıç Altını Kuralı:** Yeni başlayan veya sıfırlanan oyunda artık haksız 50 bedava altın verilmez; altınlar kesinlikle **0**'dan başlar. Sadece parkurda toplanan ve ödüllerden kazanılan altınlar hesaba geçer.
+- **Kümülatif Bölüm Puanları:** Ana menü kupa puanı (PUAN), yalnızca tek bir etabın yüksek skoru yerine tamamlanan tüm etapların puanlarının toplamını (`getTotalStagePoints()`) gösterir.
+- **Anında Altın Düşüşü & Senkronizasyon:** Kahraman, kostüm, kalkan/mıknatıs veya kamp eşyası satın alındığında altın anında eksilir ve menü, kahraman ve kamp ekranlarındaki altın sayaçları tek noktadan güncellenir.
+- **Net Vektörel Görseller:** Flu görünen kutu/palamut yerine Canvas üzerinde altın pırıltılı net vektörel madalyon (`⭐ +120`) çizimi entegre edildi.
+- **Dükkan/Kostüm Kuralı:** Parkur içinde ücretsiz rastgele kostüm dağıtımı kapatıldı; kıyafetler yalnızca toplanan puan ve altınlarla mağazadan açılarak giyilebilir.
 
 ---
 
