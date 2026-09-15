@@ -286,6 +286,29 @@ class GameState {
     }
   }
 
+  // ⭐ Kariyer Kaşif Puanı Havuzu & Harcanabilir Puanlar (Gelişim Vadisi Alışverişi İçin)
+  static getTotalExplorerPoints() {
+    const stored = parseInt(localStorage.getItem("total_explorer_points") || "0", 10);
+    const high = this.getHighScore();
+    return Math.max(stored, high);
+  }
+  static addExplorerPoints(amount) {
+    if (!amount || amount <= 0) return;
+    const current = this.getTotalExplorerPoints();
+    const next = current + Math.round(amount);
+    localStorage.setItem("total_explorer_points", next.toString());
+  }
+  static getSpentPoints() {
+    return parseInt(localStorage.getItem("spent_explorer_points") || "0", 10);
+  }
+  static spendExplorerPoints(amount) {
+    const current = this.getSpentPoints();
+    localStorage.setItem("spent_explorer_points", (current + amount).toString());
+  }
+  static getAvailablePoints() {
+    return Math.max(0, this.getTotalExplorerPoints() - this.getSpentPoints());
+  }
+
   static getSelectedHero() {
     return parseInt(localStorage.getItem("SelectedCharacterID") || "1", 10);
   }
@@ -347,6 +370,16 @@ class GameState {
     localStorage.setItem("boots_level", clamped.toString());
   }
 
+  // 4. Güçlendirme: 🧭 Orman Pusulası (Bölüm Tamamlama & Kurtarma Yeteneği)
+  static getCompassLevel() {
+    const v = parseInt(localStorage.getItem("compass_level") || "0", 10);
+    return Math.min(3, Math.max(0, isNaN(v) ? 0 : v));
+  }
+  static setCompassLevel(lvl) {
+    const clamped = Math.min(3, Math.max(0, lvl));
+    localStorage.setItem("compass_level", clamped.toString());
+  }
+
   static getBackpackLevel() {
     return parseInt(localStorage.getItem("backpack_level") || "0", 10);
   }
@@ -374,6 +407,38 @@ class GameState {
     localStorage.setItem(`voucher_used_${rewardId}`, "1");
   }
 
+  // 🧠 BİLGİ LİGİ: Quiz Toplam Puan Yönetimi (Koşu puanından bağımsız)
+  static getQuizTotalPoints() {
+    return parseInt(localStorage.getItem("quiz_total_points") || "0", 10);
+  }
+
+  static addQuizPoints(amount) {
+    const current = this.getQuizTotalPoints();
+    const next = current + Math.max(0, amount);
+    localStorage.setItem("quiz_total_points", next.toString());
+    return next;
+  }
+
+  static getQuizWeeklyPoints() {
+    const weekKey = this._getWeekKey();
+    return parseInt(localStorage.getItem(`quiz_weekly_${weekKey}`) || "0", 10);
+  }
+
+  static addQuizWeeklyPoints(amount) {
+    const weekKey = this._getWeekKey();
+    const current = this.getQuizWeeklyPoints();
+    const next = current + Math.max(0, amount);
+    localStorage.setItem(`quiz_weekly_${weekKey}`, next.toString());
+    return next;
+  }
+
+  static _getWeekKey() {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${now.getFullYear()}_w${week}`;
+  }
+
   static resetData() {
     localStorage.clear();
     sessionStorage.clear();
@@ -383,6 +448,7 @@ class GameState {
   }
 }
 
+
 // Başlangıçtaki haksız 50 bedava altını düzeltme (Tek seferlik geçiş)
 try {
   if (!localStorage.getItem("coins_unearned_fixed")) {
@@ -391,6 +457,14 @@ try {
       const cur = parseInt(localStorage.getItem("total_coins"), 10);
       const fixed = Math.max(0, cur - 50);
       localStorage.setItem("total_coins", fixed.toString());
+    }
+  }
+
+  // Başlangıçtaki hatalı 150 XP kalıntısını 0'a sıfırlama (Tek seferlik geçiş)
+  if (!localStorage.getItem("xp_init_zero_fixed_v1")) {
+    localStorage.setItem("xp_init_zero_fixed_v1", "1");
+    if (localStorage.getItem("player_xp") === "150" && (!localStorage.getItem("LevelState_1") || localStorage.getItem("LevelState_1") === "0")) {
+      localStorage.setItem("player_xp", "0");
     }
   }
 } catch(e) {}
@@ -555,7 +629,7 @@ class DeviceNetworkService {
     const lbBadge = document.getElementById("leaderboard-sync-badge");
     if (lbBadge) {
       lbBadge.textContent = displayText;
-      lbBadge.className = `cloud-sync-badge ${status.online ? 'is-online' : 'is-offline'}`;
+      lbBadge.className = `device-network-badge ${status.online ? 'is-online' : 'is-offline'}`;
       lbBadge.title = status.detail;
     }
   }
@@ -595,7 +669,8 @@ class FirebaseSimService {
   }
 
   static getXp() {
-    return parseInt(localStorage.getItem("player_xp") || "150", 10);
+    // Kullanıcı Talebi: Yeni kurulumda ve başlangıçta 0 XP ile başlar!
+    return parseInt(localStorage.getItem("player_xp") || "0", 10);
   }
 
   static addXp(amount) {
@@ -931,7 +1006,7 @@ function updateMenuUI() {
   const profileNameEl = document.getElementById("menu-profile-name");
   const profileAvatarEl = document.getElementById("menu-profile-avatar");
   const profileHeroId = GameState.getProfileHero();
-  const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯" };
+  const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯", 4: "🐿️", 5: "🦉" };
 
   if (profileAvatarEl) profileAvatarEl.textContent = heroIcons[profileHeroId] || "🦊";
 
@@ -1269,6 +1344,89 @@ function initMapPanning() {
   });
 }
 
+let focusedMapStageIndex = null;
+
+function focusOnMapPin(stageIdx) {
+  focusedMapStageIndex = stageIdx;
+  const viewport = document.getElementById("map-pan-viewport");
+  const canvasWrap = document.querySelector(".map-canvas-wrap");
+  if (!viewport) return;
+
+  const coords = PIN_COORDINATES[stageIdx] || { x: 50, y: 50 };
+  const totalW = canvasWrap ? canvasWrap.offsetWidth : 860;
+  const totalH = canvasWrap ? canvasWrap.offsetHeight : 540;
+
+  const targetPxX = (coords.x / 100) * totalW;
+  const targetPxY = (coords.y / 100) * totalH;
+
+  const vpW = viewport.clientWidth || 360;
+  const vpH = viewport.clientHeight || 480;
+
+  const scrollX = Math.max(0, targetPxX - vpW / 2);
+  const scrollY = Math.max(0, targetPxY - vpH / 2);
+
+  viewport.scrollTo({
+    left: scrollX,
+    top: scrollY,
+    behavior: "smooth"
+  });
+
+  const pins = document.querySelectorAll(".map-pin-btn");
+  pins.forEach((btn, i) => {
+    btn.classList.remove("pin-next-focus");
+    const existingBadge = btn.querySelector(".pin-focus-callout");
+    if (existingBadge) existingBadge.remove();
+
+    if (i === stageIdx) {
+      btn.classList.add("pin-next-focus");
+      const callout = document.createElement("div");
+      callout.className = "pin-focus-callout";
+      callout.innerHTML = `<span>🎯 SIRADAKİ ETAP!</span><span class="callout-arrow">▼</span>`;
+      btn.appendChild(callout);
+    }
+  });
+}
+window.focusOnMapPin = focusOnMapPin;
+
+function proceedToNextStageOnMap(nextStageIndex) {
+  clearQuizTimer();
+  clearGameOverCountdown();
+
+  const modals = ["modal-nature-quiz", "modal-victory", "modal-grand-victory", "modal-level-info", "modal-pause", "modal-gameover"];
+  modals.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active");
+  });
+
+  if (nextStageIndex >= 10) {
+    const grandModal = document.getElementById("modal-grand-victory");
+    if (grandModal) {
+      grandModal.classList.add("active");
+      if (window.launchVictoryFireworks) window.launchVictoryFireworks();
+    }
+    return;
+  }
+
+  const targetIdx = Math.max(0, Math.min(9, nextStageIndex !== undefined ? nextStageIndex : 0));
+
+  // Sonraki etabı oynanabilir (state=2) yap
+  if (GameState.getLevelState(targetIdx) === 0) {
+    GameState.setLevelState(targetIdx, 2);
+  }
+
+  showScreen("screen-map");
+  currentMapViewMode = "map";
+  renderMapScreen();
+
+  // Haritayı dinamik olarak sonraki durağa fokusla ve parlat
+  setTimeout(() => {
+    focusOnMapPin(targetIdx);
+    const etap = RESMI_ETAPLAR[targetIdx];
+    showToast(`🗺️ ${targetIdx + 1}. Etap: ${etap.business.split('&')[0].trim()} açıldı! İğneye dokunarak yarışmaya başlayabilirsin!`, "success");
+  }, 200);
+}
+window.proceedToNextStageOnMap = proceedToNextStageOnMap;
+
 function renderMapInteractive() {
   const overlay = document.getElementById("map-pins-overlay");
   if (!overlay) return;
@@ -1291,14 +1449,18 @@ function renderMapInteractive() {
       icon = "📷";
     }
 
+    const isNextFocused = (focusedMapStageIndex === idx);
     const pinBtn = document.createElement("button");
     pinBtn.type = "button";
-    pinBtn.className = `map-pin-btn ${state === 2 ? 'is-active-pin' : ''}`;
+    pinBtn.className = `map-pin-btn ${state === 2 ? 'is-active-pin' : ''} ${isNextFocused ? 'pin-next-focus' : ''}`;
     pinBtn.style.left = `${coords.x}%`;
     pinBtn.style.top = `${coords.y}%`;
     pinBtn.title = etap.title;
 
+    const calloutHtml = isNextFocused ? `<div class="pin-focus-callout"><span>🎯 SIRADAKİ ETAP!</span><span class="callout-arrow">▼</span></div>` : ``;
+
     pinBtn.innerHTML = `
+      ${calloutHtml}
       <div class="map-pin-graphic">
         <img src="Assets/Sprites/MapDefaultPin.png" alt="Etap Pin" class="map-pin-img">
         <span class="map-pin-number">${etap.id}</span>
@@ -1404,7 +1566,7 @@ function openLevelModal(idx) {
       descEl.textContent = etap.desc;
       startBtn.disabled = false;
       startBtn.style.opacity = "1";
-      startBtn.textContent = "OYUNA BAŞLA";
+      startBtn.textContent = "🎮 YARIŞMAYA BAŞLA";
       if (qrBtn) qrBtn.style.display = "none";
       startBtn.onclick = () => {
         document.getElementById("modal-level-info").classList.remove("active");
@@ -1428,21 +1590,11 @@ function openLevelModal(idx) {
     descEl.textContent = etap.desc;
     startBtn.disabled = false;
     startBtn.style.opacity = "1";
-    startBtn.textContent = state === 3 ? "TEKRAR OYNA" : "OYUNA BAŞLA";
+    startBtn.textContent = state === 3 ? "🎮 TEKRAR OYNA" : "🎮 YARIŞMAYA BAŞLA";
     if (qrBtn) qrBtn.style.display = "none";
     startBtn.onclick = () => {
       document.getElementById("modal-level-info").classList.remove("active");
       startRunnerGame(activeLevelIndex + 1);
-    };
-  }
-
-  const quizModalBtn = document.getElementById("btn-modal-nature-quiz");
-  if (quizModalBtn) {
-    quizModalBtn.onclick = () => {
-      document.getElementById("modal-level-info").classList.remove("active");
-      startNatureQuiz(idx, () => {
-        openLevelModal(idx);
-      });
     };
   }
 
@@ -2043,12 +2195,14 @@ const DOGA_SORU_HAVUZU = [
 const RemoteQuizService = {
   CACHE_KEY: "bogazici_remote_quiz_pool_v1",
   cachedPool: null,
+  syncStatus: "checking", // "live", "cached", "local"
 
   init() {
     try {
       const saved = localStorage.getItem(this.CACHE_KEY);
       if (saved) {
         this.cachedPool = JSON.parse(saved);
+        this.syncStatus = "cached";
       }
     } catch(e) {}
     this.syncFromRemote();
@@ -2060,17 +2214,69 @@ const RemoteQuizService = {
       const res = await fetch(url, { cache: "no-cache" });
       if (res.ok) {
         const doc = await res.json();
+        let questions = null;
+
         if (doc && doc.fields && doc.fields.questionsJson && doc.fields.questionsJson.stringValue) {
-          const remoteData = JSON.parse(doc.fields.questionsJson.stringValue);
-          if (Array.isArray(remoteData) && remoteData.length >= 10) {
-            this.cachedPool = remoteData;
-            localStorage.setItem(this.CACHE_KEY, JSON.stringify(remoteData));
-            console.log("🌲 [RemoteQuizService] Canlı Firestore soru havuzu senkronize edildi.");
-          }
+          try {
+            questions = JSON.parse(doc.fields.questionsJson.stringValue);
+          } catch(e) {}
+        } else if (doc && doc.fields && doc.fields.stages && doc.fields.stages.arrayValue && doc.fields.stages.arrayValue.values) {
+          try {
+            questions = doc.fields.stages.arrayValue.values.map(st => {
+              if (st.arrayValue && st.arrayValue.values) {
+                return st.arrayValue.values.map(qDoc => {
+                  const m = qDoc.mapValue ? qDoc.mapValue.fields : {};
+                  return {
+                    category: m.category ? m.category.stringValue : "Doğa & Çevre",
+                    q: m.q ? m.q.stringValue : "",
+                    optA: m.optA ? m.optA.stringValue : "",
+                    optB: m.optB ? m.optB.stringValue : "",
+                    correct: m.correct ? m.correct.stringValue : "A",
+                    fact: m.fact ? m.fact.stringValue : ""
+                  };
+                });
+              }
+              return [];
+            });
+          } catch(e) {}
+        }
+
+        if (Array.isArray(questions) && questions.length >= 10) {
+          this.cachedPool = questions;
+          this.syncStatus = "live";
+          localStorage.setItem(this.CACHE_KEY, JSON.stringify(questions));
+          console.log("🌲 [RemoteQuizService] Canlı Firestore soru havuzu senkronize edildi (10 etap).");
+          this.updateUIStatus();
+          return;
         }
       }
     } catch(err) {
       // Çevrimdışı sessiz tolerans
+    }
+
+    if (this.cachedPool && Array.isArray(this.cachedPool) && this.cachedPool.length >= 10) {
+      this.syncStatus = "cached";
+    } else {
+      this.syncStatus = "local";
+    }
+    this.updateUIStatus();
+  },
+
+  updateUIStatus() {
+    const badge = document.getElementById("quiz-sync-status");
+    if (!badge) return;
+    if (this.syncStatus === "live") {
+      badge.textContent = "🟢 Canlı Firebase Soru Havuzu";
+      badge.className = "quiz-sync-badge live";
+      badge.title = "Sorular Firestore veritabanından anlık çekildi";
+    } else if (this.syncStatus === "cached") {
+      badge.textContent = "💾 Çevrimdışı Önbellek Havuzu";
+      badge.className = "quiz-sync-badge cached";
+      badge.title = "Sorular daha önce indirilen yerel önbellekten yüklendi";
+    } else {
+      badge.textContent = "🌿 Yerel Doğa Havuzu";
+      badge.className = "quiz-sync-badge local";
+      badge.title = "Sorular dahili doğa soru havuzundan yüklendi";
     }
   },
 
@@ -2092,6 +2298,14 @@ let quizWrongCount = 0;
 let quizAnswerLocked = false;
 let quizProceedAction = null;
 
+// Dopamin Döngüsü Quiz Değişkenleri
+let quizTimerInterval = null;
+let quizTimeLeft = 15;
+const QUIZ_TIMER_SECONDS = 15;
+let quizStreak = 0;      // Mevcut soru serisi
+let quizSessionPoints = 0; // Bu quiz turundaki kazanılan bilgi puanı
+let quizQuestionStartTime = 0; // Hız bonusu hesabı için
+
 function getQuestionsForStage(stageIdx) {
   if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.getStageQuestions) {
     return RemoteQuizService.getStageQuestions(stageIdx);
@@ -2106,12 +2320,25 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   quizCorrectCount = 0;
   quizWrongCount = 0;
   quizAnswerLocked = false;
-  quizProceedAction = onComplete;
+  quizProceedAction = onComplete || (() => proceedToNextStageOnMap(stageIndex + 1));
+  quizStreak = 0;
+  quizSessionPoints = 0;
 
   const statCorrect = document.getElementById("quiz-stat-correct");
   const statWrong = document.getElementById("quiz-stat-wrong");
   if (statCorrect) statCorrect.textContent = "0";
   if (statWrong) statWrong.textContent = "0";
+
+  const liveCoins = document.getElementById("quiz-coins-counter");
+  if (liveCoins) liveCoins.textContent = GameState.getCoins();
+
+  // Streak göstergesini sıfırla
+  const streakEl = document.getElementById("quiz-streak-count");
+  const streakFire = document.getElementById("quiz-streak-fire");
+  const streakBadge = document.getElementById("quiz-streak-badge");
+  if (streakEl) streakEl.textContent = "0";
+  if (streakFire) streakFire.textContent = "🌱";
+  if (streakBadge) streakBadge.classList.remove("on-fire");
 
   const nextBtn = document.getElementById("btn-quiz-next-question");
   if (nextBtn) {
@@ -2120,6 +2347,7 @@ function startNatureQuiz(stageIndex, onComplete = null) {
       if (currentQuizQuestionIndex < 3) {
         renderQuizQuestion(currentQuizQuestionIndex);
       } else {
+        clearQuizTimer();
         showQuizSummary();
       }
     };
@@ -2132,17 +2360,132 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   const optionsBox = document.getElementById("quiz-options-container");
   const feedbackBox = document.getElementById("quiz-feedback-box");
   const skipBtn = document.getElementById("btn-quiz-skip");
+  const timerWrap = document.getElementById("quiz-timer-wrap");
 
   if (summaryBox) summaryBox.classList.add("hidden");
   if (questionBox) questionBox.classList.remove("hidden");
   if (optionsBox) optionsBox.classList.remove("hidden");
   if (feedbackBox) feedbackBox.classList.add("hidden");
-  if (skipBtn) skipBtn.style.display = "block";
+  if (timerWrap) timerWrap.style.display = "";
+
+  if (skipBtn) {
+    skipBtn.style.display = "block";
+    skipBtn.textContent = "⏭️ Soruları Atla & Sonraki Etaba Geç";
+    skipBtn.onclick = () => {
+      clearQuizTimer();
+      const modal = document.getElementById("modal-nature-quiz");
+      if (modal) modal.classList.remove("active");
+      if (quizProceedAction) {
+        quizProceedAction();
+      } else {
+        proceedToNextStageOnMap(stageIndex + 1);
+      }
+    };
+  }
 
   renderQuizQuestion(0);
+  if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.updateUIStatus) {
+    RemoteQuizService.updateUIStatus();
+  }
 
   const modal = document.getElementById("modal-nature-quiz");
   if (modal) modal.classList.add("active");
+}
+
+// ⏱️ Quiz Geri Sayım Zamanlayıcı Yönetimi
+function startQuizTimer() {
+  clearQuizTimer();
+  quizTimeLeft = QUIZ_TIMER_SECONDS;
+  quizQuestionStartTime = Date.now();
+
+  const barEl = document.getElementById("quiz-timer-bar");
+  const textEl = document.getElementById("quiz-timer-text");
+
+  if (barEl) {
+    barEl.style.width = "100%";
+    barEl.className = "quiz-timer-bar";
+  }
+  if (textEl) {
+    textEl.textContent = quizTimeLeft;
+    textEl.className = "quiz-timer-text";
+  }
+
+  quizTimerInterval = setInterval(() => {
+    quizTimeLeft--;
+
+    const pct = Math.max(0, (quizTimeLeft / QUIZ_TIMER_SECONDS) * 100);
+    if (barEl) {
+      barEl.style.width = `${pct}%`;
+      if (pct <= 25) {
+        barEl.className = "quiz-timer-bar danger";
+      } else if (pct <= 55) {
+        barEl.className = "quiz-timer-bar warning";
+      }
+    }
+    if (textEl) {
+      textEl.textContent = quizTimeLeft;
+      if (quizTimeLeft <= 4) textEl.className = "quiz-timer-text danger";
+    }
+
+    if (quizTimeLeft <= 0) {
+      clearQuizTimer();
+      // Süre doldu → otomatik yanlış cevap
+      if (!quizAnswerLocked) {
+        quizAnswerLocked = true;
+        quizWrongCount++;
+        quizStreak = 0; // Seriyi kır
+        updateStreakUI();
+        const statWrong = document.getElementById("quiz-stat-wrong");
+        if (statWrong) statWrong.textContent = quizWrongCount;
+
+        const q = currentQuizQuestions[currentQuizQuestionIndex];
+        const feedbackBox = document.getElementById("quiz-feedback-box");
+        const feedbackIcon = document.getElementById("quiz-feedback-icon");
+        const feedbackText = document.getElementById("quiz-feedback-text");
+        const correctBtn = q && q.correct === "A"
+          ? document.getElementById("quiz-opt-a")
+          : document.getElementById("quiz-opt-b");
+
+        if (correctBtn) {
+          correctBtn.classList.add("correct");
+          const b = document.createElement("span");
+          b.className = "opt-answer-badge correct-badge";
+          b.textContent = "✅ DOĞRU CEVAP BUYDU";
+          correctBtn.appendChild(b);
+        }
+        if (feedbackIcon) feedbackIcon.textContent = "⏰";
+        if (feedbackText) feedbackText.innerHTML = `<strong>Süre doldu!</strong> Doğru cevap <strong>${q ? q.correct : 'A'}</strong> seçeneğiydi.<br><span style="color:#ffd166; font-size:11px;">${q ? q.fact : ""}</span>`;
+        if (feedbackBox) {
+          feedbackBox.style.borderColor = "#f4a261";
+          feedbackBox.classList.remove("hidden");
+        }
+        if (sounds && sounds.playCollect) sounds.playCollect();
+      }
+    }
+  }, 1000);
+}
+
+function clearQuizTimer() {
+  if (quizTimerInterval) {
+    clearInterval(quizTimerInterval);
+    quizTimerInterval = null;
+  }
+}
+
+function updateStreakUI() {
+  const streakEl = document.getElementById("quiz-streak-count");
+  const streakFire = document.getElementById("quiz-streak-fire");
+  const streakBadge = document.getElementById("quiz-streak-badge");
+  if (streakEl) streakEl.textContent = quizStreak;
+  if (streakFire) {
+    if (quizStreak >= 3) streakFire.textContent = "🔥";
+    else if (quizStreak >= 2) streakFire.textContent = "🌟";
+    else streakFire.textContent = "🌱";
+  }
+  if (streakBadge) {
+    if (quizStreak >= 2) streakBadge.classList.add("on-fire");
+    else streakBadge.classList.remove("on-fire");
+  }
 }
 
 function renderQuizQuestion(idx) {
@@ -2164,7 +2507,7 @@ function renderQuizQuestion(idx) {
   const textA = document.getElementById("quiz-text-a");
   const textB = document.getElementById("quiz-text-b");
 
-  if (counterEl) counterEl.textContent = `Soru ${idx + 1} / 3`;
+  if (counterEl) counterEl.textContent = `Soru ${idx + 1}/3`;
   if (catEl) catEl.textContent = q.category;
   if (textEl) textEl.textContent = q.q;
   if (textA) textA.textContent = q.optA;
@@ -2172,17 +2515,28 @@ function renderQuizQuestion(idx) {
 
   const btnA = document.getElementById("quiz-opt-a");
   const btnB = document.getElementById("quiz-opt-b");
-  if (btnA) btnA.className = "quiz-option-btn";
-  if (btnB) btnB.className = "quiz-option-btn";
+  [btnA, btnB].forEach(btn => {
+    if (btn) {
+      btn.className = "quiz-option-btn";
+      btn.style.pointerEvents = "auto";
+      const existingBadge = btn.querySelector(".opt-answer-badge");
+      if (existingBadge) existingBadge.remove();
+    }
+  });
 
   const feedbackBox = document.getElementById("quiz-feedback-box");
   if (feedbackBox) feedbackBox.classList.add("hidden");
+
+  // ⏱️ Her yeni soruda zamanlayıcıyı sıfırla ve başlat
+  startQuizTimer();
 }
 
 function handleQuizAnswer(selectedOption) {
   if (quizAnswerLocked) return;
   quizAnswerLocked = true;
+  clearQuizTimer(); // Cevap verildi → zamanlayıcıyı durdur
 
+  const elapsed = (Date.now() - quizQuestionStartTime) / 1000;
   const q = currentQuizQuestions[currentQuizQuestionIndex];
   if (!q) return;
 
@@ -2192,47 +2546,132 @@ function handleQuizAnswer(selectedOption) {
   const selectedBtn = selectedOption === "A" ? btnA : btnB;
   const correctBtn = q.correct === "A" ? btnA : btnB;
 
+  // Çift tıklamayı önle
+  [btnA, btnB].forEach(b => {
+    if (b) {
+      b.style.pointerEvents = "none";
+      const existing = b.querySelector(".opt-answer-badge");
+      if (existing) existing.remove();
+    }
+  });
+
   const feedbackBox = document.getElementById("quiz-feedback-box");
   const feedbackIcon = document.getElementById("quiz-feedback-icon");
   const feedbackText = document.getElementById("quiz-feedback-text");
+  const nextQBtn = document.getElementById("btn-quiz-next-question");
+
+  if (nextQBtn) {
+    nextQBtn.textContent = (currentQuizQuestionIndex === 2) ? "🏆 Sonuçları ve Ödülleri Gör ⏩" : "Sonraki Soruya Geç ⏩";
+  }
 
   if (isCorrect) {
     quizCorrectCount++;
+    quizStreak++;
+
+    // Temel puan: +100
+    let earnedPoints = 100;
+    let bonusMsg = "";
+
+    // ⚡ Hız bonusu: 5 saniye içinde cevaplandıysa +50 ekstra puan
+    if (elapsed < 5) {
+      earnedPoints += 50;
+      bonusMsg = " ⚡ +50 Hız Bonusu!";
+    }
+
+    quizSessionPoints += earnedPoints;
+
     const statCorrect = document.getElementById("quiz-stat-correct");
     if (statCorrect) statCorrect.textContent = quizCorrectCount;
 
-    if (selectedBtn) selectedBtn.classList.add("correct");
+    // Doğru şıkkı yeşil yap ve etiketle
+    if (selectedBtn) {
+      selectedBtn.classList.add("correct");
+      const badge = document.createElement("span");
+      badge.className = "opt-answer-badge correct-badge";
+      badge.textContent = "✅ DOĞRU!";
+      selectedBtn.appendChild(badge);
+    }
+
+    // Altın & Puanı anında artır ve ekranda güncelle
     sounds.playCollect();
     GameState.addCoins(10);
+    GameState.addQuizPoints(earnedPoints);
+
+    // Canlı sayaçları güncelle ve punch animasyonu ver
+    const liveCoins = document.getElementById("quiz-coins-counter");
+    if (liveCoins) {
+      liveCoins.textContent = GameState.getCoins();
+      liveCoins.classList.add("punch-scale");
+      setTimeout(() => liveCoins.classList.remove("punch-scale"), 350);
+    }
+    updateMenuUI();
+
+    updateStreakUI();
+
+    // 🔥 Streak animasyonu 3'e ulaşınca toast
+    if (quizStreak === 3) {
+      showToast("🔥 MÜKEMMEL! 3 Seri Doğru! +30 🪙 Bonus!", "success");
+      GameState.addCoins(30);
+      if (liveCoins) liveCoins.textContent = GameState.getCoins();
+    }
 
     if (feedbackIcon) feedbackIcon.textContent = "🌟";
-    if (feedbackText) feedbackText.textContent = `Doğru! (+10 🪙) — ${q.fact}`;
-    if (feedbackBox) feedbackBox.style.borderColor = "#52b788";
+    if (feedbackText) feedbackText.innerHTML = `<strong>Tebrikler, Doğru!</strong> 🎉 +10 🪙 Altın, +${earnedPoints} Bilgi Puanı${bonusMsg}<br><span style="color:#b7e4c7; font-size:11.5px;">${q.fact}</span>`;
+    if (feedbackBox) {
+      feedbackBox.style.borderColor = "#52b788";
+      feedbackBox.style.background = "rgba(45, 106, 79, 0.4)";
+    }
   } else {
     quizWrongCount++;
+    quizStreak = 0; // Seriyi kır
+    updateStreakUI();
+
     const statWrong = document.getElementById("quiz-stat-wrong");
     if (statWrong) statWrong.textContent = quizWrongCount;
 
-    if (selectedBtn) selectedBtn.classList.add("wrong");
-    if (correctBtn) correctBtn.classList.add("correct");
+    // Seçilen yanlış şıkkı kırmızı yap
+    if (selectedBtn) {
+      selectedBtn.classList.add("wrong");
+      const badge = document.createElement("span");
+      badge.className = "opt-answer-badge wrong-badge";
+      badge.textContent = "❌ SEÇTİĞİN";
+      selectedBtn.appendChild(badge);
+    }
+
+    // DOĞRU ŞIKKI AYNI ANDA YEŞİL VURGULA
+    if (correctBtn) {
+      correctBtn.classList.add("correct");
+      const badge = document.createElement("span");
+      badge.className = "opt-answer-badge correct-badge";
+      badge.textContent = "✅ DOĞRU BUYDU";
+      correctBtn.appendChild(badge);
+    }
+
     if (feedbackIcon) feedbackIcon.textContent = "💡";
-    if (feedbackText) feedbackText.textContent = `Yanlış! Doğru Bilgi: ${q.fact}`;
-    if (feedbackBox) feedbackBox.style.borderColor = "#ffd166";
+    if (feedbackText) feedbackText.innerHTML = `<strong>Yanlış Seçenek!</strong> Doğru cevap <strong>${q.correct}</strong> seçeneğiydi.<br><span style="color:#ffd166; font-size:11.5px;">${q.fact}</span>`;
+    if (feedbackBox) {
+      feedbackBox.style.borderColor = "#ffd166";
+      feedbackBox.style.background = "rgba(60, 25, 10, 0.45)";
+    }
   }
 
   if (feedbackBox) feedbackBox.classList.remove("hidden");
 }
 
 function showQuizSummary() {
+  clearQuizTimer();
+
   const summaryBox = document.getElementById("quiz-summary-box");
   const questionBox = document.getElementById("quiz-question-box");
   const optionsBox = document.getElementById("quiz-options-container");
   const feedbackBox = document.getElementById("quiz-feedback-box");
   const skipBtn = document.getElementById("btn-quiz-skip");
+  const timerWrap = document.getElementById("quiz-timer-wrap");
 
   if (questionBox) questionBox.classList.add("hidden");
   if (optionsBox) optionsBox.classList.add("hidden");
   if (feedbackBox) feedbackBox.classList.add("hidden");
+  if (timerWrap) timerWrap.style.display = "none";
   if (skipBtn) skipBtn.style.display = "none";
 
   for (let s = 1; s <= 3; s++) {
@@ -2240,44 +2679,92 @@ function showQuizSummary() {
     if (el) el.className = "quiz-step-indicator completed";
   }
 
-  const earnedCoins = quizCorrectCount * 10;
-  
-  const scoreEl = document.getElementById("quiz-summary-score");
-  const rewardsEl = document.getElementById("quiz-summary-rewards");
-
-  if (scoreEl) scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru cevapladın!`;
-  
-  let rewardsText = `+${earnedCoins} 🪙 Altın`;
-
+  // 3/3 Mükemmel bonusu
   if (quizCorrectCount === 3) {
-    let unownedCostumes = KARAKTER_KIYAFETLERI.filter(c => c.id !== "none" && !GameState.isCostumeUnlocked(c.id));
-    // Shuffle array
-    unownedCostumes = unownedCostumes.sort(() => Math.random() - 0.5);
-    const rewardsToGive = unownedCostumes.slice(0, 3);
-    
-    if (rewardsToGive.length > 0) {
-      const rewardNames = [];
-      rewardsToGive.forEach(c => {
-        GameState.unlockCostume(c.id);
-        rewardNames.push(c.icon + " " + c.name);
-      });
-      rewardsText += `\n🎁 Sürpriz Hediye: ${rewardNames.join(", ")}!`;
-      showToast("Tebrikler! Soruları kusursuz bildiğiniz için sürpriz kıyafetler kazandınız!", "success");
-    }
+    quizSessionPoints += 200;
+    showToast("🏆 MÜKEMMEL! 3/3 Doğru — +200 Bilgi Puanı Bonusu!", "success");
   }
 
-  if (rewardsEl) rewardsEl.textContent = rewardsText;
+  const earnedCoins = quizCorrectCount * 10;
+
+  // Bilgi puanını kaydet (koşu puanından bağımsız)
+  const prevPoints = GameState.getQuizTotalPoints();
+  GameState.addQuizPoints(quizSessionPoints);
+  GameState.addQuizWeeklyPoints(quizSessionPoints);
+  const newPoints = GameState.getQuizTotalPoints();
+
+  // XP ekle
+  FirebaseSimService.addXp(quizCorrectCount * 20);
+
+  // Sonuç kartı metnini ayarla
+  const scoreEl = document.getElementById("quiz-summary-score");
+  const rewardsEl = document.getElementById("quiz-summary-rewards");
+  const trophyEl = document.getElementById("quiz-result-trophy");
+  const titleEl = document.getElementById("quiz-result-title");
+
+  if (quizCorrectCount === 3) {
+    if (trophyEl) trophyEl.textContent = "🏆";
+    if (titleEl) titleEl.textContent = "Mükemmel Doğa Bilgini!";
+  } else if (quizCorrectCount === 2) {
+    if (trophyEl) trophyEl.textContent = "🥈";
+    if (titleEl) titleEl.textContent = "Harika Gitti!";
+  } else {
+    if (trophyEl) trophyEl.textContent = "📚";
+    if (titleEl) titleEl.textContent = "Öğrenmeye Devam!";
+  }
+
+  if (scoreEl) scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru cevapladın!`;
+  if (rewardsEl) rewardsEl.textContent = `+${earnedCoins} 🪙 Altın`;
+
+  // Animasyonlu Bilgi Puanı Sayacı
+  const pointsValEl = document.getElementById("quiz-points-val");
+  if (pointsValEl && quizSessionPoints > 0) {
+    let displayed = 0;
+    const step = Math.ceil(quizSessionPoints / 20);
+    const counter = setInterval(() => {
+      displayed = Math.min(displayed + step, quizSessionPoints);
+      pointsValEl.textContent = `+${displayed}`;
+      if (displayed >= quizSessionPoints) clearInterval(counter);
+    }, 50);
+  } else if (pointsValEl) {
+    pointsValEl.textContent = "+0";
+  }
+
+  // Liderlik tablosu sıra değişimi bildirimi
+  const rankUpBadge = document.getElementById("quiz-rank-up-badge");
+  const prevRankData = QuizLeaderboardService.getFullData("all", prevPoints);
+  const newRankData = QuizLeaderboardService.getFullData("all", newPoints);
+  const prevRank = prevRankData.find(r => r.isMe)?.rank || 99;
+  const newRank = newRankData.find(r => r.isMe)?.rank || 99;
+  if (newRank < prevRank && rankUpBadge) {
+    rankUpBadge.style.display = "block";
+  } else if (rankUpBadge) {
+    rankUpBadge.style.display = "none";
+  }
+
+  // Kostüm ödülü (3/3 ise)
+  if (quizCorrectCount === 3) {
+    let unownedCostumes = KARAKTER_KIYAFETLERI.filter(c => c.id !== "none" && !GameState.isCostumeUnlocked(c.id));
+    unownedCostumes = unownedCostumes.sort(() => Math.random() - 0.5);
+    const rewardsToGive = unownedCostumes.slice(0, 1);
+    if (rewardsToGive.length > 0) {
+      rewardsToGive.forEach(c => GameState.unlockCostume(c.id));
+      showToast(`🎁 Tüm soruları doğru bildin! ${rewardsToGive[0].icon} ${rewardsToGive[0].name} kazandın!`, "success");
+    }
+  }
 
   if (summaryBox) summaryBox.classList.remove("hidden");
 
   const proceedBtn = document.getElementById("btn-quiz-proceed-next");
   if (proceedBtn) {
+    proceedBtn.textContent = "🗺️ SONRAKİ ETABA GİT ⏩";
     proceedBtn.onclick = () => {
       document.getElementById("modal-nature-quiz").classList.remove("active");
+      if (timerWrap) timerWrap.style.display = "";
       if (quizProceedAction) {
         quizProceedAction();
       } else {
-        showScreen("screen-map");
+        proceedToNextStageOnMap(currentQuizStageIndex + 1);
       }
     };
   }
@@ -2286,8 +2773,8 @@ function showQuizSummary() {
   if (mapBtn) {
     mapBtn.onclick = () => {
       document.getElementById("modal-nature-quiz").classList.remove("active");
-      showScreen("screen-map");
-      renderMapScreen();
+      if (timerWrap) timerWrap.style.display = "";
+      proceedToNextStageOnMap(currentQuizStageIndex + 1);
     };
   }
 }
@@ -2302,8 +2789,13 @@ function initNatureQuizEvents() {
   const skipBtn = document.getElementById("btn-quiz-skip");
   if (skipBtn) {
     skipBtn.onclick = () => {
+      clearQuizTimer();
       document.getElementById("modal-nature-quiz").classList.remove("active");
-      if (quizProceedAction) quizProceedAction();
+      if (quizProceedAction) {
+        quizProceedAction();
+      } else {
+        proceedToNextStageOnMap(currentQuizStageIndex + 1);
+      }
     };
   }
 }
@@ -2335,6 +2827,138 @@ let activeClothingBuffs = {
   vest: 0,  // 🦺 Muhafız Yeleği (Çelik zırh darbe koruması)
   pants: 0  // 👖 İzci Pantolonu (Çeviklik, çift zıplama & mıknatıs)
 };
+
+// ============================================================================
+// 7.5 KEMERBURGAZ KENT ORMANI DİNAMİK MEVSİMSEL VE ATMOSFERİK HAVA MOTORU
+// (Her 2-3 Etapta Bir Değişen: Bahar/Polen, Yağmur/Gölet, Ay Işığı/Gece, Kış/Kar)
+// ============================================================================
+
+let weatherParticles = [];
+
+function getStageAtmosphere(stageNum) {
+  const s = parseInt(stageNum || 1, 10);
+  if (s <= 3) {
+    // 🌸 1. DÖNEM (Etap 1-3): Canlı Bahar & Sabah Işıltısı (Mağlova Kapısı & Atlıkarınca)
+    return {
+      id: "spring",
+      name: "Canlı Bahar & Sabah Işıltısı",
+      particleType: "leaves_pollen",
+      skyColor: "rgba(255, 240, 200, 0.08)",
+      hasSunRays: true,
+      hasMist: false,
+      hasMoon: false,
+      hasFrost: false,
+      trailBorder: "#52b788"
+    };
+  } else if (s <= 6) {
+    // 🌧️ 2. DÖNEM (Etap 4-6): Yağmurlu Doğa & Alibey Göleti (BELTUR & Macera Parkı)
+    return {
+      id: "rainy",
+      name: "Yağmurlu Doğa & Alibey Göleti",
+      particleType: "rain",
+      skyColor: "rgba(20, 45, 60, 0.24)",
+      hasSunRays: false,
+      hasMist: true,
+      hasMoon: false,
+      hasFrost: false,
+      trailBorder: "#2d6a4f"
+    };
+  } else if (s <= 8) {
+    // 🌕 3. DÖNEM (Etap 7-8): Büyülü Alacakaranlık & Ay Işığı (Fauna Alanı & Seyir Kulesi)
+    return {
+      id: "night",
+      name: "Büyülü Alacakaranlık & Ay Işığı",
+      particleType: "fireflies",
+      skyColor: "rgba(10, 16, 38, 0.44)",
+      hasSunRays: false,
+      hasMist: false,
+      hasMoon: true,
+      hasFrost: false,
+      trailBorder: "#1e3a8a"
+    };
+  } else {
+    // ❄️ 4. DÖNEM (Etap 9-10): Masalsı Kış & Mağlova Kemeri Büyük Finali
+    return {
+      id: "winter",
+      name: "Masalsı Kış & Mağlova Kemeri",
+      particleType: "snow",
+      skyColor: "rgba(220, 238, 255, 0.16)",
+      hasSunRays: false,
+      hasMist: false,
+      hasMoon: false,
+      hasFrost: true,
+      trailBorder: "#cbd5e1"
+    };
+  }
+}
+
+function initWeatherParticles(stageNum) {
+  weatherParticles = [];
+  const atmos = getStageAtmosphere(stageNum);
+  const w = (canvas && canvas.width) ? canvas.width : 420;
+  const h = (canvas && canvas.height) ? canvas.height : 840;
+
+  const count = atmos.particleType === "rain" ? 42
+              : atmos.particleType === "snow" ? 38
+              : atmos.particleType === "fireflies" ? 22
+              : 18; // leaves/pollen
+
+  for (let i = 0; i < count; i++) {
+    weatherParticles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: atmos.particleType === "rain" ? -(Math.random() * 2 + 3)
+        : (Math.random() - 0.5) * 1.5,
+      vy: atmos.particleType === "rain" ? (Math.random() * 6 + 9)
+        : atmos.particleType === "snow" ? (Math.random() * 1.2 + 0.8)
+        : (Math.random() * 0.8 + 0.3),
+      size: atmos.particleType === "rain" ? (Math.random() * 10 + 12)
+          : atmos.particleType === "snow" ? (Math.random() * 3.5 + 2)
+          : atmos.particleType === "fireflies" ? (Math.random() * 3 + 2.5)
+          : (Math.random() * 4 + 3),
+      phase: Math.random() * Math.PI * 2,
+      opacity: Math.random() * 0.5 + 0.5
+    });
+  }
+}
+
+function updateWeatherParticles(w, h, speed, stageNum) {
+  const atmos = getStageAtmosphere(stageNum);
+  for (let i = 0; i < weatherParticles.length; i++) {
+    const p = weatherParticles[i];
+    p.phase += 0.04;
+
+    if (atmos.particleType === "rain") {
+      p.x += p.vx - (speed * 0.4);
+      p.y += p.vy;
+      if (p.y > h || p.x < -20) {
+        p.x = Math.random() * (w + 60);
+        p.y = -20;
+      }
+    } else if (atmos.particleType === "snow") {
+      p.x += Math.sin(p.phase) * 1.2 - (speed * 0.35);
+      p.y += p.vy;
+      if (p.y > h) {
+        p.x = Math.random() * (w + 40);
+        p.y = -10;
+      }
+    } else if (atmos.particleType === "fireflies") {
+      p.x += Math.sin(p.phase * 0.7) * 1.0 - (speed * 0.25);
+      p.y += Math.cos(p.phase * 0.5) * 0.7;
+      if (p.x < -20) p.x = w + 20;
+      if (p.y < 50) p.y = h - 120;
+      if (p.y > h - 70) p.y = 80;
+    } else {
+      // Taze yaprak ve polen
+      p.x += Math.sin(p.phase) * 1.1 - (speed * 0.38);
+      p.y += p.vy * 0.8;
+      if (p.y > h || p.x < -20) {
+        p.x = Math.random() * (w + 40);
+        p.y = -15;
+      }
+    }
+  }
+}
 
 // Görsel Varlıklar
 const imgBg = new Image(); imgBg.src = "Assets/Sprites/sonsuz_orman.png";
@@ -2381,8 +3005,18 @@ let player = {
 let obstacles = [];
 let coins = [];
 let particles = [];
+let snowFootprints = [];
+let waterRipples = [];
+let winterSnowman = null;
 let bgScrollX = 0;
+let trailScrollX = 0;
 let spawnCooldown = 120;
+
+function startRunnerLevel(levelId) {
+  startRunnerGame(levelId);
+}
+window.startRunnerLevel = startRunnerLevel;
+window.startRunnerGame = startRunnerGame;
 
 function startRunnerGame(levelId) {
   // Önceki loop veya geri sayımları temizle (çakışma ve donmayı önleme)
@@ -2413,6 +3047,13 @@ function startRunnerGame(levelId) {
   levelTotalDurationSeconds = STAGE_DURATIONS[levelId - 1] || (60 + (levelId - 1) * 10);
   levelTimeElapsed = 0;
   currentMaxStageScore = MAX_STAGE_SCORES[levelId - 1] || 1000;
+
+  // Kemerburgaz Kent Ormanı Mevsimsel & Atmosferik Hava Parçacıklarını Başlat
+  initWeatherParticles(levelId);
+  snowFootprints = [];
+  waterRipples = [];
+  winterSnowman = null;
+  trailScrollX = 0;
   // Ekipman & Kıyafetler: Kahraman oyuna tamamen SIFIRDAN başlar
   // Yalnızca kullanıcının altınla satın aldığı özellikler aktif olur!
   activeClothingBuffs = { hat: 0, vest: 0, pants: 0 };
@@ -2450,35 +3091,46 @@ function startRunnerGame(levelId) {
 
   lastSpawnedObstacleType = "none";
 
-  // 🚀 Profesyonel ve Akıcı Hız Skalası (Level 1: 2.90 dinamik tempo, Level 10: 4.70 büyük final)
-  gameSpeed = 2.90 + ((levelId - 1) * 0.20);
+  // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 2.30 ile rahat ve keyifli başlar, kademeli hızlanır)
+  const stageSpeeds = [2.30, 2.48, 2.68, 2.90, 3.15, 3.40, 3.65, 3.90, 4.15, 4.40];
+  gameSpeed = stageSpeeds[levelId - 1] || (2.30 + (levelId - 1) * 0.22);
   updateClothingHUD();
 
   const heroId = GameState.getSelectedHero();
   const hero = KAHRAMANLAR.find(h => h.id === heroId) || KAHRAMANLAR[0];
   player.img.src = hero.image;
 
-  // Gelişim Vadisi Kamp Güçlendirmeleri (3 Yıldızlı / Her Yıldızda +3 Saniye Süre)
+  // Gelişim Vadisi Kamp Güçlendirmeleri (Puanla Açılan 4 Büyük Yetenek)
   const tentBonus = GameState.getTentLevel(); // 0-3
   const fireBonus = GameState.getCampfireLevel(); // 0-3
   const bootsBonus = GameState.getBootsLevel(); // 0-3
+  const compassBonus = GameState.getCompassLevel(); // 0-3
   const heroBonus = hero.id === 3 ? 1 : 0;
+  // 3. Seviye Çadır kahramana kalıcı +1 Ekstra Can (Toplam 4 Can) kazandırır!
+  const tentExtraLife = tentBonus >= 3 ? 1 : 0;
 
-  maxLives = 3 + heroBonus;
+  maxLives = 3 + heroBonus + tentExtraLife;
   playerLives = maxLives;
 
-  // 1. Dinlenme Çadırı: Her yıldızda +3 saniye Koruma Kalkanı (1. Yıldız: 3s, 2. Yıldız: 6s, 3. Yıldız: 9s)
-  player.shieldTimer = tentBonus * 3;
+  // 1. Dinlenme Çadırı: Seviye 1: 4s, Seviye 2: 8s, Seviye 3: 12s Koruma Kalkanı
+  const shieldTimes = [0, 4, 8, 12];
+  player.shieldTimer = shieldTimes[tentBonus] || 0;
   player.hasShield = player.shieldTimer > 0;
 
-  // 2. Kamp Ateşi: Her yıldızda +3 saniye Manyetik Altın Çekimi (1. Yıldız: 3s, 2. Yıldız: 6s, 3. Yıldız: 9s)
-  player.magnetTimer = fireBonus * 3;
+  // 2. Kamp Ateşi: Seviye 1: 5s, Seviye 2: 10s, Seviye 3: 16s Manyetik Çekim
+  const magnetTimes = [0, 5, 10, 16];
+  player.magnetTimer = magnetTimes[fireBonus] || 0;
 
-  // 3. Orman İzcisi: Her yıldızda +3 saniye Süzülme ve Çeviklik (1. Yıldız: 3s, 2. Yıldız: 6s, 3. Yıldız: 9s)
-  player.glideTimer = bootsBonus * 3;
+  // 3. Orman İzcisi: Seviye 1: 5s, Seviye 2: 10s, Seviye 3: 16s Süzülme ve Çeviklik
+  const glideTimes = [0, 5, 10, 16];
+  player.glideTimer = glideTimes[bootsBonus] || 0;
   player.canDoubleJump = bootsBonus >= 3;
   player.hasDoubleJumped = false;
-  player.maxSlideTimer = bootsBonus >= 2 ? 52 : 44;
+  player.maxSlideTimer = bootsBonus >= 2 ? 90 : 76;
+
+  // 4. Orman Pusulası: Koşuda ivme ve can simidi kurtarma yeteneği
+  player.compassTimer = compassBonus >= 1 ? (compassBonus === 1 ? 6 : 12) : 0;
+  player.compassUsed = false;
 
   // Bot zıplama bonusu (-0.5 zıplama gücü)
   const jumpBonus = bootsBonus >= 1 ? -0.5 : 0;
@@ -2577,15 +3229,28 @@ function handleSpawning() {
       const isSlideObstacle = Math.random() < slideProb;
 
       if (isSlideObstacle) {
-        // YÜKSEK ASILI ENGEL: Macera Parkı Halatı veya Asılı Ahşap Kütük (ALTINDAN SÜZÜLEREK GEÇİLİR)
-        const isLog = Math.random() < 0.5;
-        const obsH = 26;
-        const clearance = 54;
+        // YÜKSEK ASILI ENGEL:
+        // Sezon ve etaba göre çeşitlilik:
+        // Etap 1-3: Asılı Ahşap Kütük veya Macera Halatı
+        // Etap 4-6: Macera Parkı Lastik Salıncak veya Ahşap Kiriş
+        // Etap 7-10: Lastik Salıncak veya Asılı Kütük
+        let overheadType = "overhead_log";
+        const roll = Math.random();
+        if (currentLevelNumber <= 3) {
+          overheadType = roll < 0.5 ? "overhead_log" : "rope";
+        } else if (currentLevelNumber <= 6) {
+          overheadType = roll < 0.5 ? "tire_swing" : "overhead_log";
+        } else {
+          overheadType = roll < 0.55 ? "tire_swing" : "overhead_log";
+        }
+
+        const obsH = overheadType === "tire_swing" ? 34 : 26;
+        const clearance = 38; // Eğilmeden/kaymadan geçilemez (Karakter boyu 60px, engel alt sınırı 38px)
         obstacles.push({
-          type: isLog ? "overhead_log" : "rope",
+          type: overheadType,
           x: canvas.width + 20,
-          y: groundY - (clearance + obsH), // groundY - 80px
-          w: isLog ? (currentLevelNumber <= 3 ? 60 : 70) : (currentLevelNumber <= 3 ? 52 : 62),
+          y: groundY - (clearance + obsH), // groundY - (clearance + obsH)
+          w: overheadType === "tire_swing" ? 54 : (currentLevelNumber <= 3 ? 60 : 70),
           h: obsH,
           passed: false
         });
@@ -2613,17 +3278,47 @@ function handleSpawning() {
           });
         }
       } else {
-        // ZEMİN ENGELİ: Kütük veya Kaya (ÜZERİNDEN ZIPLANMASI GEREKİR)
-        const isRock = Math.random() < 0.5;
-        // 1. Etapta 32px dinamik kaya, 10. etapta 46px sağlam orman kütüğü
-        const size = currentLevelNumber === 1 ? 32 : Math.min(46, 32 + Math.floor(currentLevelNumber * 1.5));
+        // ZEMİN ENGELİ: Kemerburgaz Doğal Çeşitliliği
+        // 1. Ahşap Parkur Çiti (Hurdle)
+        // 2. Yosunlu Orman Kayası (Mossy Boulder)
+        // 3. Dev Mantarlı Ağaç Kökü (Gnarled Root)
+        // 4. Çamur / Su Birikintisi (Puddle)
+        let groundType = "mossy_boulder";
+        const r = Math.random();
+        if (currentLevelNumber <= 3) {
+          groundType = r < 0.55 ? "mossy_boulder" : "hurdle";
+        } else if (currentLevelNumber <= 6) {
+          groundType = r < 0.35 ? "puddle" : (r < 0.68 ? "hurdle" : "gnarled_root");
+        } else if (currentLevelNumber <= 8) {
+          groundType = r < 0.50 ? "gnarled_root" : "mossy_boulder";
+        } else {
+          groundType = r < 0.55 ? "hurdle" : "mossy_boulder";
+        }
+
+        let obsW = 40;
+        let obsH = 34;
+        if (groundType === "hurdle") {
+          obsW = 44;
+          obsH = 36;
+        } else if (groundType === "puddle") {
+          obsW = 54;
+          obsH = 18;
+        } else if (groundType === "gnarled_root") {
+          obsW = 46;
+          obsH = 35;
+        } else {
+          // mossy_boulder
+          const size = currentLevelNumber === 1 ? 34 : Math.min(46, 34 + Math.floor(currentLevelNumber * 1.3));
+          obsW = size;
+          obsH = size;
+        }
+
         obstacles.push({
-          type: "ground",
+          type: groundType,
           x: canvas.width + 20,
-          y: groundY - size,
-          w: size,
-          h: size,
-          img: isRock ? imgRock : imgLog,
+          y: groundY - obsH,
+          w: obsW,
+          h: obsH,
           passed: false
         });
         lastSpawnedObstacleType = "ground";
@@ -2633,7 +3328,7 @@ function handleSpawning() {
           coins.push({
             type: "coin",
             x: canvas.width + 24,
-            y: groundY - size - 44, // Engelin üzerinde havada, üzerinden zıplayarak toplanır!
+            y: groundY - obsH - 68, // Engelin üstünden zıplama tepe noktasına hafif yukarı alındı (68px yukarıda)
             w: 24,
             h: 24,
             seed: Math.random() * 100,
@@ -2643,7 +3338,7 @@ function handleSpawning() {
           coins.push({
             type: "star",
             x: canvas.width + 24,
-            y: groundY - size - 44,
+            y: groundY - obsH - 68,
             w: 24,
             h: 24,
             collected: false
@@ -2654,7 +3349,7 @@ function handleSpawning() {
       // PROFESYONEL VE RİTMİK ENGEL ARALIĞI:
       // 1. Etap: ~90-105 frame (1.5 - 1.8 saniye canlı reaksiyon payı)
       // 10. Etap: ~55-70 frame (0.9 - 1.2 saniye heyecanlı profesyonel akış)
-      const baseGap = Math.max(52, 92 - (currentLevelNumber * 4.0));
+      const baseGap = Math.max(54, 112 - (currentLevelNumber * 5.5));
       let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 16 : 10));
       if (lastSpawnedObstacleType === "overhead") {
         extraBuffer += 12; // Kaymadan sonra doğrulmak için ilave pay
@@ -2767,6 +3462,14 @@ function gameLoop() {
   try {
     updatePhysics();
     renderCanvas();
+
+    // Zamanlayıcı ve ilerleme (ilerleme barının dinamik güncellenmesi)
+    levelTimeElapsed += 1 / 60;
+    if (levelTimeElapsed >= levelTotalDurationSeconds) {
+      onLevelVictory();
+      return;
+    }
+    updateHUD();
   } catch (err) {
     console.error("GameLoop frame error:", err);
   }
@@ -2788,19 +3491,107 @@ function updatePhysics() {
     player.vy = 0;
     player.isGrounded = true;
 
-    // Yere ilk basış anı (İniş yaylanması ve toz efekti)
+    // Yere ilk basış anı (İniş yaylanması, toz, kar ve yağmur fiziği)
     if (!player.wasGrounded) {
       player.landingSquash = 6;
-      for (let k = 0; k < 4; k++) {
-        particles.push({
-          x: player.x + 8 + (k * 12),
-          y: groundY - 2,
-          vx: (k - 1.5) * 1.6,
-          vy: -0.6 - Math.random() * 0.8,
-          size: 3 + Math.random() * 2,
-          alpha: 0.75,
-          color: "#d7ccc8"
-        });
+      const atmos = getStageAtmosphere(currentLevelNumber);
+
+      if (atmos.id === "winter") {
+        // ❄️ Karda iniş: Beyaz kabarık kar tozu fışkırması & pati izi baskısı
+        for (let k = 0; k < 8; k++) {
+          particles.push({
+            x: player.x + 4 + (k * 4),
+            y: groundY - 2,
+            vx: (k - 3.5) * 1.6,
+            vy: -1.6 - Math.random() * 2.2,
+            size: 3 + Math.random() * 2.5,
+            alpha: 0.9,
+            color: "#ffffff"
+          });
+        }
+        // İki ayak basma izi (hafif çukur)
+        snowFootprints.push({ x: player.x + 8, y: groundY + 2.5, rx: 6, ry: 3, alpha: 0.85, isPaws: true });
+        snowFootprints.push({ x: player.x + 24, y: groundY + 2.5, rx: 5.5, ry: 2.8, alpha: 0.85, isPaws: true });
+        triggerHaptic("selection", 15);
+      } else if (atmos.id === "rainy") {
+        // 🌧️ Yağmurda su birikintisine iniş: Mavi su damlası sıçramaları ve genişleyen dalga halkaları
+        for (let k = 0; k < 8; k++) {
+          particles.push({
+            x: player.x + 4 + (k * 4),
+            y: groundY - 2,
+            vx: (k - 3.5) * 1.8,
+            vy: -2.2 - Math.random() * 2.5,
+            size: 2.2 + Math.random() * 2,
+            alpha: 0.85,
+            color: Math.random() < 0.5 ? "#7dd3fc" : "#38bdf8"
+          });
+        }
+        waterRipples.push({ x: player.x + 12, y: groundY + 1, r: 3, maxR: 16, alpha: 0.75, lw: 1.8 });
+        waterRipples.push({ x: player.x + 26, y: groundY + 1, r: 2, maxR: 13, alpha: 0.65, lw: 1.5 });
+        triggerHaptic("selection", 15);
+      } else {
+        // Normal toprak iniş tozu
+        for (let k = 0; k < 5; k++) {
+          particles.push({
+            x: player.x + 6 + (k * 10),
+            y: groundY - 2,
+            vx: (k - 2) * 1.5,
+            vy: -0.8 - Math.random() * 0.9,
+            size: 3 + Math.random() * 2.5,
+            alpha: 0.8,
+            color: "#d7ccc8"
+          });
+        }
+      }
+    }
+
+    // 🐾 GERÇEKÇİ ZEMİN KOŞU ADIMLARI, YAĞMUR VE KAR ETKİLEŞİMİ
+    if (!player.isSliding) {
+      player.animTick = (player.animTick || 0) + 1;
+      const atmos = getStageAtmosphere(currentLevelNumber);
+
+      if (atmos.id === "winter") {
+        // Karda koşarken: Beyaz kar tozu savurma ve ardışık pati izi bırakma
+        if (player.animTick % 7 === 0) {
+          particles.push({
+            x: player.x + 6 + (Math.random() - 0.5) * 6,
+            y: groundY - 1,
+            vx: -(gameSpeed * 0.45 + Math.random() * 1.2),
+            vy: -0.6 - Math.random() * 0.8,
+            size: 2.5 + Math.random() * 2,
+            alpha: 0.85,
+            color: "#ffffff"
+          });
+          const stepOffset = (player.animTick % 14 === 0) ? -1.5 : 1.5;
+          snowFootprints.push({ x: player.x + 14, y: groundY + 2.5 + stepOffset, rx: 4.5, ry: 2.2, alpha: 0.8, isPaws: true });
+        }
+      } else if (atmos.id === "rainy") {
+        // Yağmurda koşarken: Küçük su sıçramaları ve ayak izi su halkası
+        if (player.animTick % 6 === 0) {
+          particles.push({
+            x: player.x + 6 + (Math.random() - 0.5) * 6,
+            y: groundY - 1,
+            vx: -(gameSpeed * 0.4 + Math.random()),
+            vy: -1.0 - Math.random() * 1.4,
+            size: 1.8 + Math.random() * 1.5,
+            alpha: 0.75,
+            color: "#bae6fd"
+          });
+          waterRipples.push({ x: player.x + 8, y: groundY + 1, r: 2, maxR: 9, alpha: 0.6, lw: 1.2 });
+        }
+      } else {
+        // Toprak / çimen parkur adım tozu
+        if (player.animTick % 7 === 0) {
+          particles.push({
+            x: player.x + 6 + (Math.random() - 0.5) * 6,
+            y: groundY - 1,
+            vx: -(gameSpeed * 0.45 + Math.random() * 1.4),
+            vy: -0.4 - Math.random() * 0.8,
+            size: 2.2 + Math.random() * 2.2,
+            alpha: 0.65,
+            color: Math.random() < 0.6 ? "#d4a373" : (Math.random() < 0.5 ? "#52b788" : "#8d6e63")
+          });
+        }
       }
     }
   } else {
@@ -2812,27 +3603,64 @@ function updatePhysics() {
     player.landingSquash--;
   }
 
+  // Mevsimsel Hava ve Atmosfer Parçacıklarını Güncelle
+  updateWeatherParticles(canvas.width, canvas.height, gameSpeed, currentLevelNumber);
+
   // Kayma (Slide) Sayacı ve Durumu
   if (player.isSliding) {
     player.slideTimer--;
-    // Kayma sırasında ayakların altından toz parçacıkları çıkar
+    const atmos = getStageAtmosphere(currentLevelNumber);
+
     if (player.slideTimer % 3 === 0) {
-      particles.push({
-        x: player.x + Math.random() * 10,
-        y: groundY - 2,
-        vx: -3 - Math.random() * 2,
-        vy: -0.4 - Math.random() * 0.8,
-        size: 3 + Math.random() * 3,
-        alpha: 0.8,
-        color: "#cfbba6"
-      });
+      if (atmos.id === "winter") {
+        // Karda kayma: Kar yarığı ve beyaz püskürme
+        snowFootprints.push({ x: player.x + 18, y: groundY + 2.5, rx: 7, ry: 2, alpha: 0.75, isSlide: true });
+        particles.push({
+          x: player.x + Math.random() * 10,
+          y: groundY - 2,
+          vx: -3 - Math.random() * 2.5,
+          vy: -0.8 - Math.random() * 1.2,
+          size: 3 + Math.random() * 2.5,
+          alpha: 0.85,
+          color: "#ffffff"
+        });
+      } else if (atmos.id === "rainy") {
+        // Islak zeminde kayma: Su dalgası fışkırması
+        particles.push({
+          x: player.x + Math.random() * 10,
+          y: groundY - 2,
+          vx: -3 - Math.random() * 2,
+          vy: -1.2 - Math.random() * 1.4,
+          size: 2.4 + Math.random() * 2,
+          alpha: 0.8,
+          color: "#7dd3fc"
+        });
+      } else {
+        particles.push({
+          x: player.x + Math.random() * 10,
+          y: groundY - 2,
+          vx: -3 - Math.random() * 2,
+          vy: -0.4 - Math.random() * 0.8,
+          size: 3 + Math.random() * 3,
+          alpha: 0.8,
+          color: "#cfbba6"
+        });
+      }
     }
 
     if (player.slideTimer <= 0) {
-      player.isSliding = false;
-      player.h = player.origH;
-      player.w = player.origW;
-      player.y = groundY - player.h;
+      // Çocuk Dostu Akıllı Koruma: Eğer kahraman yüksek bir engelin altındaysa engel geçilene kadar ayağa kalkmaz!
+      const isUnderHighObstacle = obstacles.some(obs => {
+        const isHigh = (obs.type === "rope" || obs.type === "overhead_log" || obs.type === "tire_swing" || obs.type === "overhead_beam");
+        return isHigh && (obs.x - 35 <= player.x + player.w && obs.x + obs.w + 15 >= player.x);
+      });
+
+      if (!isUnderHighObstacle && !player.isHoldingSlide) {
+        player.isSliding = false;
+        player.h = player.origH;
+        player.w = player.origW;
+        player.y = groundY - player.h;
+      }
     }
   }
 
@@ -2898,8 +3726,22 @@ function updatePhysics() {
     if (p.alpha <= 0) particles.splice(i, 1);
   }
 
-  // Arka Plan Kayması
+  // Arka Plan ve Zemin Kayması
   bgScrollX -= gameSpeed * 0.7;
+  trailScrollX -= gameSpeed;
+
+  // ☃️ Kış Etapları Bitiş Çizgisi İçin Neşeli Kardan Adam Üretimi (Etap 9 ve 10)
+  if ((currentLevelNumber === 9 || currentLevelNumber === 10) && !winterSnowman) {
+    const remainingSec = Math.max(0, Math.ceil(levelTotalDurationSeconds - levelTimeElapsed));
+    if (remainingSec <= 9) {
+      winterSnowman = {
+        x: canvas.width + 80,
+        armAngle: 0,
+        waveDir: 1,
+        cheerBurst: false
+      };
+    }
+  }
 
   // Objelerin Üretimi
   handleSpawning();
@@ -3059,6 +3901,7 @@ function updatePhysics() {
           });
         }
       } else {
+        const fireLevel = GameState.getCampfireLevel();
         const mult = fireLevel >= 3 ? 3 : (fireLevel >= 2 ? 2 : 1);
         coinsCollected += mult;
         coinsCollectedInRun += mult;
@@ -3114,8 +3957,10 @@ function updatePhysics() {
 // Önceden boş PNG kenarları nedeniyle nesne uzaktayken çarpmış sayılıyordu.
 // Artık %30'luk güvenli pay ile sadece karakterin gövdesi gerçekten taşa değerse can gider!
 function checkCollision(player, obs) {
-  if (obs.type === "rope" || obs.type === "overhead_log") {
-    // YÜKSEK HALAT / KÜTÜK ENGELİ:
+  const isHighObstacle = (obs.type === "rope" || obs.type === "overhead_log" || obs.type === "tire_swing" || obs.type === "overhead_beam");
+
+  if (isHighObstacle) {
+    // YÜKSEK HALAT / SALINCAK / KÜTÜK ENGELİ:
     // 1. Karakter KAYDIĞINDA (Slide) altından süzülerek geçer - KESİNLİKLE HASAR ALMAZ!
     if (player.isSliding) return false;
 
@@ -3141,23 +3986,23 @@ function checkCollision(player, obs) {
     
     const oLeft = obs.x + 4;
     const oRight = obs.x + obs.w - 4;
-    const oBottom = obs.y + obs.h; // Engelin alt seviyesi (groundY - 54)
+    const oBottom = obs.y + obs.h; // Engelin alt seviyesi (clearance sınırı)
 
     // Eğer oyuncunun başı engel seviyesinden yüksekteyse çarpar
     return (pLeft < oRight && pRight > oLeft && pTop < oBottom);
   }
 
-  // ZEMİN ENGELİ (KAYA / KÜTÜK):
+  // ZEMİN ENGELİ (ÇİT / KAYA / KÜTÜK / MANTARLI KÖK / SU BİRİKİNTİSİ):
   // Karakter üzerinden ZIPLAMALIDIR. İç paylar sayesindeki tolerans ile haksız hasar engellendi.
   const pLeft = player.x + (player.w * 0.32);
   const pRight = player.x + (player.w * 0.70);
   const pTop = player.y + (player.h * 0.22);
   const pBottom = player.y + (player.h * 0.95);
 
-  const oLeft = obs.x + (obs.w * 0.28);
-  const oRight = obs.x + (obs.w * 0.72);
-  const oTop = obs.y + (obs.h * 0.22);
-  const oBottom = obs.y + (obs.h * 0.95);
+  const oLeft = obs.x + (obs.w * 0.22);
+  const oRight = obs.x + (obs.w * 0.78);
+  const oTop = obs.y + (obs.h * 0.20);
+  const oBottom = obs.y + (obs.h * 0.96);
 
   return (pLeft < oRight && pRight > oLeft && pTop < oBottom && pBottom > oTop);
 }
@@ -3174,6 +4019,21 @@ function checkCoinPickup(player, coin) {
     player.y < effectiveCoinY + coin.h + 12 + magnetRadiusBonus &&
     player.y + player.h > effectiveCoinY - 12 - magnetRadiusBonus
   );
+}
+
+// Çapraz Platform Titreşim & Dokunsal Geri Bildirim (Android @JavascriptInterface & iOS WKScriptMessageHandler)
+function triggerHaptic(type = "medium", durationMs = 90) {
+  try {
+    if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === "function") {
+      window.AndroidBridge.vibrate(durationMs);
+    } else if (window.AndroidFirebaseBridge && typeof window.AndroidFirebaseBridge.vibrate === "function") {
+      window.AndroidFirebaseBridge.vibrate(durationMs);
+    } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.gameBridge) {
+      window.webkit.messageHandlers.gameBridge.postMessage(type);
+    } else if (navigator.vibrate) {
+      navigator.vibrate(durationMs);
+    }
+  } catch (_) {}
 }
 
 function playerTakesDamage() {
@@ -3224,13 +4084,41 @@ function playerTakesDamage() {
   playerLives--;
   player.invulnerable = 65; // ~1.1 saniye dokunulmazlık payı
 
-  if (navigator.vibrate) navigator.vibrate(90);
+  triggerHaptic("heavy", 100);
 
   showToast(`⚠️ Dikkat! Kalan Can: ${playerLives}/${maxLives}`, "warning");
   updateHUD();
   updateHUDPerks();
 
   if (playerLives <= 0) {
+    // 🧭 Orman Pusulası 3. Seviye: Kritik Anda Acil Can Simidi Kurtarması!
+    const compassLvl = GameState.getCompassLevel();
+    if (compassLvl >= 3 && !player.compassUsed) {
+      player.compassUsed = true;
+      playerLives = 1;
+      player.invulnerable = 110; // ~1.8 saniye güvenli toparlanma süresi
+      sounds.playCollect();
+      triggerHaptic("notification", 90);
+
+      // Gökyüzünden turkuaz & altın koruma patlaması
+      for (let k = 0; k < 22; k++) {
+        particles.push({
+          x: player.x + player.w * 0.5,
+          y: player.y + player.h * 0.5,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          size: 4.8,
+          alpha: 1.0,
+          color: k % 2 === 0 ? "#38bdf8" : "#ffd166"
+        });
+      }
+
+      showToast("🧭 Orman Pusulası Can Simidi Devreye Girdi! Pes etmek yok, devam et!", "success");
+      updateHUD();
+      updateHUDPerks();
+      return;
+    }
+
     onGameOver();
   }
 }
@@ -3240,35 +4128,16 @@ function renderCanvas() {
 
   const groundY = canvas.height - 90;
 
-  // 1. Arka Plan (Yüksek Çözünürlük & Doğal Panoramik En-Boy Oranı)
-  if (imgBg.complete && imgBg.naturalWidth > 0) {
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+  // 1. Arka Plan & Mevsimsel Atmosfer Gökyüzü Katmanı
+  renderWeatherAtmosphereBackground(ctx, canvas.width, canvas.height, bgScrollX, currentLevelNumber);
 
-    const bgDrawH = canvas.height;
-    const bgDrawW = (imgBg.naturalWidth / imgBg.naturalHeight) * bgDrawH;
-    let curX = bgScrollX % bgDrawW;
-    while (curX > 0) curX -= bgDrawW;
-    while (curX < canvas.width) {
-      ctx.drawImage(imgBg, curX, 0, bgDrawW + 1, bgDrawH);
-      curX += bgDrawW;
-    }
-  } else {
-    ctx.fillStyle = "#1b4332";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  // 2. Kemerburgaz Kent Ormanı Gerçekçi Zemin Patikası (Ahşap Traversler, Çim Bordürü, Kar Pati İzleri & Yağmur Halkaları)
+  renderKemerburgazTrail(ctx, groundY, canvas.width, canvas.height, trailScrollX, currentLevelNumber);
 
-  // 2. Orman Zemin Patikası (Toprak Yol & Çim Sınırı)
-  ctx.fillStyle = "#3e2723"; // Derin toprak
-  ctx.fillRect(0, groundY, canvas.width, 90);
+  // 3. Mevsimsel Hava Parçacıkları (Yağmur damlaları, Kar taneleri, Ateş böcekleri, Bahar yaprakları)
+  renderWeatherParticles(ctx, canvas.width, canvas.height, currentLevelNumber);
 
-  // Üst çimen çizgisi
-  ctx.fillStyle = "#2d6a4f";
-  ctx.fillRect(0, groundY, canvas.width, 10);
-  ctx.fillStyle = "#52b788";
-  ctx.fillRect(0, groundY, canvas.width, 3);
-
-  // 3. Altınlar, Yıldızlar ve Özel Güçlendirmeler
+  // 4. Altınlar, Yıldızlar ve Özel Güçlendirmeler
   coins.forEach(c => {
     if (c.type === "golden_acorn") {
       drawGoldenAcornPickup(ctx, c);
@@ -3286,7 +4155,7 @@ function renderCanvas() {
     drawAnimatedCoin(ctx, c);
   });
 
-  // 4. Parçacıklar (Toz & Kıvılcım)
+  // 5. Parçacıklar (Toz & Kıvılcım & Adım Tozları)
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = Math.max(0, p.alpha);
@@ -3297,41 +4166,74 @@ function renderCanvas() {
     ctx.restore();
   });
 
-  // 5. Engellerin Çizimi
+  // 6. Yüksek Kontrastlı ve Belirgin Kemerburgaz Engelleri
   obstacles.forEach(o => {
     if (o.type === "rope") {
-      // Yüksek Halat Çizimi (Macera Parkı İpi)
       drawRopeObstacle(ctx, o, groundY);
-    } else if (o.type === "overhead_log") {
-      // Yüksek Asılı Ahşap Kütük / Tahta Kiriş Çizimi
+    } else if (o.type === "overhead_log" || o.type === "overhead_beam") {
       drawOverheadLogObstacle(ctx, o, groundY);
+    } else if (o.type === "tire_swing") {
+      drawTireSwing(ctx, o, groundY);
+    } else if (o.type === "hurdle") {
+      drawWoodenHurdle(ctx, o, groundY);
+    } else if (o.type === "mossy_boulder") {
+      drawMossyBoulder(ctx, o, groundY);
+    } else if (o.type === "gnarled_root") {
+      drawGnarledRootWithMushrooms(ctx, o, groundY);
+    } else if (o.type === "puddle") {
+      drawPuddleObstacle(ctx, o, groundY);
     } else {
-      // Zemin Kütük veya Taş Çizimi (Zemine Tam Temas Eden Gölge ile)
-      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-      ctx.beginPath();
-      ctx.ellipse(o.x + o.w/2, groundY + 2, o.w * 0.38, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (o.img.complete && o.img.naturalWidth > 0) {
-        ctx.drawImage(o.img, o.x, o.y, o.w, o.h);
-      } else {
-        ctx.fillStyle = "#8d6e63";
-        ctx.fillRect(o.x, o.y, o.w, o.h);
-      }
+      drawMossyBoulder(ctx, o, groundY);
     }
   });
 
-  // 6. Oyuncu (Karakter) - Gerçekçi Çizgi Film Hayvan Animasyonu (Tilki, Maymun, Kaplan)
+  // 6.5 Kış Etapları Bitişinde Neşeli Kardan Adam Kutlaması (Etap 9 ve 10)
+  if (winterSnowman) {
+    winterSnowman.x -= gameSpeed * 0.95;
+    winterSnowman.armAngle += 0.09 * winterSnowman.waveDir;
+    if (Math.abs(winterSnowman.armAngle) > 0.42) winterSnowman.waveDir *= -1;
+
+    if (!winterSnowman.cheerBurst && winterSnowman.x <= player.x + player.w + 12) {
+      winterSnowman.cheerBurst = true;
+      if (sounds && sounds.playCollect) sounds.playCollect();
+      triggerHaptic("notification", 35);
+      // Havaya zafer konfetisi ve kar parıltıları patlaması
+      const confettiColors = ["#ffd166", "#52b788", "#38bdf8", "#ff758f", "#ffffff", "#f59e0b"];
+      for (let k = 0; k < 28; k++) {
+        particles.push({
+          x: winterSnowman.x + (Math.random() - 0.5) * 20,
+          y: groundY - 45 + (Math.random() - 0.5) * 15,
+          vx: (Math.random() - 0.5) * 7,
+          vy: -3 - Math.random() * 4.5,
+          size: 2.8 + Math.random() * 3,
+          alpha: 1.0,
+          color: confettiColors[k % confettiColors.length]
+        });
+      }
+    }
+
+    drawWinterSnowman(ctx, winterSnowman, groundY);
+  }
+
+  // 7. Oyuncu (Karakter) - Zemin ile Sıfır Boşluklu Kontak ve Ayak Hizalaması
   const heroId = GameState.getSelectedHero();
   const hero = KAHRAMANLAR.find(h => h.id === heroId) || KAHRAMANLAR[0];
 
-  // Zemin Yumuşak Dinamik Gölgesi
+  // Zemin Yumuşak Dinamik Gölgesi (Zıpladıkça küçülür ve solar)
   const distFromGround = Math.max(0, groundY - (player.y + player.h));
-  const shadowFactor = Math.max(0.2, 1 - distFromGround / 150);
-  ctx.fillStyle = `rgba(0, 0, 0, ${0.32 * shadowFactor})`;
+  const shadowFactor = Math.max(0.18, 1 - distFromGround / 140);
+  ctx.fillStyle = `rgba(0, 0, 0, ${0.34 * shadowFactor})`;
   ctx.beginPath();
-  ctx.ellipse(player.x + player.w / 2, groundY + 2, (player.w * 0.42) * shadowFactor, 5 * shadowFactor, 0, 0, Math.PI * 2);
+  ctx.ellipse(player.x + player.w / 2, groundY + 2, (player.w * 0.40) * shadowFactor, 5 * shadowFactor, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // 🐾 Ayakların Tabana Tam Oturması İçin Net Kontak Gölgesi (Grounded iken jilet gibi net)
+  if (player.isGrounded && !player.isSliding) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
+    ctx.beginPath();
+    ctx.ellipse(player.x + player.w / 2, groundY + 1, player.w * 0.28, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // 60 FPS Animasyonlu GIF Karakter Katmanı Senkronizasyonu
   const runnerWrap = document.getElementById("runner-player-sprite-wrap");
@@ -3349,10 +4251,15 @@ function renderCanvas() {
       runnerWrap.className = `runner-player-sprite-wrap ${heroClass}`;
     }
 
+    // 🐾 Kahramana Özel Taban Kalibrasyonu (Ayakların zemine sıfır basması):
+    // Tilki: +11px, Maymun: +9px, Kaplan: +10px, Sincap: +10px
+    const heroFootOffsets = { 1: 11, 2: 9, 3: 10, 4: 10, 5: 9 };
+    const footOffset = heroFootOffsets[hero.id] || 10;
+
     const drawW = 76;
     const drawH = 76;
     const posX = player.x + (player.w - drawW) / 2;
-    const posY = player.y + player.h - drawH + 4;
+    const posY = player.y + player.h - drawH + footOffset;
 
     let transform = `translate3d(${posX}px, ${posY}px, 0)`;
     if (player.isSliding) {
@@ -3372,6 +4279,9 @@ function renderCanvas() {
     runnerWrap.style.transform = transform;
     runnerWrap.style.display = (player.invulnerable % 10 < 5) ? "flex" : "none";
   }
+
+  // 8. Mevsimsel Atmosferik Renk & Işık Filtresi (Gece Mehtabı, Yağmur Pusu, Kar Aydınlığı)
+  renderWeatherAtmosphereOverlay(ctx, canvas.width, canvas.height, currentLevelNumber);
 
   // 7. Dinlenme Çadırı Koruma Kalkanı Halesi
   if (player.hasShield) {
@@ -4318,6 +5228,793 @@ function drawOverheadLogObstacle(ctx, obs, groundY) {
   ctx.restore();
 }
 
+// ============================================================================
+// 9. YENİ BELİRGİN VE YÜKSEK KONTRASTLI KEMERBURGAZ ORMAN ENGELLERİ
+// (Macera Parkı Lastik Salıncak, Ahşap Çit, Yosunlu Kaya, Mantarlı Ağaç Kökü, Su Birikintisi)
+// ============================================================================
+
+// 1. Macera Parkı Asılı Lastik Salıncak (Tire Swing - Yüksek Engel / Altından Kayılır)
+function drawTireSwing(ctx, obs, groundY) {
+  ctx.save();
+
+  // Sarkaç salınım açısı
+  const swingOffset = Math.sin(levelTimeElapsed * 3.2) * 5;
+  const centerX = obs.x + obs.w / 2 + swingOffset;
+  const bottomY = obs.y + obs.h;
+
+  // İki kalın dağcılık halatı (Tavandan lastiğe asılı)
+  ctx.strokeStyle = "#d4a373";
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 8, obs.y + 4);
+  ctx.lineTo(obs.x + 4, 0);
+  ctx.moveTo(centerX + 8, obs.y + 4);
+  ctx.lineTo(obs.x + obs.w - 4, 0);
+  ctx.stroke();
+
+  // Çelik bağlantı halkaları
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillRect(centerX - 10, obs.y + 2, 5, 5);
+  ctx.fillRect(centerX + 5, obs.y + 2, 5, 5);
+
+  // Dev Kamyon Lastiği Dış Gövdesi (Yüksek kontrastlı siyah ve derin gölge)
+  ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = "#1e293b";
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 2.5;
+
+  ctx.beginPath();
+  ctx.ellipse(centerX, obs.y + obs.h / 2, obs.w * 0.44, obs.h * 0.46, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Lastik İç Boşluğu
+  ctx.fillStyle = "#020617";
+  ctx.beginPath();
+  ctx.ellipse(centerX, obs.y + obs.h / 2, obs.w * 0.22, obs.h * 0.24, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Lastik sırt dişleri ve reflektör şeridi
+  ctx.strokeStyle = "#ffd166";
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath();
+  ctx.ellipse(centerX, obs.y + obs.h / 2, obs.w * 0.36, obs.h * 0.38, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  // Açık Yönlendirici Etiket: "⬇️ ALTINDAN KAY ⬇️"
+  const tagW = 78;
+  const tagH = 19;
+  const tagX = centerX - tagW / 2;
+  const tagY = obs.y - 23;
+
+  ctx.fillStyle = "rgba(8, 28, 18, 0.95)";
+  ctx.strokeStyle = "#ffd166";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(tagX, tagY, tagW, tagH, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffd166";
+  ctx.font = "bold 9.5px Outfit, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("⬇️ ALTINDAN KAY ⬇️", centerX, tagY + 13);
+
+  // Altındaki Ferah Açık Geçit Oku
+  ctx.fillStyle = "rgba(74, 222, 128, 0.5)";
+  ctx.beginPath();
+  ctx.moveTo(centerX - 6, bottomY + 4);
+  ctx.lineTo(centerX + 6, bottomY + 4);
+  ctx.lineTo(centerX, bottomY + 12);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// 2. Kemerburgaz Ahşap Parkur Çiti (Hurdle - Zemin Engeli / Üzerinden Zıplanır)
+function drawWoodenHurdle(ctx, obs, groundY) {
+  ctx.save();
+
+  // Zemin Temas Gölgesi
+  ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY + 2, obs.w * 0.52, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2 Dikey Ahşap Direk (Kalın meşe direkler)
+  const postW = 8;
+  ctx.fillStyle = "#451a03";
+  ctx.strokeStyle = "#1c0a00";
+  ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.roundRect(obs.x + 2, obs.y, postW, obs.h, 3);
+  ctx.roundRect(obs.x + obs.w - postW - 2, obs.y, postW, obs.h, 3);
+  ctx.fill();
+  ctx.stroke();
+
+  // 2 Yatay Çita (Üzerinde yüksek kontrastlı Reflektör Şeritler)
+  const barH = 8;
+  const bar1Y = obs.y + 4;
+  const bar2Y = obs.y + 19;
+
+  [bar1Y, bar2Y].forEach((by, idx) => {
+    ctx.fillStyle = "#78350f";
+    ctx.beginPath();
+    ctx.roundRect(obs.x, by, obs.w, barH, 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Sarı ve Kırmızı Reflektör Şeritleri (Yüksek hızda bile hemen fark edilir)
+    const stripeCount = 4;
+    const stripeW = obs.w / (stripeCount * 2);
+    for (let s = 0; s < stripeCount; s++) {
+      ctx.fillStyle = idx === 0 ? "#ffd166" : "#ef4444";
+      ctx.fillRect(obs.x + (s * 2 * stripeW) + 2, by + 1, stripeW, barH - 2);
+    }
+  });
+
+  // Üst Tepe Zıplama İpucu Yıldızı (Zıplayarak altın kapma işareti)
+  ctx.fillStyle = "#ffd166";
+  ctx.font = "bold 9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("▲ ZIPLA", obs.x + obs.w / 2, obs.y - 4);
+
+  ctx.restore();
+}
+
+// 3. Yosunlu Orman Kayası (Mossy Boulder - Zemin Engeli / Üzerinden Zıplanır)
+function drawMossyBoulder(ctx, obs, groundY) {
+  ctx.save();
+
+  // Koyu zemin gölgesi
+  ctx.fillStyle = "rgba(0, 0, 0, 0.40)";
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY + 2, obs.w * 0.48, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3D Granit Kaya Gövdesi (Koyu gri gradyan)
+  const rockGrad = ctx.createRadialGradient(
+    obs.x + obs.w * 0.35, obs.y + obs.h * 0.35, obs.w * 0.1,
+    obs.x + obs.w * 0.5, obs.y + obs.h * 0.5, obs.w * 0.6
+  );
+  rockGrad.addColorStop(0, "#94a3b8");
+  rockGrad.addColorStop(0.5, "#475569");
+  rockGrad.addColorStop(1, "#1e293b");
+
+  ctx.fillStyle = rockGrad;
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 2.2;
+
+  // Asimetrik doğal kaya formu
+  ctx.beginPath();
+  ctx.moveTo(obs.x + obs.w * 0.15, groundY);
+  ctx.lineTo(obs.x + 2, obs.y + obs.h * 0.55);
+  ctx.lineTo(obs.x + obs.w * 0.25, obs.y + 4);
+  ctx.lineTo(obs.x + obs.w * 0.70, obs.y + 2);
+  ctx.lineTo(obs.x + obs.w - 2, obs.y + obs.h * 0.45);
+  ctx.lineTo(obs.x + obs.w * 0.88, groundY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Canlı Yeşil Orman Yosunu Şapkası (Kayanın tepesinde parıldar)
+  ctx.fillStyle = "#4ade80";
+  ctx.beginPath();
+  ctx.moveTo(obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
+  ctx.quadraticCurveTo(obs.x + obs.w * 0.45, obs.y - 1, obs.x + obs.w * 0.75, obs.y + obs.h * 0.30);
+  ctx.quadraticCurveTo(obs.x + obs.w * 0.50, obs.y + obs.h * 0.40, obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
+  ctx.fill();
+
+  // Yosun benekleri
+  ctx.fillStyle = "#86efac";
+  ctx.beginPath();
+  ctx.arc(obs.x + obs.w * 0.42, obs.y + obs.h * 0.20, 2.5, 0, Math.PI * 2);
+  ctx.arc(obs.x + obs.w * 0.58, obs.y + obs.h * 0.22, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// 4. Dev Mantarlı Ağaç Kökü (Gnarled Root - Zemin Engeli / Üzerinden Zıplanır)
+function drawGnarledRootWithMushrooms(ctx, obs, groundY) {
+  ctx.save();
+
+  // Zemin temas gölgesi
+  ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY + 2, obs.w * 0.50, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Kıvrımlı Meşe Kökü Gövdesi
+  const rootGrad = ctx.createLinearGradient(obs.x, obs.y, obs.x + obs.w, groundY);
+  rootGrad.addColorStop(0, "#78350f");
+  rootGrad.addColorStop(0.6, "#451a03");
+  rootGrad.addColorStop(1, "#270d02");
+
+  ctx.fillStyle = rootGrad;
+  ctx.strokeStyle = "#1c0a00";
+  ctx.lineWidth = 2.0;
+
+  ctx.beginPath();
+  ctx.moveTo(obs.x, groundY);
+  ctx.bezierCurveTo(obs.x + obs.w * 0.2, obs.y + 4, obs.x + obs.w * 0.65, obs.y + 2, obs.x + obs.w, groundY);
+  ctx.lineTo(obs.x + obs.w * 0.75, groundY);
+  ctx.bezierCurveTo(obs.x + obs.w * 0.55, obs.y + 14, obs.x + obs.w * 0.25, obs.y + 16, obs.x + 6, groundY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Kırmızı Benekli Masalsı Mantarlar (🍄)
+  // 1. Büyük Mantar
+  const m1X = obs.x + obs.w * 0.32;
+  const m1Y = obs.y + 4;
+  // Mantar sapı
+  ctx.fillStyle = "#fef08a";
+  ctx.fillRect(m1X - 2.5, m1Y, 5, 8);
+  // Mantar şapkası
+  ctx.fillStyle = "#ef4444";
+  ctx.strokeStyle = "#991b1b";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(m1X, m1Y, 7, Math.PI, 0);
+  ctx.fill();
+  ctx.stroke();
+  // Beyaz benekler
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(m1X - 3, m1Y - 3, 1.3, 0, Math.PI * 2);
+  ctx.arc(m1X + 2.5, m1Y - 3.5, 1.3, 0, Math.PI * 2);
+  ctx.arc(m1X, m1Y - 5, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Küçük Mantar
+  const m2X = obs.x + obs.w * 0.65;
+  const m2Y = obs.y + 8;
+  ctx.fillStyle = "#fef08a";
+  ctx.fillRect(m2X - 2, m2Y, 4, 7);
+  ctx.fillStyle = "#f97316";
+  ctx.beginPath();
+  ctx.arc(m2X, m2Y, 5, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(m2X - 1.5, m2Y - 2.5, 1.1, 0, Math.PI * 2);
+  ctx.arc(m2X + 1.5, m2Y - 2.5, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// 5. Çamur & Su Birikintisi (Puddle - Zemin Engeli / Üzerinden Zıplanır)
+function drawPuddleObstacle(ctx, obs, groundY) {
+  ctx.save();
+
+  // Su birikintisi çamurlu toprak kenarı
+  ctx.fillStyle = "#271406";
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 3, obs.w * 0.52, obs.h * 0.52, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Parıldayan berrak/mavi orman suyu katmanı
+  const waterGrad = ctx.createLinearGradient(obs.x, obs.y, obs.x + obs.w, obs.y + obs.h);
+  waterGrad.addColorStop(0, "#38bdf8");
+  waterGrad.addColorStop(0.5, "#0284c7");
+  waterGrad.addColorStop(1, "#0369a1");
+
+  ctx.fillStyle = waterGrad;
+  ctx.strokeStyle = "#bae6fd";
+  ctx.lineWidth = 1.6;
+
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 2, obs.w * 0.44, obs.h * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Su yüzeyi dalga halkaları (Ripples)
+  const rippleR = ((levelTimeElapsed * 40) % 18) + 4;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 2, rippleR, rippleR * 0.35, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Kenar taşları
+  ctx.fillStyle = "#94a3b8";
+  ctx.beginPath();
+  ctx.arc(obs.x + 6, groundY - 2, 2.5, 0, Math.PI * 2);
+  ctx.arc(obs.x + obs.w - 8, groundY - 3, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ============================================================================
+// 10. KEMERBURGAZ KENT ORMANI DOĞAL PATİKA VE ATMOSFER ÇİZİM MOTORU
+// ============================================================================
+
+function renderKemerburgazTrail(ctx, groundY, w, h, scrollX, stageNum) {
+  ctx.save();
+
+  const atmos = getStageAtmosphere(stageNum);
+
+  // 1. Derin Toprak Katmanı (Zengin Doğal Toprak Gradyanı)
+  const soilGrad = ctx.createLinearGradient(0, groundY, 0, h);
+  if (atmos.id === "winter") {
+    soilGrad.addColorStop(0, "#334155"); // Donmuş soğuk toprak
+    soilGrad.addColorStop(1, "#0f172a");
+  } else if (atmos.id === "rainy") {
+    soilGrad.addColorStop(0, "#2d1b0e"); // Islak koyu çamur toprağı
+    soilGrad.addColorStop(1, "#180d07");
+  } else {
+    soilGrad.addColorStop(0, "#45220c"); // Sıcak orman humusu
+    soilGrad.addColorStop(1, "#1c0d05");
+  }
+  ctx.fillStyle = soilGrad;
+  ctx.fillRect(0, groundY, w, h - groundY);
+
+  // 2. Ahşap Yürüyüş Parkuru Traversleri (Boardwalk Planks)
+  // Her 72px'te bir patikayı bölen ahşap traversler (1.0x zemin hızıyla)
+  const plankSpacing = 72;
+  const plankW = 10;
+  let startPlankX = (scrollX % plankSpacing);
+  while (startPlankX < 0) startPlankX += plankSpacing;
+
+  ctx.fillStyle = atmos.id === "winter" ? "rgba(71, 85, 105, 0.4)" : "rgba(38, 18, 7, 0.45)";
+  for (let px = startPlankX; px < w; px += plankSpacing) {
+    ctx.fillRect(px, groundY + 4, plankW, h - groundY);
+  }
+
+  // 3. Üst Çim / Bordür Çizgisi
+  if (atmos.id === "winter") {
+    // Karlı beyaz örtü ve buz parıltısı
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(0, groundY, w, 7);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, groundY, w, 3);
+  } else if (atmos.id === "rainy") {
+    // Islak gölet çimeni ve su ışıltısı
+    ctx.fillStyle = "#1e3a2b";
+    ctx.fillRect(0, groundY, w, 8);
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillRect(0, groundY, w, 2); // Islak su parıltısı
+  } else if (atmos.id === "night") {
+    // Ay ışığında parıldayan gece çimeni
+    ctx.fillStyle = "#0f2e21";
+    ctx.fillRect(0, groundY, w, 8);
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillRect(0, groundY, w, 2);
+  } else {
+    // Bahar taze yeşil çimen şeridi
+    ctx.fillStyle = "#2d6a4f";
+    ctx.fillRect(0, groundY, w, 9);
+    ctx.fillStyle = "#52b788";
+    ctx.fillRect(0, groundY, w, 3);
+  }
+
+  // 4. 🐾 GERÇEKÇİ KAR PATİ İZLERİ (Kış Etapları Fiziği)
+  if (atmos.id === "winter") {
+    for (let i = snowFootprints.length - 1; i >= 0; i--) {
+      const fp = snowFootprints[i];
+      fp.x -= gameSpeed;
+      if (fp.x < -50) {
+        snowFootprints.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.fillStyle = `rgba(148, 163, 184, ${fp.alpha * 0.75})`;
+      if (fp.isSlide) {
+        // Kayma oluğu
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(fp.x - fp.rx, fp.y - fp.ry, fp.rx * 2, fp.ry * 2, 2) : ctx.rect(fp.x - fp.rx, fp.y - fp.ry, fp.rx * 2, fp.ry * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(255, 255, 255, ${fp.alpha * 0.6})`;
+        ctx.fillRect(fp.x - fp.rx, fp.y - fp.ry - 1, fp.rx * 2, 1);
+      } else {
+        // Ana pati çukuru
+        ctx.beginPath();
+        ctx.ellipse(fp.x, fp.y, fp.rx, fp.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Üst kenar beyaz kar kabartısı
+        ctx.strokeStyle = `rgba(255, 255, 255, ${fp.alpha * 0.8})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(fp.x, fp.y - 0.5, fp.rx * 0.85, Math.PI * 0.9, Math.PI * 1.8);
+        ctx.stroke();
+
+        // Sevimli 3 parmak pati izi
+        if (fp.isPaws) {
+          ctx.fillStyle = `rgba(100, 116, 139, ${fp.alpha * 0.8})`;
+          ctx.beginPath();
+          ctx.arc(fp.x + fp.rx * 0.7, fp.y - 1.8, 1.4, 0, Math.PI * 2);
+          ctx.arc(fp.x + fp.rx * 0.8, fp.y, 1.4, 0, Math.PI * 2);
+          ctx.arc(fp.x + fp.rx * 0.7, fp.y + 1.8, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  // 5. 💧 YAĞMUR SU HALKALARI & SIZINTI DALGALARI
+  if (atmos.id === "rainy") {
+    for (let i = waterRipples.length - 1; i >= 0; i--) {
+      const rip = waterRipples[i];
+      rip.x -= gameSpeed * 0.85;
+      rip.r += 0.45;
+      rip.alpha *= 0.94;
+      if (rip.alpha < 0.04 || rip.r >= rip.maxR) {
+        waterRipples.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(56, 189, 248, ${rip.alpha})`;
+      ctx.lineWidth = rip.lw || 1.4;
+      ctx.beginPath();
+      ctx.ellipse(rip.x, rip.y, rip.r * 1.8, rip.r * 0.45, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+}
+
+function renderWeatherAtmosphereBackground(ctx, w, h, scrollX, stageNum) {
+  const atmos = getStageAtmosphere(stageNum);
+
+  // 1. En Uzak Gökyüzü Katmanı (Uzak Dağlar & Sisli Tepe Silüeti - 0.20x Paralaks Derinliği)
+  ctx.save();
+  const farScroll = scrollX * 0.2;
+  const hillWidth = 240;
+  let hillStartX = farScroll % hillWidth;
+  while (hillStartX > 0) hillStartX -= hillWidth;
+
+  const hillGrad = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.75);
+  if (atmos.id === "winter") {
+    hillGrad.addColorStop(0, "rgba(30, 41, 59, 0.4)");
+    hillGrad.addColorStop(1, "rgba(15, 23, 42, 0.8)");
+  } else if (atmos.id === "night") {
+    hillGrad.addColorStop(0, "rgba(8, 28, 21, 0.45)");
+    hillGrad.addColorStop(1, "rgba(3, 10, 6, 0.85)");
+  } else if (atmos.id === "rainy") {
+    hillGrad.addColorStop(0, "rgba(17, 34, 23, 0.4)");
+    hillGrad.addColorStop(1, "rgba(7, 16, 10, 0.8)");
+  } else {
+    hillGrad.addColorStop(0, "rgba(45, 106, 79, 0.35)");
+    hillGrad.addColorStop(1, "rgba(27, 67, 50, 0.75)");
+  }
+
+  ctx.fillStyle = hillGrad;
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.65);
+  for (let hx = hillStartX; hx < w + hillWidth; hx += hillWidth) {
+    ctx.quadraticCurveTo(hx + hillWidth * 0.5, h * 0.42, hx + hillWidth, h * 0.65);
+  }
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Orta Fon: Orijinal Sonsuz Orman Arka Planı (0.45x Paralaks Derinliği)
+  if (imgBg.complete && imgBg.naturalWidth > 0) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const bgDrawH = h;
+    const bgDrawW = (imgBg.naturalWidth / imgBg.naturalHeight) * bgDrawH;
+    const midScroll = scrollX * 0.45;
+    let curX = midScroll % bgDrawW;
+    while (curX > 0) curX -= bgDrawW;
+    while (curX < w) {
+      ctx.drawImage(imgBg, curX, 0, bgDrawW + 1, bgDrawH);
+      curX += bgDrawW;
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = "#1b4332";
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // 3. Yakın-Orta Plan Orman Gövdeleri & Ağaç Silüetleri (0.72x Paralaks)
+  ctx.save();
+  const treeSpacing = 160;
+  const treeScroll = scrollX * 0.72;
+  let startTreeX = treeScroll % treeSpacing;
+  while (startTreeX > 0) startTreeX += treeSpacing;
+
+  for (let tx = startTreeX; false && tx < w + treeSpacing; tx += treeSpacing) {
+    const treeH = h * 0.42;
+    const treeY = h - 90 - treeH;
+
+    if (atmos.id === "winter") {
+      // Karlı çam silüeti
+      ctx.fillStyle = "rgba(30, 41, 59, 0.35)";
+      ctx.fillRect(tx + 18, treeY + 30, 8, treeH);
+      ctx.fillStyle = "rgba(51, 65, 85, 0.45)";
+      ctx.beginPath();
+      ctx.moveTo(tx + 22, treeY);
+      ctx.lineTo(tx + 44, treeY + 50);
+      ctx.lineTo(tx, treeY + 50);
+      ctx.closePath();
+      ctx.fill();
+      // Dal karı
+      ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.fillRect(tx + 6, treeY + 48, 32, 3);
+    } else {
+      // Doğa yeşili ağaç gövdesi ve taç silüeti
+      ctx.fillStyle = "rgba(24, 43, 31, 0.32)";
+      ctx.fillRect(tx + 19, treeY + 35, 6, treeH);
+      ctx.beginPath();
+      ctx.arc(tx + 22, treeY + 28, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // 4. Atmosfere Özel Gökyüzü Elemanları
+  if (atmos.hasMoon) {
+    // 🌕 Büyülü Dolunay Çizimi (Seyir Kulesi Gece Teması)
+    ctx.save();
+    const moonX = w - 85;
+    const moonY = 85;
+    // Dolunay halesi
+    const moonGlow = ctx.createRadialGradient(moonX, moonY, 14, moonX, moonY, 48);
+    moonGlow.addColorStop(0, "rgba(254, 240, 138, 0.45)");
+    moonGlow.addColorStop(0.5, "rgba(217, 249, 157, 0.15)");
+    moonGlow.addColorStop(1, "rgba(217, 249, 157, 0)");
+    ctx.fillStyle = moonGlow;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, 48, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dolunay Küresi
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (atmos.hasSunRays) {
+    // ☀️ Güneş Hüzmeleri (Bahar Sabahı God Rays)
+    ctx.save();
+    const rayGrad = ctx.createLinearGradient(0, 0, w * 0.6, h * 0.5);
+    rayGrad.addColorStop(0, "rgba(254, 240, 138, 0.15)");
+    rayGrad.addColorStop(0.7, "rgba(255, 255, 255, 0.04)");
+    rayGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = rayGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w * 0.8, 0);
+    ctx.lineTo(w * 0.35, h * 0.6);
+    ctx.lineTo(0, h * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ☃️ SEVİMLİ KIŞ ETAPLARI BİTİŞ KARDAN ADAMI (ETAP 9 & 10 FİNAL KUTLAMASI)
+function drawWinterSnowman(ctx, snowman, groundY) {
+  ctx.save();
+  const sx = snowman.x;
+  const sy = groundY;
+
+  // Taban gölgesi
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + 2, 26, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // "FİNAL!" Bitiş Tabelası (Kardan adamın solunda)
+  const signX = sx - 38;
+  ctx.fillStyle = "#5c3317";
+  ctx.fillRect(signX - 3, sy - 58, 6, 58);
+  ctx.fillStyle = "#a2673d";
+  ctx.fillRect(signX - 22, sy - 64, 44, 22);
+  ctx.strokeStyle = "#4a2810";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(signX - 22, sy - 64, 44, 22);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(signX - 23, sy - 66, 46, 3);
+  ctx.fillStyle = "#fff8dc";
+  ctx.font = "bold 9.5px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("🏁 FİNAL", signX, sy - 49);
+
+  // 1. Alt Kar Küresi (Büyük)
+  const gradBottom = ctx.createRadialGradient(sx - 5, sy - 20, 4, sx, sy - 18, 22);
+  gradBottom.addColorStop(0, "#ffffff");
+  gradBottom.addColorStop(0.75, "#f0f9ff");
+  gradBottom.addColorStop(1, "#bae6fd");
+  ctx.fillStyle = gradBottom;
+  ctx.beginPath();
+  ctx.arc(sx, sy - 18, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(186, 230, 253, 0.5)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // 2. Orta Kar Küresi (Gövde)
+  const gradMid = ctx.createRadialGradient(sx - 4, sy - 44, 3, sx, sy - 42, 16);
+  gradMid.addColorStop(0, "#ffffff");
+  gradMid.addColorStop(0.75, "#f0f9ff");
+  gradMid.addColorStop(1, "#bae6fd");
+  ctx.fillStyle = gradMid;
+  ctx.beginPath();
+  ctx.arc(sx, sy - 42, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Kömür Düğmeler
+  ctx.fillStyle = "#1e293b";
+  ctx.beginPath();
+  ctx.arc(sx, sy - 46, 2.2, 0, Math.PI * 2);
+  ctx.arc(sx, sy - 39, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sol Kol (Sabit dal)
+  ctx.strokeStyle = "#6b3e11";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(sx - 13, sy - 43);
+  ctx.lineTo(sx - 28, sy - 36);
+  ctx.lineTo(sx - 34, sy - 42);
+  ctx.stroke();
+
+  // Sağ Kol (Kahramana el sallayan hareketli dal)
+  ctx.save();
+  ctx.translate(sx + 13, sy - 43);
+  ctx.rotate(-0.45 + (snowman.armAngle || 0));
+  ctx.strokeStyle = "#6b3e11";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(18, -14);
+  ctx.lineTo(24, -22);
+  ctx.moveTo(18, -14);
+  ctx.lineTo(26, -11);
+  ctx.stroke();
+  ctx.restore();
+
+  // Sıcak Örgü Atkı (Boyun)
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(sx - 13, sy - 55, 26, 7, 3) : ctx.rect(sx - 13, sy - 55, 26, 7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(sx + 4, sy - 51);
+  ctx.lineTo(sx + 12, sy - 32);
+  ctx.lineTo(sx + 6, sy - 31);
+  ctx.closePath();
+  ctx.fill();
+
+  // 3. Baş Küresi
+  const gradHead = ctx.createRadialGradient(sx - 3, sy - 63, 2, sx, sy - 62, 13);
+  gradHead.addColorStop(0, "#ffffff");
+  gradHead.addColorStop(0.8, "#f0f9ff");
+  gradHead.addColorStop(1, "#bae6fd");
+  ctx.fillStyle = gradHead;
+  ctx.beginPath();
+  ctx.arc(sx, sy - 62, 11, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Kömür Gözler
+  ctx.fillStyle = "#0f172a";
+  ctx.beginPath();
+  ctx.arc(sx - 4, sy - 64, 1.8, 0, Math.PI * 2);
+  ctx.arc(sx + 4, sy - 64, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Havuç Burun
+  ctx.fillStyle = "#ea580c";
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - 61);
+  ctx.lineTo(sx - 12, sy - 59);
+  ctx.lineTo(sx, sy - 58);
+  ctx.closePath();
+  ctx.fill();
+
+  // Gülümseyen Ağız (Küçük noktalar)
+  ctx.fillStyle = "#334155";
+  for (let m = -3; m <= 3; m += 2) {
+    ctx.beginPath();
+    ctx.arc(sx + m * 2, sy - 56 + Math.abs(m) * 0.7, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Sevimli Silindir Şapka
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(sx - 15, sy - 73, 30, 3.5);
+  ctx.fillRect(sx - 10, sy - 87, 20, 14);
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(sx - 10, sy - 76, 20, 3);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(sx - 11, sy - 89, 22, 2.5);
+
+  ctx.restore();
+}
+
+function renderWeatherParticles(ctx, w, h, stageNum) {
+  const atmos = getStageAtmosphere(stageNum);
+
+  ctx.save();
+  for (let i = 0; i < weatherParticles.length; i++) {
+    const p = weatherParticles[i];
+
+    if (atmos.particleType === "rain") {
+      // 🌧️ Yağmur Çizgileri
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + p.vx * 1.8, p.y + p.size);
+      ctx.stroke();
+    } else if (atmos.particleType === "snow") {
+      // ❄️ Kar Kristalleri
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (atmos.particleType === "fireflies") {
+      // 🪲 Ateş Böcekleri (Pulsing Glow)
+      const glow = Math.sin(p.phase) * 0.4 + 0.6;
+      ctx.fillStyle = `rgba(250, 204, 21, ${glow * 0.85})`;
+      ctx.shadowColor = "#fde047";
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      // 🍃 Taze Bahar Yaprakları & Altın Polen
+      if (i % 2 === 0) {
+        // Yeşil yaprak
+        ctx.fillStyle = "rgba(74, 222, 128, 0.70)";
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.size * 1.3, p.size * 0.7, p.phase, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Altın polen zerresi
+        ctx.fillStyle = "rgba(253, 224, 71, 0.75)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function renderWeatherAtmosphereOverlay(ctx, w, h, stageNum) {
+  const atmos = getStageAtmosphere(stageNum);
+  if (!atmos.skyColor) return;
+
+  ctx.save();
+  ctx.fillStyle = atmos.skyColor;
+  ctx.fillRect(0, 0, w, h);
+
+  // Yağmurlu günlerde zemin üstü hafif sis katmanı
+  if (atmos.hasMist) {
+    const mistY = h - 140;
+    const mistGrad = ctx.createLinearGradient(0, mistY, 0, mistY + 50);
+    mistGrad.addColorStop(0, "rgba(241, 245, 249, 0)");
+    mistGrad.addColorStop(0.5, "rgba(241, 245, 249, 0.16)");
+    mistGrad.addColorStop(1, "rgba(241, 245, 249, 0)");
+    ctx.fillStyle = mistGrad;
+    ctx.fillRect(0, mistY, w, 50);
+  }
+  ctx.restore();
+}
+
 function updateHUD() {
   const hudCoins = document.getElementById("game-hud-coins");
   if (hudCoins) hudCoins.textContent = coinsCollected;
@@ -4346,7 +6043,7 @@ function updateHUD() {
   if (barEl) barEl.style.width = `${pct}%`;
   if (markerEl) {
     markerEl.style.left = `${pct}%`;
-    const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯" };
+    const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯", 4: "🐿️", 5: "🦉" };
     const hId = GameState.getSelectedHero();
     markerEl.textContent = heroIcons[hId] || "🦊";
   }
@@ -4768,11 +6465,11 @@ function playerSlide() {
 
   if (player.isGrounded && !player.isSliding) {
     player.isSliding = true;
-    player.h = 34; // Doğal eğilerek süzülme boyu (ezilmeden rahatça geçer)
-    player.w = 66; // Akıcı süzülme duruşu
+    player.h = 24; // Çocuk dostu alçak ve süzülen eğilme boyu (engellerin altından sıfır takılma ile rahatça geçer)
+    player.w = 68; // Akıcı süzülme duruşu
     player.y = groundY - player.h;
-    // 👖 İzci Pantolonu aktif ise ekstra uzun süzülme süresi (64 frame)
-    player.slideTimer = activeClothingBuffs.pants > 0 ? 64 : (player.maxSlideTimer || 44);
+    // 👖 İzci Pantolonu aktif ise ekstra uzun süzülme süresi (105 frame), normalde 76 frame
+    player.slideTimer = activeClothingBuffs.pants > 0 ? 105 : (player.maxSlideTimer || 76);
     sounds.playSlide();
 
     // Kayma başlangıç tozu ve rüzgar partikülleri
@@ -4807,6 +6504,7 @@ function onLevelVictory() {
   const nextIndex = currentIndex + 1;
   GameState.setStageScore(currentIndex, score);
   GameState.updateHighScore(score);
+  GameState.addExplorerPoints(score);
   GameState.setLevelState(currentIndex, 3); // 3=Completed
 
   // Kaşif XP Ödülü & Firebase Senkronizasyonu
@@ -4876,53 +6574,59 @@ function onLevelVictory() {
     }
   }
   if (currentLevelNumber === 10) {
+    const finalScoreEl = document.getElementById("grand-final-score");
+    if (finalScoreEl) finalScoreEl.textContent = `${score.toLocaleString("tr-TR")} ⭐`;
+    const finalCoinsEl = document.getElementById("grand-final-coins");
+    if (finalCoinsEl) finalCoinsEl.textContent = `🪙 ${coinsCollected}`;
     document.getElementById("modal-grand-victory").classList.add("active");
+    setTimeout(() => {
+      if (window.launchVictoryFireworks) window.launchVictoryFireworks();
+    }, 400);
     return;
   }
 
   // Normal Zafer Modalı
   const etap = RESMI_ETAPLAR[currentIndex] || RESMI_ETAPLAR[0];
   const nextBtn = document.getElementById("btn-victory-next");
-  const quizBtn = document.getElementById("btn-victory-quiz");
+  const vicMapBtn = document.getElementById("btn-victory-map");
   document.getElementById("victory-coins-earned").textContent = `+${coinsCollected} 🪙 (+120 XP ⭐)`;
-
-  const proceedToNextFlow = () => {
-    if (nextIndex <= 9) {
-      showScreen("screen-map");
-      renderMapScreen();
-      setTimeout(() => openLevelModal(nextIndex), 250);
-    } else {
-      showScreen("screen-map");
-      renderMapScreen();
-    }
-  };
-
-  if (quizBtn) {
-    quizBtn.onclick = () => {
-      document.getElementById("modal-victory").classList.remove("active");
-      startNatureQuiz(currentIndex, proceedToNextFlow);
-    };
-  }
 
   document.getElementById("victory-title").textContent = `${currentLevelNumber}. Etap Başarıyla Geçildi!`;
   document.getElementById("victory-fact").textContent = etap.fact;
 
   if (nextIndex <= 9) {
-    nextBtn.textContent = `SONRAKİ BÖLÜME GEÇ (${nextIndex + 1}. ETAP) ⏩`;
-    nextBtn.onclick = () => {
-      document.getElementById("modal-victory").classList.remove("active");
-      startNatureQuiz(currentIndex, () => {
-        showScreen("screen-map");
-        renderMapScreen();
-        setTimeout(() => openLevelModal(nextIndex), 250);
-      });
-    };
+    if (nextBtn) {
+      nextBtn.textContent = `🌿 DOĞA VE BİLİM YARIŞMASINA GEÇ ⏩`;
+      nextBtn.onclick = () => {
+        document.getElementById("modal-victory").classList.remove("active");
+        startNatureQuiz(currentIndex, () => {
+          proceedToNextStageOnMap(nextIndex);
+        });
+      };
+    }
+    if (vicMapBtn) {
+      vicMapBtn.textContent = `🗺️ Soruları Geç, ${nextIndex + 1}. Etaba Odaklan`;
+      vicMapBtn.onclick = () => {
+        document.getElementById("modal-victory").classList.remove("active");
+        proceedToNextStageOnMap(nextIndex);
+      };
+    }
   } else {
-    nextBtn.textContent = "🏆 BÜYÜK ŞAMPİYONLUK KEMERİ";
-    nextBtn.onclick = () => {
-      document.getElementById("modal-victory").classList.remove("active");
-      document.getElementById("modal-grand-victory").classList.add("active");
-    };
+    if (nextBtn) {
+      nextBtn.textContent = "🏆 BÜYÜK ŞAMPİYONLUK KEMERİ";
+      nextBtn.onclick = () => {
+        document.getElementById("modal-victory").classList.remove("active");
+        document.getElementById("modal-grand-victory").classList.add("active");
+        if (window.launchVictoryFireworks) window.launchVictoryFireworks();
+      };
+    }
+    if (vicMapBtn) {
+      vicMapBtn.textContent = "🗺️ Haritaya Dön";
+      vicMapBtn.onclick = () => {
+        document.getElementById("modal-victory").classList.remove("active");
+        proceedToNextStageOnMap(10);
+      };
+    }
   }
 
   const btnVictoryLb = document.getElementById("btn-victory-lb");
@@ -5036,7 +6740,9 @@ function onGameOver() {
   stageFailureStreaks[currentLevelNumber] = (stageFailureStreaks[currentLevelNumber] || 0) + 1;
 
   sounds.playGameOver();
+  GameState.setStageScore(currentLevelNumber - 1, score);
   GameState.updateHighScore(score);
+  GameState.addExplorerPoints(score);
   LeaderboardService.syncMyScore();
   
   const modal = document.getElementById("modal-gameover");
@@ -5078,7 +6784,7 @@ window.addEventListener("keydown", e => {
   }
 });
 
-// Ekrandaki Görsel ZIPLA ve KAY Butonları (Kompakt, Sağ Alt Zemin İçi)
+// Ekrandaki Görsel ZIPLA ve EĞİL Başparmak Kutuları
 const btnTouchJump = document.getElementById("btn-touch-jump");
 if (btnTouchJump) {
   const doJump = (e) => {
@@ -5087,20 +6793,26 @@ if (btnTouchJump) {
     playerJump();
   };
   btnTouchJump.addEventListener("pointerdown", doJump);
-  btnTouchJump.addEventListener("click", doJump);
   btnTouchJump.addEventListener("touchstart", doJump, { passive: false });
 }
 
 const btnTouchSlide = document.getElementById("btn-touch-slide");
 if (btnTouchSlide) {
-  const doSlide = (e) => {
+  const doSlideStart = (e) => {
     e.stopPropagation();
     if (e.cancelable) e.preventDefault();
+    player.isHoldingSlide = true;
     playerSlide();
   };
-  btnTouchSlide.addEventListener("pointerdown", doSlide);
-  btnTouchSlide.addEventListener("click", doSlide);
-  btnTouchSlide.addEventListener("touchstart", doSlide, { passive: false });
+  const doSlideEnd = (e) => {
+    player.isHoldingSlide = false;
+  };
+  btnTouchSlide.addEventListener("pointerdown", doSlideStart);
+  btnTouchSlide.addEventListener("touchstart", doSlideStart, { passive: false });
+  btnTouchSlide.addEventListener("pointerup", doSlideEnd);
+  btnTouchSlide.addEventListener("touchend", doSlideEnd);
+  btnTouchSlide.addEventListener("pointercancel", doSlideEnd);
+  btnTouchSlide.addEventListener("touchcancel", doSlideEnd);
 }
 
 // ============================================================================
@@ -5169,8 +6881,13 @@ function handleGestureEnd(clientX, clientY) {
       if (dy > 0) playerSlide();
       else playerJump();
     } else if (Math.abs(dy) < 14 && Math.abs(dx) < 14 && duration < 400) {
-      // Ekrana hızlı hafif dokunma veya tıklama (Tap/Click): Zıpla!
-      playerJump();
+      // 🧭 Çocuk Dostu Dokunmatik: Ekranın sol yarısına dokununca EĞİL, sağ yarısına dokununca ZIPLA!
+      const midX = (canvas ? canvas.width : window.innerWidth) / 2;
+      if (clientX < midX) {
+        playerSlide();
+      } else {
+        playerJump();
+      }
     }
   }
 }
@@ -5357,9 +7074,15 @@ function initNavigationEvents() {
     btnVicNext.onclick = () => {
       const modal = document.getElementById("modal-victory");
       if (modal) modal.classList.remove("active");
-      showScreen("screen-map");
-      renderMapScreen();
-      setTimeout(() => openLevelModal(currentLevelNumber), 250);
+      const curIdx = currentLevelNumber - 1;
+      const nextIdx = curIdx + 1;
+      if (nextIdx <= 9) {
+        startNatureQuiz(curIdx, () => {
+          proceedToNextStageOnMap(nextIdx);
+        });
+      } else {
+        proceedToNextStageOnMap(nextIdx);
+      }
     };
   }
 
@@ -5368,8 +7091,7 @@ function initNavigationEvents() {
     btnVicMap.onclick = () => {
       const modal = document.getElementById("modal-victory");
       if (modal) modal.classList.remove("active");
-      showScreen("screen-map");
-      renderMapScreen();
+      proceedToNextStageOnMap(currentLevelNumber);
     };
   }
 
@@ -5443,7 +7165,84 @@ function initNavigationEvents() {
 
 
 // ============================================================================
-// 10. ÇOCUKLAR İÇİN İNTERAKTİF BAŞARIMLAR & FİREBASE SİSTEMİ
+// 9.5 BILGI SAMPIYONU LIG SERVISI (QuizLeaderboardService)
+// ============================================================================
+
+const QUIZ_BOT_PLAYERS = [
+  { name: "Zeynep K.",  icon: "\ud83e\udd8a", quizPts: 2450, weeklyPts: 380 },
+  { name: "Ali R\u0131za T.", icon: "\ud83d\udc3a", quizPts: 2100, weeklyPts: 210 },
+  { name: "Defne S.",   icon: "\ud83e\udda5", quizPts: 1870, weeklyPts: 450 },
+  { name: "Mert B.",    icon: "\ud83d\udc3e", quizPts: 1650, weeklyPts: 150 },
+  { name: "Selin D.",   icon: "\ud83e\udda6", quizPts: 1420, weeklyPts: 320 },
+  { name: "Omer F.",    icon: "\ud83c\udf32", quizPts: 1200, weeklyPts: 100 },
+  { name: "Busra Y.",   icon: "\ud83c\udf3f", quizPts:  980, weeklyPts: 280 },
+  { name: "Kaan A.",    icon: "\ud83d\udc3f\ufe0f", quizPts:  750, weeklyPts:  90 },
+  { name: "Nisa M.",    icon: "\ud83e\uddb8", quizPts:  520, weeklyPts: 130 },
+  { name: "Ege T.",     icon: "\ud83c\udf31", quizPts:  300, weeklyPts:  50 }
+];
+
+const QuizLeaderboardService = {
+  getFullData(mode, myPointsOverride) {
+    const myPts = myPointsOverride !== undefined
+      ? myPointsOverride
+      : (mode === "weekly" ? GameState.getQuizWeeklyPoints() : GameState.getQuizTotalPoints());
+    const myName = GameState.getExplorerName() || "Sen";
+    const myHeroId = GameState.getSelectedHero() || 1;
+    const HERO_ICONS = ["\ud83e\udd8a","\ud83d\udc3a","\ud83e\udda5","\ud83d\udc3e","\ud83e\udda6","\ud83c\udf32","\ud83d\udc3f\ufe0f","\ud83e\uddb8"];
+    const myIcon = HERO_ICONS[(myHeroId - 1) % HERO_ICONS.length];
+
+    const bots = QUIZ_BOT_PLAYERS.map(b => ({
+      name: b.name,
+      icon: b.icon,
+      pts: mode === "weekly" ? b.weeklyPts : b.quizPts,
+      isMe: false
+    }));
+
+    const meEntry = { name: myName, icon: myIcon, pts: myPts, isMe: true };
+    const all = [...bots, meEntry].sort((a, b) => b.pts - a.pts);
+    return all.map((entry, i) => ({ ...entry, rank: i + 1 }));
+  },
+
+  render(mode) {
+    mode = mode || "all";
+    const container = document.getElementById("quiz-leaderboard-list");
+    if (!container) return;
+
+    const data = this.getFullData(mode);
+    const meEntry = data.find(r => r.isMe);
+
+    const myScoreEl = document.getElementById("quiz-lb-my-score");
+    const myRankEl  = document.getElementById("quiz-lb-my-rank");
+    if (myScoreEl) myScoreEl.textContent = (meEntry ? meEntry.pts : 0).toLocaleString("tr-TR") + " Puan";
+    if (myRankEl)  myRankEl.textContent  = meEntry ? "#" + meEntry.rank : "#--";
+
+    const medals = ["\ud83e\udd47", "\ud83e\udd48", "\ud83e\udd49"];
+    container.innerHTML = data.map(entry => {
+      const rankLabel = entry.rank <= 3 ? medals[entry.rank - 1] : "#" + entry.rank;
+      const meBg = entry.isMe
+        ? "background:rgba(255,209,102,0.1); border-left:3px solid #ffd166;"
+        : "";
+      return '<div class="lb-row" style="' + meBg + '">'
+        + '<span class="lb-rank">' + rankLabel + '</span>'
+        + '<span class="lb-avatar">' + entry.icon + '</span>'
+        + '<div class="lb-info">'
+        +   '<div class="lb-name">' + entry.name + (entry.isMe ? " (Sen)" : "") + '</div>'
+        +   '<div class="lb-sub">Bilgi Puan\u0131: ' + entry.pts.toLocaleString("tr-TR") + '</div>'
+        + '</div>'
+        + '<div class="lb-score">' + entry.pts.toLocaleString("tr-TR") + ' P</div>'
+        + '</div>';
+    }).join("");
+
+    const tabAll    = document.getElementById("btn-tab-quiz-all");
+    const tabWeekly = document.getElementById("btn-tab-quiz-weekly");
+    if (tabAll)    { tabAll.classList.toggle("active", mode === "all");    tabAll.onclick    = () => QuizLeaderboardService.render("all"); }
+    if (tabWeekly) { tabWeekly.classList.toggle("active", mode === "weekly"); tabWeekly.onclick = () => QuizLeaderboardService.render("weekly"); }
+  }
+};
+window.QuizLeaderboardService = QuizLeaderboardService;
+
+// ============================================================================
+// 10. COCUKLAR ICIN INTERAKTIF BASARIMLAR & FIREBASE SISTEMI
 // ============================================================================
 
 function openAchievementsModal() {
@@ -5518,7 +7317,7 @@ function renderAchievementsUI() {
 }
 
 function switchHubTab(tabName) {
-  const tabs = ["achieve", "lb", "rewards"];
+  const tabs = ["achieve", "lb", "quiz-lb", "rewards"];
   tabs.forEach(t => {
     const btn = document.getElementById(`hub-tab-${t}`);
     const view = document.getElementById(`hub-view-${t}`);
@@ -5535,6 +7334,8 @@ function switchHubTab(tabName) {
     renderAchievementsUI();
   } else if (tabName === "lb") {
     LeaderboardService.render();
+  } else if (tabName === "quiz-lb") {
+    QuizLeaderboardService.render();
   } else if (tabName === "rewards") {
     RewardsService.render();
   }
@@ -5552,7 +7353,16 @@ function openAchievementsModal() {
 }
 
 function openLeaderboardModal() {
-  openAchievementsHub("lb");
+  const modal = document.getElementById("modal-leaderboard");
+  if (modal) {
+    modal.classList.add("active");
+    LeaderboardService.updateSyncBadge("syncing");
+    LeaderboardService.syncMyScore();
+    LeaderboardService.fetchWebLeaderboard();
+    LeaderboardService.render();
+  } else {
+    openAchievementsHub("lb");
+  }
 }
 
 function openRewardsModal() {
@@ -5564,6 +7374,11 @@ function initHubEvents() {
   if (hubTabAchieve) hubTabAchieve.onclick = () => switchHubTab("achieve");
   const hubTabLb = document.getElementById("hub-tab-lb");
   if (hubTabLb) hubTabLb.onclick = () => switchHubTab("lb");
+  const hubTabQuizLb = document.getElementById("hub-tab-quiz-lb");
+  if (hubTabQuizLb) hubTabQuizLb.onclick = () => {
+    switchHubTab("quiz-lb");
+    QuizLeaderboardService.render();
+  };
   const hubTabRewards = document.getElementById("hub-tab-rewards");
   if (hubTabRewards) hubTabRewards.onclick = () => switchHubTab("rewards");
 
@@ -5676,218 +7491,250 @@ function renderCampUI() {
   if (rankTitle) rankTitle.textContent = `Seviye ${rank.rank}: ${rank.title}`;
 
   const xpFill = document.getElementById("camp-xp-fill");
-  const pct = Math.min(100, Math.max(10, Math.floor(((xp - rank.minXp) / (rank.maxXp - rank.minXp)) * 100)));
+  const pct = Math.min(100, Math.max(5, Math.floor(((xp - rank.minXp) / (rank.maxXp - rank.minXp)) * 100)));
   if (xpFill) xpFill.style.width = `${pct}%`;
 
   const xpStat = document.getElementById("camp-xp-stat");
-  if (xpStat) xpStat.textContent = `${xp} / ${rank.maxXp} XP • Bulut Senkronize: Aktif ☁️`;
-
-  const userCoinsBadge = document.getElementById("camp-user-coins-badge");
-  if (userCoinsBadge) userCoinsBadge.textContent = `🪙 ${GameState.getCoins()} Altın`;
-
-  // Kupa & Madalya Vitrini
-  const shelfContainer = document.getElementById("trophy-shelf-items");
-  if (shelfContainer) {
-    shelfContainer.innerHTML = "";
-    const trophies = [
-      { id: "t1", name: "Bronz Kaşif", icon: "🥉", unlocked: GameState.getLevelState(1) === 3 },
-      { id: "t2", name: "BELTUR Molası", icon: "☕", unlocked: GameState.getLevelState(3) === 3 },
-      { id: "t3", name: "Macera Şampiyonu", icon: "🧗", unlocked: GameState.getLevelState(4) === 3 },
-      { id: "t4", name: "Gümüş Muhafız", icon: "🥈", unlocked: GameState.getLevelState(6) === 3 },
-      { id: "t5", name: "Altın Mağlova", icon: "🥇", unlocked: GameState.getLevelState(9) === 3 },
-      { id: "t6", name: "Usta Kaşif (500 XP)", icon: "⭐", unlocked: xp >= 500 },
-      { id: "t7", name: "Kamp Kurucusu", icon: "⛺", unlocked: GameState.getTentLevel() >= 1 },
-      { id: "t8", name: "Çift Zıplayıcı", icon: "👟", unlocked: GameState.getBootsLevel() >= 3 }
-    ];
-
-    trophies.forEach(t => {
-      const item = document.createElement("div");
-      item.className = "shelf-trophy";
-      item.style.opacity = t.unlocked ? "1" : "0.35";
-      item.innerHTML = `
-        <div class="shelf-trophy-icon" style="${t.unlocked ? 'border-color: #ffd166;' : 'border-color: #555; filter: grayscale(1);'}">
-          ${t.unlocked ? t.icon : '🔒'}
-        </div>
-        <div class="shelf-trophy-name">${t.name}</div>
-      `;
-      shelfContainer.appendChild(item);
-    });
+  if (xpStat) {
+    const xpNeeded = Math.max(0, rank.maxXp - xp);
+    xpStat.textContent = rank.rank >= 5 
+      ? `${xp} XP • Zirve Seviye: Mağlova Baş Muhafızı 👑`
+      : `${xp} / ${rank.maxXp} XP • Seviye ${rank.rank + 1} için ${xpNeeded} XP Gerekli`;
   }
 
-  // 1. Dinlenme Çadırı (3 Yıldız / Her Yıldızda +3 Saniye Koruma Kalkanı)
-  // Kilit Şartları: 1.Yıldız=Başlangıç, 2.Yıldız=2.Etap, 3.Yıldız=5.Etap
-  const TENT_UNLOCK_STAGES = [0, 0, 2, 5]; // index = hedef yıldız seviyesi
+  // Kariyer Toplam Puanı ve Harcanabilir Puanlar
+  const totalPoints = GameState.getTotalExplorerPoints();
+  const availablePoints = GameState.getAvailablePoints();
+
+  const pointsDisplay = document.getElementById("camp-points-display");
+  if (pointsDisplay) pointsDisplay.textContent = `⭐ ${totalPoints.toLocaleString("tr-TR")} Kaşif Puanı`;
+
+  const userPointsBadge = document.getElementById("camp-user-coins-badge");
+  if (userPointsBadge) userPointsBadge.textContent = `⭐ ${availablePoints.toLocaleString("tr-TR")} Harcanabilir`;
+
+  // Tamamlanan Etap Sayısı (Kilit Şartları İçin)
+  let completedStagesCount = 0;
+  for (let s = 0; s < 10; s++) {
+    if (GameState.getLevelState(s) === 3) completedStagesCount++;
+  }
+
+  // ========================================================
+  // 1. DİNLENME ÇADIRI (⛺ Kalkan ve 3. Seviyede +1 Kalıcı Can)
+  // ========================================================
+  const TENT_CONFIG = [
+    null,
+    { reqPoints: 500, reqStage: 0, cost: 300, desc: "Koşu başında 4 saniye koruma kalkanı" },
+    { reqPoints: 2000, reqStage: 2, cost: 800, desc: "Koşu başında 8 saniye koruma kalkanı" },
+    { reqPoints: 4500, reqStage: 5, cost: 1800, desc: "Koşu başında 12 sn kalkan + +1 KALICI CAN (4 Canla Başla!)" }
+  ];
   const tentLvl = GameState.getTentLevel();
   const tentStars = document.getElementById("camp-tent-stars");
   if (tentStars) tentStars.textContent = getStarsString(tentLvl, 3);
   const tentDesc = document.getElementById("camp-tent-desc");
   if (tentDesc) {
-    tentDesc.textContent = tentLvl > 0 ? `Mevcut: Seviye ${tentLvl} (${tentLvl * 3} Saniye Koruma Kalkanı)` : "Mevcut: Seviye 0 (Kalkan Yok)";
+    if (tentLvl >= 3) tentDesc.textContent = "Mevcut: Seviye 3 (12 sn Kalkan + 4 Başlangıç Canı!)";
+    else if (tentLvl > 0) tentDesc.textContent = `Mevcut: Seviye ${tentLvl} (${tentLvl * 4} sn Kalkan)`;
+    else tentDesc.textContent = "Mevcut: Seviye 0 (Kalkan Yok)";
   }
   const tentBtn = document.getElementById("btn-upgrade-tent");
   if (tentBtn) {
     if (tentLvl >= 3) {
       tentBtn.textContent = "MAKS SEVİYE ✅";
-      tentBtn.classList.add("maxed", "locked-upgrade");
-      tentBtn.removeAttribute("data-locked");
+      tentBtn.className = "btn-camp-upgrade maxed";
       tentBtn.onclick = null;
     } else {
-      const tentRequiredStage = TENT_UNLOCK_STAGES[tentLvl + 1];
-      const tentCompletedStages = GameState.getCompletedStages ? GameState.getCompletedStages().length : 0;
-      const tentCost = [0, 50, 120, 250][tentLvl + 1];
-      if (tentRequiredStage > 0 && tentCompletedStages < tentRequiredStage) {
-        tentBtn.textContent = `🔒 Kilitli (${tentRequiredStage}. Etapta Açılır)`;
-        tentBtn.classList.add("locked-upgrade");
-        tentBtn.setAttribute("data-locked", "true");
-        tentBtn.onclick = () => showToast(`⛺ Bu yükseltme için önce ${tentRequiredStage}. Etabı tamamlamalısın! (Şu an: ${tentCompletedStages} etap)`, "warning");
-      } else {
-        tentBtn.textContent = `${tentCost} 🪙 Yükselt (${tentLvl + 1}. Yıldız)`;
-        tentBtn.classList.remove("maxed", "locked-upgrade");
-        tentBtn.removeAttribute("data-locked");
+      const cfg = TENT_CONFIG[tentLvl + 1];
+      const isPointsLocked = totalPoints < cfg.reqPoints;
+      const isStageLocked = cfg.reqStage > 0 && completedStagesCount < cfg.reqStage;
+
+      if (isPointsLocked || isStageLocked) {
+        const lockReason = isStageLocked ? `${cfg.reqStage}. Etap` : `${cfg.reqPoints.toLocaleString("tr-TR")} Puan`;
+        tentBtn.textContent = `🔒 Kilitli (${lockReason})`;
+        tentBtn.className = "btn-camp-upgrade locked-upgrade";
         tentBtn.onclick = () => {
-          if (GameState.getCoins() >= tentCost) {
-            GameState.setCoins(GameState.getCoins() - tentCost);
+          showToast(`⛺ Bu yetenek için ${cfg.reqPoints.toLocaleString("tr-TR")} Kaşif Puanı ${cfg.reqStage > 0 ? `ve ${cfg.reqStage}. Etabı tamamlama` : ''} gerekiyor!`, "warning");
+        };
+      } else {
+        tentBtn.textContent = `${cfg.cost} ⭐ Yükselt (${tentLvl + 1}. Yıldız)`;
+        tentBtn.className = "btn-camp-upgrade";
+        tentBtn.onclick = () => {
+          if (GameState.getAvailablePoints() >= cfg.cost) {
+            GameState.spendExplorerPoints(cfg.cost);
             GameState.setTentLevel(tentLvl + 1);
-            showToast(`⛺ Dinlenme Çadırı ${tentLvl + 1} Yıldız oldu! Koşu başında ${(tentLvl + 1) * 3} saniye koruma kalkanı devrede.`, "success");
+            triggerHaptic("success", 60);
+            showToast(`⛺ Dinlenme Çadırı ${tentLvl + 1}. Yıldız oldu! ${cfg.desc}`, "success");
             renderCampUI();
             updateMenuUI();
           } else {
-            showToast(`⚠️ Yetersiz Altın! ${tentCost} Altın gerekiyor.`, "warning");
+            showToast(`⚠️ Yetersiz Puan! ${cfg.cost} ⭐ Harcanabilir Kaşif Puanı gerekiyor. Koşularda puan topla!`, "warning");
           }
         };
       }
     }
   }
 
-  // 2. Kamp Ateşi (3 Yıldız / Her Yıldızda +3 Saniye Manyetik Altın Çekimi)
-  // Kilit Şartları: 1.Yıldız=3.Etap, 2.Yıldız=5.Etap, 3.Yıldız=7.Etap
-  const FIRE_UNLOCK_STAGES = [0, 3, 5, 7]; // index = hedef yıldız seviyesi
+  // ========================================================
+  // 2. KAMP ATEŞİ (🔥 Manyetik Puan & Altın Çekimi)
+  // ========================================================
+  const FIRE_CONFIG = [
+    null,
+    { reqPoints: 800, reqStage: 0, cost: 450, desc: "Koşu başında 5 saniye manyetik çekim" },
+    { reqPoints: 2600, reqStage: 3, cost: 1100, desc: "Koşu başında 10 saniye geniş manyetik çekim" },
+    { reqPoints: 5200, reqStage: 6, cost: 2200, desc: "Koşu başında 16 saniye devasa manyetik çekim" }
+  ];
   const fireLvl = GameState.getCampfireLevel();
   const fireStars = document.getElementById("camp-fire-stars");
   if (fireStars) fireStars.textContent = getStarsString(fireLvl, 3);
   const fireDesc = document.getElementById("camp-fire-desc");
   if (fireDesc) {
-    fireDesc.textContent = fireLvl > 0 ? `Mevcut: Seviye ${fireLvl} (${fireLvl * 3} Saniye Manyetik Çekim)` : "Mevcut: Seviye 0 (Mıknatıs Yok)";
+    if (fireLvl >= 3) fireDesc.textContent = "Mevcut: Seviye 3 (16 sn Devasa Mıknatıs)";
+    else if (fireLvl === 2) fireDesc.textContent = "Mevcut: Seviye 2 (10 sn Geniş Mıknatıs)";
+    else if (fireLvl === 1) fireDesc.textContent = "Mevcut: Seviye 1 (5 sn Mıknatıs)";
+    else fireDesc.textContent = "Mevcut: Seviye 0 (Mıknatıs Yok)";
   }
   const fireBtn = document.getElementById("btn-upgrade-fire");
   if (fireBtn) {
     if (fireLvl >= 3) {
       fireBtn.textContent = "MAKS SEVİYE ✅";
-      fireBtn.classList.add("maxed", "locked-upgrade");
-      fireBtn.removeAttribute("data-locked");
+      fireBtn.className = "btn-camp-upgrade maxed";
       fireBtn.onclick = null;
     } else {
-      const fireRequiredStage = FIRE_UNLOCK_STAGES[fireLvl + 1];
-      const fireCompletedStages = GameState.getCompletedStages ? GameState.getCompletedStages().length : 0;
-      const fireCost = [0, 80, 180, 350][fireLvl + 1];
-      if (fireRequiredStage > 0 && fireCompletedStages < fireRequiredStage) {
-        fireBtn.textContent = `🔒 Kilitli (${fireRequiredStage}. Etapta Açılır)`;
-        fireBtn.classList.add("locked-upgrade");
-        fireBtn.setAttribute("data-locked", "true");
-        fireBtn.onclick = () => showToast(`🔥 Bu yükseltme için önce ${fireRequiredStage}. Etabı tamamlamalısın! (Şu an: ${fireCompletedStages} etap)`, "warning");
-      } else {
-        fireBtn.textContent = `${fireCost} 🪙 Yükselt (${fireLvl + 1}. Yıldız)`;
-        fireBtn.classList.remove("maxed", "locked-upgrade");
-        fireBtn.removeAttribute("data-locked");
+      const cfg = FIRE_CONFIG[fireLvl + 1];
+      const isPointsLocked = totalPoints < cfg.reqPoints;
+      const isStageLocked = cfg.reqStage > 0 && completedStagesCount < cfg.reqStage;
+
+      if (isPointsLocked || isStageLocked) {
+        const lockReason = isStageLocked ? `${cfg.reqStage}. Etap` : `${cfg.reqPoints.toLocaleString("tr-TR")} Puan`;
+        fireBtn.textContent = `🔒 Kilitli (${lockReason})`;
+        fireBtn.className = "btn-camp-upgrade locked-upgrade";
         fireBtn.onclick = () => {
-          if (GameState.getCoins() >= fireCost) {
-            GameState.setCoins(GameState.getCoins() - fireCost);
+          showToast(`🔥 Bu yetenek için ${cfg.reqPoints.toLocaleString("tr-TR")} Kaşif Puanı ${cfg.reqStage > 0 ? `ve ${cfg.reqStage}. Etabı tamamlama` : ''} gerekiyor!`, "warning");
+        };
+      } else {
+        fireBtn.textContent = `${cfg.cost} ⭐ Yükselt (${fireLvl + 1}. Yıldız)`;
+        fireBtn.className = "btn-camp-upgrade";
+        fireBtn.onclick = () => {
+          if (GameState.getAvailablePoints() >= cfg.cost) {
+            GameState.spendExplorerPoints(cfg.cost);
             GameState.setCampfireLevel(fireLvl + 1);
-            showToast(`🔥 Kamp Ateşi ${fireLvl + 1} Yıldız oldu! Koşu başında ${(fireLvl + 1) * 3} saniye mıknatıs devrede.`, "success");
+            triggerHaptic("success", 60);
+            showToast(`🔥 Kamp Ateşi ${fireLvl + 1}. Yıldız oldu! ${cfg.desc}`, "success");
             renderCampUI();
             updateMenuUI();
           } else {
-            showToast(`⚠️ Yetersiz Altın! ${fireCost} Altın gerekiyor.`, "warning");
+            showToast(`⚠️ Yetersiz Puan! ${cfg.cost} ⭐ Harcanabilir Kaşif Puanı gerekiyor. Koşularda puan topla!`, "warning");
           }
         };
       }
     }
   }
 
-  // 3. Orman İzcisi Botları (3 Yıldız / Her Yıldızda +3 Saniye Süzülme ve Çeviklik)
-  // Kilit Şartları: 1.Yıldız=6.Etap, 2.Yıldız=8.Etap, 3.Yıldız=10.Etap
-  const BOOTS_UNLOCK_STAGES = [0, 6, 8, 10]; // index = hedef yıldız seviyesi
+  // ========================================================
+  // 3. ORMAN İZCİSİ (👟 Süzülme ve 3. Seviyede Kalıcı Çift Zıplama)
+  // ========================================================
+  const BOOTS_CONFIG = [
+    null,
+    { reqPoints: 1200, reqStage: 0, cost: 600, desc: "Koşuda 5 saniye süzülme ve çeviklik" },
+    { reqPoints: 3200, reqStage: 4, cost: 1400, desc: "Koşuda 10 saniye süzülme ve uzun kayma" },
+    { reqPoints: 6000, reqStage: 7, cost: 2600, desc: "Tüm engelleri aşan KALICI ÇİFT ZIPLAMA (Double Jump)!" }
+  ];
   const bootsLvl = GameState.getBootsLevel();
   const bootsStars = document.getElementById("camp-boots-stars");
   if (bootsStars) bootsStars.textContent = getStarsString(bootsLvl, 3);
   const bootsDesc = document.getElementById("camp-boots-desc");
   if (bootsDesc) {
-    bootsDesc.textContent = bootsLvl > 0 ? `Mevcut: Seviye ${bootsLvl} (${bootsLvl * 3} Saniye Süzülme${bootsLvl >= 3 ? ' + Çift Zıplama' : ''})` : "Mevcut: Seviye 0 (Standart)";
+    if (bootsLvl >= 3) bootsDesc.textContent = "Mevcut: Seviye 3 (Kalıcı Çift Zıplama Devrede!)";
+    else if (bootsLvl === 2) bootsDesc.textContent = "Mevcut: Seviye 2 (10 sn Süzülme + Uzun Kayma)";
+    else if (bootsLvl === 1) bootsDesc.textContent = "Mevcut: Seviye 1 (5 sn Süzülme)";
+    else bootsDesc.textContent = "Mevcut: Seviye 0 (Standart)";
   }
   const bootsBtn = document.getElementById("btn-upgrade-boots");
   if (bootsBtn) {
     if (bootsLvl >= 3) {
       bootsBtn.textContent = "MAKS SEVİYE ✅";
-      bootsBtn.classList.add("maxed", "locked-upgrade");
-      bootsBtn.removeAttribute("data-locked");
+      bootsBtn.className = "btn-camp-upgrade maxed";
       bootsBtn.onclick = null;
     } else {
-      const bootsRequiredStage = BOOTS_UNLOCK_STAGES[bootsLvl + 1];
-      const bootsCompletedStages = GameState.getCompletedStages ? GameState.getCompletedStages().length : 0;
-      const bootsCost = [0, 120, 280, 500][bootsLvl + 1];
-      if (bootsRequiredStage > 0 && bootsCompletedStages < bootsRequiredStage) {
-        bootsBtn.textContent = `🔒 Kilitli (${bootsRequiredStage}. Etapta Açılır)`;
-        bootsBtn.classList.add("locked-upgrade");
-        bootsBtn.setAttribute("data-locked", "true");
-        bootsBtn.onclick = () => showToast(`👟 Bu yükseltme için önce ${bootsRequiredStage}. Etabı tamamlamalısın! (Şu an: ${bootsCompletedStages} etap)`, "warning");
-      } else {
-        bootsBtn.textContent = `${bootsCost} 🪙 Yükselt (${bootsLvl + 1}. Yıldız)`;
-        bootsBtn.classList.remove("maxed", "locked-upgrade");
-        bootsBtn.removeAttribute("data-locked");
+      const cfg = BOOTS_CONFIG[bootsLvl + 1];
+      const isPointsLocked = totalPoints < cfg.reqPoints;
+      const isStageLocked = cfg.reqStage > 0 && completedStagesCount < cfg.reqStage;
+
+      if (isPointsLocked || isStageLocked) {
+        const lockReason = isStageLocked ? `${cfg.reqStage}. Etap` : `${cfg.reqPoints.toLocaleString("tr-TR")} Puan`;
+        bootsBtn.textContent = `🔒 Kilitli (${lockReason})`;
+        bootsBtn.className = "btn-camp-upgrade locked-upgrade";
         bootsBtn.onclick = () => {
-          if (GameState.getCoins() >= bootsCost) {
-            GameState.setCoins(GameState.getCoins() - bootsCost);
+          showToast(`👟 Bu yetenek için ${cfg.reqPoints.toLocaleString("tr-TR")} Kaşif Puanı ${cfg.reqStage > 0 ? `ve ${cfg.reqStage}. Etabı tamamlama` : ''} gerekiyor!`, "warning");
+        };
+      } else {
+        bootsBtn.textContent = `${cfg.cost} ⭐ Yükselt (${bootsLvl + 1}. Yıldız)`;
+        bootsBtn.className = "btn-camp-upgrade";
+        bootsBtn.onclick = () => {
+          if (GameState.getAvailablePoints() >= cfg.cost) {
+            GameState.spendExplorerPoints(cfg.cost);
             GameState.setBootsLevel(bootsLvl + 1);
-            showToast(`👟 Orman İzcisi ${bootsLvl + 1} Yıldız oldu! Koşu başında ${(bootsLvl + 1) * 3} saniye süzülme devrede.`, "success");
+            triggerHaptic("success", 60);
+            showToast(`👟 Orman İzcisi ${bootsLvl + 1}. Yıldız oldu! ${cfg.desc}`, "success");
             renderCampUI();
             updateMenuUI();
           } else {
-            showToast(`⚠️ Yetersiz Altın! ${bootsCost} Altın gerekiyor.`, "warning");
+            showToast(`⚠️ Yetersiz Puan! ${cfg.cost} ⭐ Harcanabilir Kaşif Puanı gerekiyor. Koşularda puan topla!`, "warning");
           }
         };
       }
     }
   }
 
-  // 4. Kaşif Sırt Çantası (İsteğe Bağlı Ek Kart)
-  // Kilit Şartları: 1.Yıldız=4.Etap, 2.Yıldız=7.Etap, 3.Yıldız=9.Etap
-  const PACK_UNLOCK_STAGES = [0, 4, 7, 9]; // index = hedef yıldız seviyesi
-  const packLvl = GameState.getBackpackLevel ? GameState.getBackpackLevel() : 0;
-  const packStars = document.getElementById("camp-pack-stars");
-  if (packStars) packStars.textContent = getStarsString(packLvl, 3);
-  const packDesc = document.getElementById("camp-pack-desc");
-  if (packDesc) {
-    packDesc.textContent = packLvl > 0 ? `Mevcut: Seviye ${packLvl} (Zafer Bonusu Aktif)` : "Mevcut: Seviye 0 (Standart)";
+  // ========================================================
+  // 4. ORMAN PUSULASI (🧭 Patika Avansı & Kritik Can Simidi Kurtarması)
+  // ========================================================
+  const COMPASS_CONFIG = [
+    null,
+    { reqPoints: 1500, reqStage: 0, cost: 700, desc: "Koşu başında 6 sn hızlı adımlar ve patika ivmesi" },
+    { reqPoints: 3800, reqStage: 5, cost: 1600, desc: "Koşu başında 12 sn hızlı adımlar + destek palamudu şansı" },
+    { reqPoints: 7000, reqStage: 8, cost: 3000, desc: "Can 1'e düştüğünde OTOMATİK KURTARMA CAN SİMİDİ!" }
+  ];
+  const compassLvl = GameState.getCompassLevel();
+  const compassStars = document.getElementById("camp-compass-stars");
+  if (compassStars) compassStars.textContent = getStarsString(compassLvl, 3);
+  const compassDesc = document.getElementById("camp-compass-desc");
+  if (compassDesc) {
+    if (compassLvl >= 3) compassDesc.textContent = "Mevcut: Seviye 3 (Kritik Anda Can Simidi Aktif!)";
+    else if (compassLvl === 2) compassDesc.textContent = "Mevcut: Seviye 2 (12 sn Hızlı Adımlar + Palamut)";
+    else if (compassLvl === 1) compassDesc.textContent = "Mevcut: Seviye 1 (6 sn Hızlı Adımlar)";
+    else compassDesc.textContent = "Mevcut: Seviye 0 (Normal Hız)";
   }
-  const packBtn = document.getElementById("btn-upgrade-pack");
-  if (packBtn) {
-    if (packLvl >= 3) {
-      packBtn.textContent = "MAKS SEVİYE ✅";
-      packBtn.classList.add("maxed", "locked-upgrade");
-      packBtn.removeAttribute("data-locked");
-      packBtn.onclick = null;
+  const compassBtn = document.getElementById("btn-upgrade-compass");
+  if (compassBtn) {
+    if (compassLvl >= 3) {
+      compassBtn.textContent = "MAKS SEVİYE ✅";
+      compassBtn.className = "btn-camp-upgrade maxed";
+      compassBtn.onclick = null;
     } else {
-      const packRequiredStage = PACK_UNLOCK_STAGES[packLvl + 1];
-      const packCompletedStages = GameState.getCompletedStages ? GameState.getCompletedStages().length : 0;
-      const packCost = [0, 100, 220, 400][packLvl + 1];
-      if (packRequiredStage > 0 && packCompletedStages < packRequiredStage) {
-        packBtn.textContent = `🔒 Kilitli (${packRequiredStage}. Etapta Açılır)`;
-        packBtn.classList.add("locked-upgrade");
-        packBtn.setAttribute("data-locked", "true");
-        packBtn.onclick = () => showToast(`🎒 Bu yükseltme için önce ${packRequiredStage}. Etabı tamamlamalısın! (Şu an: ${packCompletedStages} etap)`, "warning");
+      const cfg = COMPASS_CONFIG[compassLvl + 1];
+      const isPointsLocked = totalPoints < cfg.reqPoints;
+      const isStageLocked = cfg.reqStage > 0 && completedStagesCount < cfg.reqStage;
+
+      if (isPointsLocked || isStageLocked) {
+        const lockReason = isStageLocked ? `${cfg.reqStage}. Etap` : `${cfg.reqPoints.toLocaleString("tr-TR")} Puan`;
+        compassBtn.textContent = `🔒 Kilitli (${lockReason})`;
+        compassBtn.className = "btn-camp-upgrade locked-upgrade";
+        compassBtn.onclick = () => {
+          showToast(`🧭 Bu yetenek için ${cfg.reqPoints.toLocaleString("tr-TR")} Kaşif Puanı ${cfg.reqStage > 0 ? `ve ${cfg.reqStage}. Etabı tamamlama` : ''} gerekiyor!`, "warning");
+        };
       } else {
-        packBtn.textContent = `${packCost} 🪙 Yükselt (${packLvl + 1}. Yıldız)`;
-        packBtn.classList.remove("maxed", "locked-upgrade");
-        packBtn.removeAttribute("data-locked");
-        packBtn.onclick = () => {
-          if (GameState.getCoins() >= packCost) {
-            GameState.setCoins(GameState.getCoins() - packCost);
-            if (GameState.setBackpackLevel) GameState.setBackpackLevel(packLvl + 1);
-            showToast(`🎒 Sırt Çantası ${packLvl + 1} Yıldız oldu! Zafer bonusu aktif.`, "success");
+        compassBtn.textContent = `${cfg.cost} ⭐ Yükselt (${compassLvl + 1}. Yıldız)`;
+        compassBtn.className = "btn-camp-upgrade";
+        compassBtn.onclick = () => {
+          if (GameState.getAvailablePoints() >= cfg.cost) {
+            GameState.spendExplorerPoints(cfg.cost);
+            GameState.setCompassLevel(compassLvl + 1);
+            triggerHaptic("success", 60);
+            showToast(`🧭 Orman Pusulası ${compassLvl + 1}. Yıldız oldu! ${cfg.desc}`, "success");
             renderCampUI();
             updateMenuUI();
           } else {
-            showToast(`⚠️ Yetersiz Altın! ${packCost} Altın gerekiyor.`, "warning");
+            showToast(`⚠️ Yetersiz Puan! ${cfg.cost} ⭐ Harcanabilir Kaşif Puanı gerekiyor. Koşularda puan topla!`, "warning");
           }
         };
       }
@@ -5918,6 +7765,25 @@ function openOnboardingModal() {
   if (nameInput) {
     nameInput.value = GameState.getExplorerName();
   }
+
+  // Profil İstatistiklerini Doldur (Puan, Altın, Rütbe & Etap)
+  const totalScore = GameState.getTotalStagePoints();
+  const totalCoins = GameState.getCoins();
+  const xp = FirebaseSimService.getXp();
+  const rank = FirebaseSimService.getPlayerRank(xp);
+  let completedCount = 0;
+  for (let i = 0; i < 10; i++) {
+    if (GameState.getLevelState(i) === 3) completedCount++;
+  }
+
+  const statScore = document.getElementById("onboarding-stat-score");
+  if (statScore) statScore.textContent = `${totalScore.toLocaleString("tr-TR")} Puan`;
+
+  const statCoins = document.getElementById("onboarding-stat-coins");
+  if (statCoins) statCoins.textContent = totalCoins.toLocaleString("tr-TR");
+
+  const statRank = document.getElementById("onboarding-stat-rank");
+  if (statRank) statRank.textContent = `${rank.title} (${completedCount}/10)`;
 
   onboardingSelectedHero = GameState.getProfileHero() || 1;
   updateOnboardingHeroSelectionUI();
@@ -5994,12 +7860,12 @@ function initOnboardingEvents() {
 
 const SAHA_KASIFLERI = [
   { id: "k1", name: "Eren", heroId: 3, rankTitle: "Mağlova Baş Muhafızı", stages: 10, baseScore: 4850, coins: 340 },
-  { id: "k2", name: "Duru", heroId: 1, rankTitle: "Gölet Muhafızı", stages: 9, baseScore: 4210, coins: 280 },
-  { id: "k3", name: "Mert", heroId: 2, rankTitle: "Zipline Şampiyonu", stages: 8, baseScore: 3680, coins: 240 },
+  { id: "k2", name: "Duru", heroId: 1, rankTitle: "Gölet & Vadi Muhafızı", stages: 9, baseScore: 4210, coins: 280 },
+  { id: "k3", name: "Mert", heroId: 2, rankTitle: "Gölet & Vadi Muhafızı", stages: 8, baseScore: 3680, coins: 240 },
   { id: "k4", name: "Zeynep", heroId: 3, rankTitle: "Doğa İz Sürücüsü", stages: 7, baseScore: 3120, coins: 210 },
-  { id: "k5", name: "Ali", heroId: 2, rankTitle: "Zipline Şampiyonu", stages: 6, baseScore: 2650, coins: 180 },
+  { id: "k5", name: "Ali", heroId: 2, rankTitle: "Doğa İz Sürücüsü", stages: 6, baseScore: 2650, coins: 180 },
   { id: "k6", name: "Selim", heroId: 1, rankTitle: "Patika Kaşifi", stages: 5, baseScore: 2190, coins: 150 },
-  { id: "k7", name: "Ayşe", heroId: 1, rankTitle: "Doğa Dostu", stages: 4, baseScore: 1740, coins: 120 },
+  { id: "k7", name: "Ayşe", heroId: 1, rankTitle: "Patika Kaşifi", stages: 4, baseScore: 1740, coins: 120 },
   { id: "k8", name: "Can", heroId: 3, rankTitle: "Orman Çaylağı", stages: 3, baseScore: 1320, coins: 90 },
   { id: "k9", name: "Defne", heroId: 2, rankTitle: "Orman Çaylağı", stages: 2, baseScore: 940, coins: 70 },
   { id: "k10", name: "Emir", heroId: 3, rankTitle: "Orman Çaylağı", stages: 1, baseScore: 620, coins: 50 }
@@ -6020,7 +7886,7 @@ class LeaderboardService {
     // Aktif Oyuncu Verisi
     const myName = GameState.getExplorerName() || "Sen (Kaşif)";
     const myProfileHeroId = GameState.getProfileHero();
-    const myTotalPoints = GameState.getTotalExplorerPoints();
+    const myTotalPoints = GameState.getTotalStagePoints();
     const myCoins = GameState.getCoins();
     const myXp = FirebaseSimService.getXp();
     const myRank = FirebaseSimService.getPlayerRank(myXp);
@@ -6090,56 +7956,91 @@ class LeaderboardService {
   }
 
   static render() {
-    const container = document.getElementById("leaderboard-list-container");
-    if (!container) return;
-    container.innerHTML = "";
+    const containers = [
+      document.getElementById("leaderboard-list-container"),
+      document.getElementById("standalone-leaderboard-list-container")
+    ].filter(Boolean);
+
+    if (containers.length === 0) return;
 
     const data = this.getFullLeaderboardData(currentLeaderboardTab);
-    const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯" };
+    const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯", 4: "🐿️", 5: "🦉" };
 
     const me = data.find(d => d.isMe);
     if (me) {
-      const myRankEl = document.getElementById("my-lb-rank");
-      const myAvatarEl = document.getElementById("my-lb-avatar");
-      const myNameEl = document.getElementById("my-lb-name");
-      const mySubEl = document.getElementById("my-lb-sub");
-      const myScoreEl = document.getElementById("my-lb-score");
-      const myCoinsEl = document.getElementById("my-lb-coins");
+      const updateCard = (prefix = "") => {
+        const myRankEl = document.getElementById(`${prefix}my-lb-rank`);
+        const myAvatarEl = document.getElementById(`${prefix}my-lb-avatar`);
+        const myNameEl = document.getElementById(`${prefix}my-lb-name`);
+        const mySubEl = document.getElementById(`${prefix}my-lb-sub`);
+        const myScoreEl = document.getElementById(`${prefix}my-lb-score`);
+        const myCoinsEl = document.getElementById(`${prefix}my-lb-coins`);
 
-      if (myRankEl) myRankEl.textContent = `#${me.rank}`;
-      if (myAvatarEl) myAvatarEl.textContent = heroIcons[me.heroId] || "🦊";
-      if (myNameEl) myNameEl.textContent = me.name;
-      if (mySubEl) mySubEl.textContent = `${me.rankTitle} • ${me.stages}/10 Etap`;
-      if (myScoreEl) myScoreEl.textContent = `${me.score.toLocaleString()} Puan`;
-      if (myCoinsEl) myCoinsEl.textContent = `🪙 ${me.coins}`;
+        if (myRankEl) myRankEl.textContent = `#${me.rank}`;
+        if (myAvatarEl) myAvatarEl.textContent = heroIcons[me.heroId] || "🦊";
+        if (myNameEl) myNameEl.textContent = me.name;
+        if (mySubEl) mySubEl.textContent = `${me.rankTitle} • ${me.stages}/10 Etap`;
+        if (myScoreEl) myScoreEl.textContent = `${me.score.toLocaleString()} Puan`;
+        if (myCoinsEl) myCoinsEl.textContent = `🪙 ${me.coins}`;
+      };
+
+      updateCard("");            // my-lb-...
+      updateCard("standalone-"); // standalone-my-lb-...
     }
 
-    data.forEach(item => {
-      const row = document.createElement("div");
-      row.className = `leaderboard-row ${item.isMe ? 'is-me' : ''}`;
+    containers.forEach(container => {
+      container.innerHTML = "";
+      data.forEach(item => {
+        const row = document.createElement("div");
+        row.className = `leaderboard-row ${item.isMe ? 'is-me' : ''}`;
 
-      let rankClass = "other";
-      let rankText = `#${item.rank}`;
-      if (item.rank === 1) { rankClass = "top-1"; rankText = "🥇 1"; }
-      else if (item.rank === 2) { rankClass = "top-2"; rankText = "🥈 2"; }
-      else if (item.rank === 3) { rankClass = "top-3"; rankText = "🥉 3"; }
+        let rankClass = "other";
+        let rankText = `#${item.rank}`;
+        if (item.rank === 1) { rankClass = "top-1"; rankText = "🥇 1"; }
+        else if (item.rank === 2) { rankClass = "top-2"; rankText = "🥈 2"; }
+        else if (item.rank === 3) { rankClass = "top-3"; rankText = "🥉 3"; }
 
-      row.innerHTML = `
-        <div class="lb-rank-badge ${rankClass}">${rankText}</div>
-        <div class="lb-user-info">
-          <div class="lb-user-avatar">${heroIcons[item.heroId] || "🦊"}</div>
-          <div class="lb-user-details">
-            <div class="lb-user-name">${item.name} ${item.isMe ? '<span style="font-size:10px; color:#ffd166;">(SEN)</span>' : ''}</div>
-            <div class="lb-user-rank-title">${item.rankTitle} • ${item.stages}/10 Etap</div>
+        row.innerHTML = `
+          <div class="lb-rank-badge ${rankClass}">${rankText}</div>
+          <div class="lb-user-info">
+            <div class="lb-user-avatar">${heroIcons[item.heroId] || "🦊"}</div>
+            <div class="lb-user-details">
+              <div class="lb-user-name">${item.name} ${item.isMe ? '<span style="font-size:10px; color:#ffd166;">(SEN)</span>' : ''}</div>
+              <div class="lb-user-rank-title">${item.rankTitle} • ${item.stages}/10 Etap</div>
+            </div>
           </div>
-        </div>
-        <div class="lb-score-col">
-          <div class="lb-score-val">⭐ ${item.score.toLocaleString()}</div>
-          <div class="lb-level-tag">🪙 ${item.coins}</div>
-        </div>
-      `;
+          <div class="lb-score-col">
+            <div class="lb-score-val">⭐ ${item.score.toLocaleString()}</div>
+            <div class="lb-level-tag">🪙 ${item.coins}</div>
+          </div>
+        `;
 
-      container.appendChild(row);
+        container.appendChild(row);
+      });
+    });
+  }
+
+  static updateSyncBadge(status) {
+    const badges = [
+      document.getElementById("leaderboard-sync-badge"),
+      document.getElementById("firebase-cloud-indicator")
+    ].filter(Boolean);
+
+    badges.forEach(badge => {
+      if (status === "live") {
+        badge.textContent = "🟢 Canlı Firebase Bağlantı";
+        badge.className = "device-network-badge is-online";
+        badge.title = "Firestore ile anlık ve çift yönlü senkronize";
+      } else if (status === "syncing") {
+        badge.textContent = "🔄 Senkronize Ediliyor...";
+        badge.className = "device-network-badge is-online";
+      } else if (status === "cached") {
+        badge.textContent = "💾 Önbellek Sıralaması";
+        badge.className = "device-network-badge";
+      } else if (status === "offline") {
+        badge.textContent = "📶 Çevrimdışı (Yerel)";
+        badge.className = "device-network-badge is-offline";
+      }
     });
   }
 
@@ -6148,22 +8049,28 @@ class LeaderboardService {
 
     const myName = GameState.getExplorerName() || "Sen (Kaşif)";
     const myProfileHeroId = GameState.getProfileHero();
-    const myTotalPoints = GameState.getTotalExplorerPoints();
+    const myTotalPoints = GameState.getTotalStagePoints();
     const myCoins = GameState.getCoins();
     let completedCount = 0;
     for (let i = 0; i < 10; i++) {
       if (GameState.getLevelState(i) === 3) completedCount++;
     }
 
+    const rankTitle = FirebaseSimService.getPlayerRank().title;
+
     // 1. Android Native Firebase Bridge ile Firestore'a kaydet
     const bridge = window.AndroidFirebaseBridge || window.AndroidBridge;
+    let bridgeSubmitted = false;
     if (bridge && typeof bridge.submitScore === 'function') {
       try {
         bridge.submitScore(myName, myTotalPoints, myProfileHeroId, completedCount, myCoins);
+        bridgeSubmitted = true;
+        console.log("📱 Android Firebase bridge.submitScore executed for " + myName);
       } catch(e) {
         console.warn("bridge.submitScore error:", e);
       }
-    } else if (bridge && typeof bridge.postMessage === 'function') {
+    }
+    if (bridge && typeof bridge.postMessage === 'function') {
       try {
         bridge.postMessage(JSON.stringify({
           event: "SUBMIT_SCORE",
@@ -6173,65 +8080,79 @@ class LeaderboardService {
           stages: completedCount,
           coins: myCoins
         }));
+        bridgeSubmitted = true;
       } catch(e) {
         console.warn("bridge.postMessage error:", e);
       }
-    } else {
-      // 2. Web Fallback: Firestore REST API ile direkt skor kaydı / güncelleme
-      try {
-        const safeName = (myName || "player").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
-        const docId = `user_${safeName}`;
-        const firestoreUrl = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard/${docId}`;
-        fetch(firestoreUrl, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fields: {
-              name: { stringValue: myName },
-              score: { integerValue: myTotalPoints.toString() },
-              heroId: { integerValue: myProfileHeroId.toString() },
-              stages: { integerValue: completedCount.toString() },
-              coins: { integerValue: myCoins.toString() },
-              rankTitle: { stringValue: FirebaseSimService.getPlayerRank().title },
-              updatedAt: { timestampValue: new Date().toISOString() }
-            }
-          })
-        }).then(res => res.json()).then(resData => {
-          console.log("🌐 Web Firestore leaderboard score synced:", resData);
-        }).catch(err => {
-          console.warn("Web Firestore leaderboard sync failed:", err);
-        });
-      } catch(e) {}
+    }
+
+    // 2. Web / iOS Direct Firestore REST API (hem Web'de hem de çift katman koruması olarak çalışır)
+    try {
+      const safeName = (myName || "player").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
+      const docId = `user_${safeName}`;
+      const firestoreUrl = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard/${docId}`;
+      fetch(firestoreUrl, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            name: { stringValue: myName },
+            score: { integerValue: myTotalPoints.toString() },
+            heroId: { integerValue: myProfileHeroId.toString() },
+            stages: { integerValue: completedCount.toString() },
+            coins: { integerValue: myCoins.toString() },
+            rankTitle: { stringValue: rankTitle },
+            updatedAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      }).then(res => res.json()).then(resData => {
+        console.log("🌐 Firestore leaderboard score synced successfully:", resData);
+        LeaderboardService.updateSyncBadge("live");
+      }).catch(err => {
+        console.warn("Firestore leaderboard score sync notice:", err);
+      });
+    } catch(e) {}
+
+    if (bridgeSubmitted) {
+      LeaderboardService.updateSyncBadge("live");
     }
 
     this.render();
   }
 
-  static fetchWebLeaderboard() {
-    if (window.AndroidFirebaseBridge || window.AndroidBridge) return;
+  static async fetchWebLeaderboard() {
     try {
-      fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard")
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.documents && Array.isArray(data.documents)) {
-            const list = data.documents.map(doc => {
-              const f = doc.fields || {};
-              const id = doc.name ? doc.name.split("/").pop() : "unknown";
-              return {
-                id: id,
-                name: f.name ? f.name.stringValue : "Kaşif",
-                score: f.score ? parseInt(f.score.integerValue || f.score.doubleValue || "0", 10) : 0,
-                heroId: f.heroId ? parseInt(f.heroId.integerValue || "1", 10) : 1,
-                stages: f.stages ? parseInt(f.stages.integerValue || "0", 10) : 0,
-                coins: f.coins ? parseInt(f.coins.integerValue || "0", 10) : 0,
-                rankTitle: f.rankTitle ? f.rankTitle.stringValue : "Doğa Kaşifi"
-              };
-            });
+      LeaderboardService.updateSyncBadge("syncing");
+      const res = await fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/leaderboard", { cache: "no-cache" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.documents && Array.isArray(data.documents)) {
+          const list = data.documents.map(doc => {
+            const f = doc.fields || {};
+            const id = doc.name ? doc.name.split("/").pop() : "unknown";
+            return {
+              id: id,
+              name: f.name ? f.name.stringValue : "Kaşif",
+              score: f.score ? parseInt(f.score.integerValue || f.score.doubleValue || "0", 10) : 0,
+              heroId: f.heroId ? parseInt(f.heroId.integerValue || "1", 10) : 1,
+              stages: f.stages ? parseInt(f.stages.integerValue || "0", 10) : 0,
+              coins: f.coins ? parseInt(f.coins.integerValue || "0", 10) : 0,
+              rankTitle: f.rankTitle ? f.rankTitle.stringValue : "Doğa Kaşifi"
+            };
+          });
+          if (list.length > 0) {
             LeaderboardService.setRemoteLeaderboard(list);
+            LeaderboardService.updateSyncBadge("live");
+            console.log("🌐 Live Firestore leaderboard fetched: " + list.length + " players.");
+            return;
           }
-        })
-        .catch(e => console.warn("Web Firestore leaderboard fetch error:", e));
-    } catch(e) {}
+        }
+      }
+      LeaderboardService.updateSyncBadge("cached");
+    } catch(e) {
+      console.warn("Web Firestore leaderboard fetch error:", e);
+      LeaderboardService.updateSyncBadge("offline");
+    }
   }
 
   static fetchWebZones() {
@@ -6267,10 +8188,6 @@ class LeaderboardService {
   }
 }
 
-function openLeaderboardModal() {
-  openAchievementsHub("lb");
-}
-
 function initLeaderboardEvents() {
   const btnMenu = document.getElementById("btn-menu-leaderboard");
   if (btnMenu) btnMenu.onclick = () => openLeaderboardModal();
@@ -6282,13 +8199,28 @@ function initLeaderboardEvents() {
     };
   }
 
+  const handleRefresh = () => {
+    LeaderboardService.updateSyncBadge("syncing");
+    showToast("🔄 Puan tablosu canlı olarak güncelleniyor...", "info");
+    LeaderboardService.syncMyScore();
+    LeaderboardService.fetchWebLeaderboard();
+    if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.syncFromRemote) {
+      RemoteQuizService.syncFromRemote();
+    }
+    if (typeof CrossPlatformBridge !== "undefined" && CrossPlatformBridge.syncFirebaseData) {
+      CrossPlatformBridge.syncFirebaseData();
+    }
+    setTimeout(() => {
+      LeaderboardService.render();
+      showToast("✅ Canlı Puan Tablosu Firebase ile Senkronize Edildi!", "success");
+    }, 600);
+  };
+
   const refreshBtn = document.getElementById("btn-lb-refresh");
-  if (refreshBtn) {
-    refreshBtn.onclick = () => {
-      showToast("🔄 Puan tablosu canlı olarak güncellendi!", "info");
-      LeaderboardService.syncMyScore();
-    };
-  }
+  if (refreshBtn) refreshBtn.onclick = handleRefresh;
+
+  const standaloneRefreshBtn = document.getElementById("btn-standalone-lb-refresh");
+  if (standaloneRefreshBtn) standaloneRefreshBtn.onclick = handleRefresh;
 
   const openRewardsBtn = document.getElementById("btn-lb-open-rewards");
   if (openRewardsBtn) {
@@ -6298,22 +8230,32 @@ function initLeaderboardEvents() {
     };
   }
 
+  const switchTab = (tab) => {
+    currentLeaderboardTab = tab;
+    const isAll = tab === "all";
+
+    const tabAll = document.getElementById("btn-tab-lb-all");
+    const tabWeekly = document.getElementById("btn-tab-lb-weekly");
+    if (tabAll) tabAll.classList.toggle("active", isAll);
+    if (tabWeekly) tabWeekly.classList.toggle("active", !isAll);
+
+    const sTabAll = document.getElementById("btn-standalone-tab-lb-all");
+    const sTabWeekly = document.getElementById("btn-standalone-tab-lb-weekly");
+    if (sTabAll) sTabAll.classList.toggle("active", isAll);
+    if (sTabWeekly) sTabWeekly.classList.toggle("active", !isAll);
+
+    LeaderboardService.render();
+  };
+
   const tabAll = document.getElementById("btn-tab-lb-all");
   const tabWeekly = document.getElementById("btn-tab-lb-weekly");
-  if (tabAll && tabWeekly) {
-    tabAll.onclick = () => {
-      currentLeaderboardTab = "all";
-      tabAll.classList.add("active");
-      tabWeekly.classList.remove("active");
-      LeaderboardService.render();
-    };
-    tabWeekly.onclick = () => {
-      currentLeaderboardTab = "weekly";
-      tabWeekly.classList.add("active");
-      tabAll.classList.remove("active");
-      LeaderboardService.render();
-    };
-  }
+  if (tabAll) tabAll.onclick = () => switchTab("all");
+  if (tabWeekly) tabWeekly.onclick = () => switchTab("weekly");
+
+  const sTabAll = document.getElementById("btn-standalone-tab-lb-all");
+  const sTabWeekly = document.getElementById("btn-standalone-tab-lb-weekly");
+  if (sTabAll) sTabAll.onclick = () => switchTab("all");
+  if (sTabWeekly) sTabWeekly.onclick = () => switchTab("weekly");
 }
 
 // ============================================================================
@@ -6392,7 +8334,7 @@ class RewardsService {
     if (!container) return;
     container.innerHTML = "";
 
-    const userPoints = GameState.getTotalExplorerPoints();
+    const userPoints = GameState.getTotalStagePoints();
     const userCoins = GameState.getCoins();
 
     const bannerPoints = document.getElementById("rewards-user-points");
@@ -6610,6 +8552,9 @@ const CrossPlatformBridge = {
         LeaderboardService.fetchWebZones();
         LeaderboardService.fetchWebLeaderboard();
       }
+      if (typeof RemoteQuizService !== 'undefined' && RemoteQuizService.syncFromRemote) {
+        RemoteQuizService.syncFromRemote();
+      }
     } catch(e) {
       console.warn("syncFirebaseData error:", e);
     }
@@ -6678,6 +8623,7 @@ window.onFirebaseLeaderboardReady = function(lbData) {
     const list = typeof lbData === 'string' ? JSON.parse(lbData) : lbData;
     if (Array.isArray(list) && list.length > 0) {
       LeaderboardService.setRemoteLeaderboard(list);
+      LeaderboardService.updateSyncBadge("live");
       console.log("🏆 Live onFirebaseLeaderboardReady received with " + list.length + " scores!");
     }
   } catch(e) {
@@ -6709,6 +8655,9 @@ window.switchHubTab = switchHubTab;
 window.openAchievementsHub = openAchievementsHub;
 window.DeviceNetworkService = DeviceNetworkService;
 window.CrossPlatformBridge = CrossPlatformBridge;
+window.startNatureQuiz = startNatureQuiz;
+window.focusOnMapPin = focusOnMapPin;
+window.proceedToNextStageOnMap = proceedToNextStageOnMap;
 
 function initApp() {
   if (appInitialized) return;
@@ -6765,4 +8714,79 @@ window.addEventListener("load", () => {
   initApp();
   try { updateMenuUI(); } catch(e) {}
 });
+
+// ============================================================================
+// 11. BÜYÜK FİNAL (10. ETAP) RESMİ ORMAN KAŞİFİ ROZETİ VE KUTLAMA ANİMASYONLARI
+// ============================================================================
+
+window.triggerBadgeCelebration = function() {
+  if (sounds && sounds.playCollect) sounds.playCollect();
+  triggerHaptic("impactMedium", 40);
+
+  const container = document.getElementById("grand-badge-container");
+  if (!container) return;
+
+  const rect = container.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  const starSymbols = ["⭐", "✨", "🌟", "🪙", "👑", "🌿"];
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+    const dist = 75 + Math.random() * 85;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+
+    const star = document.createElement("span");
+    star.className = "badge-flying-star";
+    star.textContent = starSymbols[i % starSymbols.length];
+    star.style.left = `${centerX}px`;
+    star.style.top = `${centerY}px`;
+    star.style.setProperty("--dx", `${dx}px`);
+    star.style.setProperty("--dy", `${dy}px`);
+    document.body.appendChild(star);
+
+    setTimeout(() => {
+      if (star.parentNode) star.parentNode.removeChild(star);
+    }, 900);
+  }
+};
+
+window.launchVictoryFireworks = function() {
+  if (sounds && sounds.playCollect) sounds.playCollect();
+  triggerHaptic("notification", 50);
+
+  const colors = ["#ffd166", "#ef4444", "#38bdf8", "#52b788", "#ec4899", "#f59e0b", "#ffffff"];
+  for (let burst = 0; burst < 5; burst++) {
+    setTimeout(() => {
+      const bx = window.innerWidth * (0.18 + Math.random() * 0.64);
+      const by = window.innerHeight * (0.22 + Math.random() * 0.38);
+
+      for (let i = 0; i < 20; i++) {
+        const angle = (i / 20) * Math.PI * 2;
+        const dist = 65 + Math.random() * 110;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+
+        const p = document.createElement("div");
+        p.className = "badge-flying-star";
+        p.style.left = `${bx}px`;
+        p.style.top = `${by}px`;
+        p.style.width = "7px";
+        p.style.height = "7px";
+        p.style.borderRadius = "50%";
+        p.style.backgroundColor = colors[(burst + i) % colors.length];
+        p.style.boxShadow = `0 0 10px ${colors[(burst + i) % colors.length]}`;
+        p.style.setProperty("--dx", `${dx}px`);
+        p.style.setProperty("--dy", `${dy}px`);
+        document.body.appendChild(p);
+
+        setTimeout(() => {
+          if (p.parentNode) p.parentNode.removeChild(p);
+        }, 900);
+      }
+    }, burst * 260);
+  }
+};
+
 

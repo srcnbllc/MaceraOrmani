@@ -184,12 +184,15 @@ body.is-native-app #app-container {
 #screen-menu {
   background-image: url('Assets/Sprites/menu_arkaplan.png');
   background-color: #11281c;
-  background-size: 100% 100%;
-  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center top;
   position: relative;
   overflow: hidden;
   padding: 0;
   margin: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* ==========================================================
@@ -949,6 +952,14 @@ body.is-native-app #app-container {
   margin-bottom: 4px;
 }
 
+.wood-victory-card {
+  background: linear-gradient(180deg, #1b3a29 0%, #0d2217 60%, #08170f 100%);
+  border: 2.5px solid #ffd166;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 15px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(255, 209, 102, 0.35);
+  text-align: center;
+  gap: 10px;
+}
+
 /* ==========================================================
    5. RUNNER GAMEPLAY SCREEN
 ========================================================== */
@@ -1000,7 +1011,7 @@ body.is-native-app #app-container {
 /* HUD Overlay */
 .game-hud {
   position: absolute;
-  top: 36px;
+  top: 32px;
   left: 0;
   width: 100%;
   padding: 0 14px;
@@ -1009,6 +1020,7 @@ body.is-native-app #app-container {
   align-items: center;
   z-index: 100;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .hud-pill {
@@ -1038,12 +1050,13 @@ body.is-native-app #app-container {
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 28px);
-  background: rgba(8, 24, 16, 0.88);
-  border: 1.5px solid rgba(212, 175, 55, 0.5);
-  border-radius: 12px;
-  padding: 4px 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  z-index: 100;
+  max-width: 480px;
+  background: linear-gradient(135deg, rgba(24, 15, 9, 0.94) 0%, rgba(12, 32, 20, 0.94) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
+  border-radius: 14px;
+  padding: 4px 10px 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
+  z-index: 90;
   pointer-events: none;
   box-sizing: border-box;
 }
@@ -1086,7 +1099,7 @@ body.is-native-app #app-container {
 /* In-game Forest Spot Card Banner */
 .in-game-spot-card {
   position: absolute;
-  top: 90px;
+  top: 148px;
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
@@ -1325,6 +1338,58 @@ body.is-native-app #app-container {
 @keyframes pinBounce {
   0%, 100% { transform: translate(-50%, -85%) scale(1); }
   50% { transform: translate(-50%, -98%) scale(1.14); }
+}
+
+/* 🎯 Dinamik Sonraki Durak Odaklanması (Golden Forest Glow & Callout) */
+.map-pin-btn.pin-next-focus {
+  z-index: 120 !important;
+  animation: pinNextPulse 1.3s infinite alternate ease-in-out !important;
+}
+
+@keyframes pinNextPulse {
+  0% {
+    transform: translate(-50%, -85%) scale(1.08);
+    filter: drop-shadow(0 0 8px #ffd166);
+  }
+  100% {
+    transform: translate(-50%, -102%) scale(1.26);
+    filter: drop-shadow(0 0 16px #ffd166) drop-shadow(0 0 28px #52b788);
+  }
+}
+
+.pin-focus-callout {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #d4af37 0%, #7c5807 100%);
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 209, 102, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  animation: calloutBounce 0.75s infinite alternate ease-in-out;
+  letter-spacing: 0.4px;
+}
+
+@keyframes calloutBounce {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.pin-focus-callout .callout-arrow {
+  font-size: 8px;
+  line-height: 1;
+  color: #ffd166;
+  margin-top: -2px;
 }
 
 .map-pin-graphic {
@@ -1962,6 +2027,34 @@ body.is-native-app #app-container {
   border-radius: 12px;
 }
 
+.quiz-sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+.quiz-sync-badge.live {
+  background: rgba(45, 106, 79, 0.45);
+  border: 1px solid #52b788;
+  color: #74c69d;
+  box-shadow: 0 0 6px rgba(82, 183, 136, 0.3);
+}
+.quiz-sync-badge.cached {
+  background: rgba(255, 209, 102, 0.15);
+  border: 1px solid #ffd166;
+  color: #ffd166;
+}
+.quiz-sync-badge.local {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #d8f3dc;
+}
+
 .quiz-progress-track {
   display: flex;
   justify-content: center;
@@ -2134,19 +2227,27 @@ body.is-native-app #app-container {
 }
 
 .quiz-feedback-box {
-  background: rgba(45, 106, 79, 0.28);
+  background: rgba(45, 106, 79, 0.35);
   border: 1.5px solid #52b788;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  text-align: left;
+  animation: fadeIn 0.22s ease-out;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.quiz-feedback-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  text-align: left;
-  animation: fadeIn 0.22s ease-out;
 }
 
 .quiz-feedback-icon {
-  font-size: 20px;
+  font-size: 22px;
   flex-shrink: 0;
 }
 
@@ -2154,7 +2255,64 @@ body.is-native-app #app-container {
   font-size: 12px;
   color: #d8f3dc;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* Şık Cevap Rozetleri (Seçenek üzerinde anında beliren DOĞRU / YANLIŞ etiketleri) */
+.opt-answer-badge {
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 8px;
+  margin-left: auto;
+  white-space: nowrap;
+  animation: popInBadge 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.opt-answer-badge.correct-badge {
+  background: #52b788;
+  color: #081c15;
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 10px rgba(82, 183, 136, 0.85);
+}
+
+.opt-answer-badge.wrong-badge {
+  background: #e63946;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.85);
+}
+
+@keyframes popInBadge {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Canlı Altın & Skor Punch Animasyonu */
+.quiz-live-coins-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1.5px solid #ffd166;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #ffd166;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.punch-scale {
+  animation: punchScaleAnim 0.35s ease-out;
+}
+
+@keyframes punchScaleAnim {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); color: #fff; text-shadow: 0 0 12px #ffd166; }
+  100% { transform: scale(1); }
 }
 
 /* Sonuç Ekranı */
@@ -2416,11 +2574,66 @@ body.is-native-app #app-container {
   border: 2px solid #ffd166 !important;
 }
 
+.onboarding-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: rgba(8, 24, 16, 0.85);
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  border-radius: 14px;
+  padding: 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  box-sizing: border-box;
+}
+
+.ob-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ob-stat-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.ob-stat-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: left;
+}
+
+.ob-stat-label {
+  font-size: 8.5px;
+  color: #a7c4bc;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.ob-stat-val {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffd166;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .onboarding-form {
   display: flex;
   flex-direction: column;
   text-align: left;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .onboarding-label {
@@ -3335,7 +3548,7 @@ body.is-native-app #app-container {
   align-items: center;
   gap: 6px;
   position: absolute;
-  top: 50px;
+  top: 114px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
@@ -3894,7 +4107,7 @@ body.is-native-app #app-container {
 /* Aktif Kıyafet Güçleri HUD Şeridi */
 .hud-clothing-bar {
   position: absolute;
-  top: 86px;
+  top: 138px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -3965,17 +4178,17 @@ body.is-native-app #app-container {
 /* Canlı İlerleme Çubuğu & HUD Skor */
 .hud-progress-wrap {
   position: absolute;
-  top: 48px;
+  top: 76px;
   left: 50%;
   transform: translateX(-50%);
   width: 92%;
   max-width: 480px;
-  background: linear-gradient(135deg, rgba(24, 15, 9, 0.92) 0%, rgba(12, 32, 20, 0.92) 100%);
-  border: 1.5px solid rgba(255, 209, 102, 0.55);
-  border-radius: 16px;
-  padding: 5px 12px 6px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
-  z-index: 52;
+  background: linear-gradient(135deg, rgba(24, 15, 9, 0.94) 0%, rgba(12, 32, 20, 0.94) 100%);
+  border: 1.5px solid rgba(255, 209, 102, 0.6);
+  border-radius: 14px;
+  padding: 4px 10px 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
+  z-index: 90;
   box-sizing: border-box;
 }
 
@@ -4034,91 +4247,82 @@ body.is-native-app #app-container {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 90px; /* 90 piksellik derin toprak zemin tabakasının tam içi */
+  height: 72px; /* Küçültülmüş, ergonomik ve kompakt zemin kutusu */
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 12px;
   z-index: 65;
   pointer-events: none;
   box-sizing: border-box;
-  padding: 0 10px;
-  padding-bottom: max(0px, env(safe-area-inset-bottom, 0px));
+  padding: 0 14px 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
 }
 
-.btn-touch-action {
+/* Ortadan İkiye Ayrılmış Çocuk Dostu Geniş Kontrol Kutuları */
+.dock-action-box {
   pointer-events: auto;
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  min-height: 52px;
-  border-radius: 50%;
-  border: 2.5px solid #ffd166;
+  flex: 1;
+  height: 54px;
+  border-radius: 16px;
   font-family: 'Fredoka', sans-serif;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 900;
   color: #ffffff;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 1.5px 0 rgba(255, 255, 255, 0.4);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.btn-touch-action span {
-  font-size: 17px;
+.dock-action-box .dock-box-icon {
+  font-size: 20px;
   line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
-.btn-touch-jump {
-  background: linear-gradient(180deg, #2a9d8f 0%, #1b4332 100%);
-  border-color: #52b788;
+.dock-action-box .dock-box-text {
+  letter-spacing: 0.8px;
+  text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.8);
 }
 
-.btn-touch-jump:active {
-  transform: scale(0.92);
-  background: linear-gradient(180deg, #1b4332 0%, #0d281a 100%);
+/* Sol Kutu: Turuncu EĞİL */
+.dock-box-slide {
+  background: linear-gradient(135deg, #e76f51 0%, #b3391b 100%);
+  border: 2.5px solid #f4a261;
+  box-shadow: 0 4px 14px rgba(179, 57, 27, 0.5), inset 0 1.5px 0 rgba(255, 255, 255, 0.4);
+}
+
+.dock-box-slide:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #a43a22 0%, #6e2010 100%);
   border-color: #ffd166;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.btn-touch-slide {
-  background: linear-gradient(180deg, #e76f51 0%, #a43a22 100%);
-  border-color: #f4a261;
+/* Sağ Kutu: Yeşil ZIPLA */
+.dock-box-jump {
+  background: linear-gradient(135deg, #2a9d8f 0%, #164e3b 100%);
+  border: 2.5px solid #52b788;
+  box-shadow: 0 4px 14px rgba(22, 78, 59, 0.5), inset 0 1.5px 0 rgba(255, 255, 255, 0.4);
 }
 
-.btn-touch-slide:active {
-  transform: scale(0.92);
-  background: linear-gradient(180deg, #a43a22 0%, #6e2010 100%);
+.dock-box-jump:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #1b4332 0%, #0d281a 100%);
   border-color: #ffd166;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-/* İki Buton Arasındaki Mesaj Kapsülü */
-.touch-control-hint.inline-center-hint {
-  position: static;
-  transform: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(14, 38, 26, 0.9);
-  border: 1.5px solid rgba(255, 209, 102, 0.65);
-  border-radius: 14px;
-  padding: 4px 10px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 9.5px;
-  font-weight: 800;
-  color: #ffd166;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  text-align: center;
-  line-height: 1.2;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  z-index: 55;
-  white-space: nowrap;
+/* Geriye Dönük Uyumluluk (Legacy classes) */
+.btn-touch-action {
+  pointer-events: auto;
 }
 
 /* Dar Ekran Mobil Cihazlar Optimizasyonu (iPhone SE / Küçük Ekranlı Android'ler) */
@@ -4160,11 +4364,11 @@ body.is-native-app #app-container {
     font-size: 10.5px;
   }
   .hud-progress-wrap {
-    top: 54px;
+    top: 78px;
     padding: 7px 16px 8px;
   }
   .hud-clothing-bar {
-    top: 96px;
+    top: 140px;
   }
 }
 
@@ -4497,6 +4701,405 @@ body.is-native-app #app-container {
 .wood-btn-secondary:active {
   transform: scale(0.97);
 }
+
+/* ========================================================
+   BÜYÜK FİNAL & RESMİ ORMAN KAŞİFİ ROZETİ (10. ETAP)
+======================================================== */
+.grand-victory-content {
+  background: radial-gradient(circle at 50% 20%, #1e3a29 0%, #0a1710 70%, #040906 100%) !important;
+  border: 2px solid #ffd166 !important;
+  box-shadow: 0 0 35px rgba(255, 209, 102, 0.45), inset 0 0 20px rgba(0, 0, 0, 0.8) !important;
+  max-width: 380px !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: 16px 14px !important;
+}
+
+.grand-victory-title {
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  color: #ffd166 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 209, 102, 0.6) !important;
+  margin: 6px 0 4px 0 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.grand-victory-subtitle {
+  font-size: 11.5px !important;
+  color: #d8f3dc !important;
+  line-height: 1.4 !important;
+  margin: 0 0 10px 0 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* 3D Altın Rozet Sarmalayıcı */
+.grand-badge-wrapper {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 6px auto 10px auto !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: manipulation !important;
+  width: 170px !important;
+  height: 170px !important;
+}
+
+/* Dönen Güneş Işınları */
+.badge-rays {
+  position: absolute !important;
+  width: 160px !important;
+  height: 160px !important;
+  border-radius: 50% !important;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 209, 102, 0.3) 0deg 20deg,
+    transparent 20deg 40deg,
+    rgba(255, 209, 102, 0.3) 40deg 60deg,
+    transparent 60deg 80deg,
+    rgba(255, 209, 102, 0.3) 80deg 100deg,
+    transparent 100deg 120deg,
+    rgba(255, 209, 102, 0.3) 120deg 140deg,
+    transparent 140deg 160deg,
+    rgba(255, 209, 102, 0.3) 160deg 180deg,
+    transparent 180deg 200deg,
+    rgba(255, 209, 102, 0.3) 200deg 220deg,
+    transparent 220deg 240deg,
+    rgba(255, 209, 102, 0.3) 240deg 260deg,
+    transparent 260deg 280deg,
+    rgba(255, 209, 102, 0.3) 280deg 300deg,
+    transparent 300deg 320deg,
+    rgba(255, 209, 102, 0.3) 320deg 340deg,
+    transparent 340deg 360deg
+  ) !important;
+  animation: spinRays 14s linear infinite !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+@keyframes spinRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Altın Madalya ve Kurdele */
+.grand-gold-medal {
+  position: relative !important;
+  z-index: 2 !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.grand-badge-wrapper:active .grand-gold-medal {
+  transform: scale(0.92) rotate(-3deg) !important;
+}
+
+.medal-ribbon {
+  position: absolute !important;
+  top: -6px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 60px !important;
+  height: 25px !important;
+  z-index: 1 !important;
+}
+
+.ribbon-tail {
+  position: absolute !important;
+  top: 0 !important;
+  width: 22px !important;
+  height: 38px !important;
+  background: linear-gradient(180deg, #b71c1c 0%, #880e4f 100%) !important;
+  border: 1px solid #ffd166 !important;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 82%, 0% 100%) !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.ribbon-tail.left {
+  left: 4px !important;
+  transform: rotate(18deg) !important;
+}
+
+.ribbon-tail.right {
+  right: 4px !important;
+  transform: rotate(-18deg) !important;
+}
+
+.medal-outer-ring {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 122px !important;
+  height: 122px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, #ffe066 10%, #d4af37 55%, #8c6b12 90%, #544007 100%) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.8), inset 0 -2px 6px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #fff275 !important;
+}
+
+.medal-inner-disc {
+  width: 98px !important;
+  height: 98px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #20402b 0%, #0d2116 75%, #05100a 100%) !important;
+  border: 2px dashed #ffd166 !important;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(255, 255, 255, 0.3) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+}
+
+.medal-crown {
+  font-size: 13px !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8)) !important;
+  margin-top: -2px !important;
+}
+
+.medal-emblem {
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) !important;
+}
+
+.medal-title {
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  color: #ffd166 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 1px 2px #000 !important;
+  margin-top: 1px !important;
+}
+
+.medal-rank {
+  font-size: 7px !important;
+  font-weight: 700 !important;
+  color: #b7efc5 !important;
+  letter-spacing: 0.3px !important;
+  text-shadow: 0 1px 2px #000 !important;
+}
+
+.medal-stars {
+  font-size: 8px !important;
+  line-height: 1 !important;
+  letter-spacing: 1px !important;
+  margin-top: 1px !important;
+}
+
+.badge-sparkle-prompt {
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: #ffd166 !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9) !important;
+  margin-top: 4px !important;
+  animation: promptPulse 1.6s ease-in-out infinite alternate !important;
+  z-index: 3 !important;
+}
+
+@keyframes promptPulse {
+  0% { transform: scale(0.96); opacity: 0.8; }
+  100% { transform: scale(1.06); opacity: 1; text-shadow: 0 0 10px #ffd166; }
+}
+
+/* Final İstatistikleri */
+.grand-victory-stats {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 6px !important;
+  margin: 6px 0 12px 0 !important;
+  width: 100% !important;
+}
+
+.g-stat-box {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(82, 183, 136, 0.4) !important;
+  border-radius: 8px !important;
+  padding: 6px 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.g-stat-label {
+  font-size: 9.5px !important;
+  color: #a7c957 !important;
+  text-transform: uppercase !important;
+  margin-bottom: 2px !important;
+}
+
+.g-stat-val {
+  font-size: 13px !important;
+  font-weight: bold !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+}
+
+.g-stat-val.gold-text {
+  color: #ffd166 !important;
+}
+
+/* Butonlar & Havai Fişek Efekti */
+.grand-action-btns {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.pulse-btn {
+  animation: grandPulse 2s infinite !important;
+  background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%) !important;
+  color: #1a0f00 !important;
+  font-weight: 900 !important;
+  border: 1.5px solid #fff275 !important;
+  box-shadow: 0 4px 15px rgba(255, 209, 102, 0.5) !important;
+}
+
+@keyframes grandPulse {
+  0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 209, 102, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 6px 22px rgba(255, 209, 102, 0.85); }
+  100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 209, 102, 0.4); }
+}
+
+/* Dokunulduğunda Uçuşan Zafer Yıldızları (Floating Sparkles) */
+.badge-flying-star {
+  position: fixed !important;
+  pointer-events: none !important;
+  z-index: 10001 !important;
+  font-size: 18px !important;
+  animation: flyOutStar 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+}
+
+@keyframes flyOutStar {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.6) rotate(360deg);
+  }
+}
+
+/* ========================================================
+   GELİŞİM VADİSİ: KAŞİF PUANI & XP KILAVUZU STİLLERİ
+======================================================== */
+.camp-points-badge {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.25) 0%, rgba(245, 158, 11, 0.35) 100%);
+  border: 1.5px solid #ffd166;
+  color: #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.2);
+}
+
+.camp-xp-explainer {
+  background: rgba(13, 40, 26, 0.85);
+  border: 1px solid rgba(82, 183, 136, 0.35);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 8px 0 10px 0;
+  text-align: left;
+}
+
+.camp-xp-explainer-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd166;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.camp-xp-explainer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.camp-xp-item {
+  font-size: 10px;
+  color: #d8f3dc;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.35;
+}
+
+.camp-xp-item-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.camp-xp-item strong {
+  color: #ffffff;
+}
+
+.btn-camp-upgrade.locked-upgrade {
+  background: rgba(50, 50, 50, 0.6) !important;
+  color: #9ca3af !important;
+  border-color: #6b7280 !important;
+  cursor: not-allowed !important;
+}
+
+.btn-camp-upgrade.maxed {
+  background: rgba(45, 106, 79, 0.8) !important;
+  color: #b7e4c7 !important;
+  border-color: #52b788 !important;
+  cursor: default !important;
+}
+
+/* KULLANICI TALEBİ: Kalan canlar ve HUD biraz daha aşağıda, görünür ve büyük olmalı */
+.game-hud {
+  position: absolute !important;
+  top: max(46px, calc(env(safe-area-inset-top, 0px) + 24px)) !important; /* Çentik ve üst bardan kurtarıp görünür kıldık */
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+  pointer-events: none; /* Tıklamaların alt katmana geçmesi için (gerekirse butonlara auto verilir) */
+}
+
+.game-hud .hud-wood-pause-btn {
+  pointer-events: auto; /* Durdur butonunun tıklanabilir olması için */
+}
+
+.game-hud .hud-pill {
+  padding: 6px 13px !important;
+  font-size: 13.5px !important;
+}
+
+.game-hud .hearts-container {
+  font-size: 20px !important; /* Çocuklar için çok daha büyük, net ve belirgin can göstergesi */
+  letter-spacing: 3px !important;
+  filter: drop-shadow(0 2px 5px rgba(255, 71, 87, 0.55));
+}
+
+.hud-progress-wrap {
+  position: absolute !important;
+  top: max(96px, calc(env(safe-area-inset-top, 0px) + 74px)) !important; /* Puanların (game-hud) altında ferah konum */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 90% !important;
+  z-index: 90;
+}
+
 
 
 

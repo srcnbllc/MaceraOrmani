@@ -41,7 +41,7 @@
 
     <!-- Ahşap Pano Üzerindeki Sayı Sayaçları (ALTIN ve PUAN) -->
     <div class="stat-slot-gold">
-      <span id="menu-coin-count">50</span>
+      <span id="menu-coin-count">0</span>
     </div>
     <div class="stat-slot-score">
       <span id="menu-high-score">0</span>
@@ -293,14 +293,13 @@
     </div>
 
     <div class="game-action-buttons centered-bottom-dock">
-      <button id="btn-touch-slide" class="btn-touch-action btn-touch-slide" type="button" title="Kay / Eğil">
-        <span>⬇️</span> EĞİL
+      <button id="btn-touch-slide" class="dock-action-box dock-box-slide btn-touch-action btn-touch-slide" type="button" title="Kay / Eğil">
+        <span class="dock-box-icon">⬇️</span>
+        <span class="dock-box-text">EĞİL</span>
       </button>
-      <div class="touch-control-hint inline-center-hint">
-        <span>👆 Başparmak Kontrolü<br>🟠 Sol: Eğil • 🟢 Sağ: Zıpla</span>
-      </div>
-      <button id="btn-touch-jump" class="btn-touch-action btn-touch-jump" type="button" title="Zıpla">
-        <span>⬆️</span> ZIPLA
+      <button id="btn-touch-jump" class="dock-action-box dock-box-jump btn-touch-action btn-touch-jump" type="button" title="Zıpla">
+        <span class="dock-box-icon">⬆️</span>
+        <span class="dock-box-text">ZIPLA</span>
       </button>
     </div>
   </div>
@@ -347,8 +346,7 @@
         </div>
       </div>
 
-      <button id="btn-modal-start-level" class="btn-main">OYUNA BAŞLA</button>
-      <button id="btn-modal-nature-quiz" class="btn-secondary" style="border-color: #52b788; color: #d8f3dc; font-size: 12px;">🌿 3 Soruluk Doğa Bilgi Yarışması (+Ödül)</button>
+      <button id="btn-modal-start-level" class="btn-main">🎮 YARIŞMAYA BAŞLA</button>
       <button id="btn-modal-qr-unlock" class="btn-secondary" style="display: none; border-color: #ffd166; color: #ffd166;">📷 Saha QR Kodu ile Kilidi Aç</button>
       <button id="btn-modal-close-level" class="btn-secondary" onclick="document.getElementById('modal-level-info').classList.remove('active');">Kapat</button>
     </div>
@@ -356,34 +354,114 @@
 
   <!-- Bölüm Zafer Modalı -->
   <div id="modal-victory" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content wood-victory-card">
       <div class="modal-header-tag">🎉 TEBRİKLER! ETAP TAMAMLANDI!</div>
       <h3 id="victory-title" class="modal-title">Etap Başarıyla Geçildi!</h3>
       <p id="victory-fact" class="modal-desc">Doğa ve Tarih Notu</p>
       <div class="modal-facilities">
-        <span>Kazanılan Altın: </span>
+        <span>Kazanılan Ödül: </span>
         <strong id="victory-coins-earned">+0 🪙</strong>
       </div>
-      <button id="btn-victory-next" class="btn-main">SONRAKİ BÖLÜM ⏩</button>
-      <button id="btn-victory-lb" class="btn-secondary" style="border-color: #ffd166; color: #ffd166;" type="button">🏆 Puan Tablosunu Gör</button>
-      <button id="btn-victory-map" class="btn-secondary">Haritaya Dön</button>
+      <button id="btn-victory-next" class="btn-main">🌿 DOĞA VE BİLİM YARIŞMASINA GEÇ ⏩</button>
+      <button id="btn-victory-map" class="btn-secondary">🗺️ Soruları Geç, Sonraki Etaba Odaklan</button>
+      <button id="btn-victory-lb" class="btn-secondary" style="border-color: #ffd166; color: #ffd166; font-size: 11.5px; opacity: 0.85;" type="button">🏆 Puan Tablosunu Gör</button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       4. BÜYÜK FİNAL & RESMİ ORMAN KAŞİFİ ROZETİ MODALI (10. ETAP)
+  ======================================================== -->
+  <div id="modal-grand-victory" class="modal-overlay">
+    <div class="modal-content grand-victory-content">
+      <div class="modal-header-tag">🏆 BÜYÜK ŞAMPİYONLUK • 10. ETAP MAĞLOVA FİNALİ</div>
+      <h2 class="grand-victory-title">🌲 EFSANEVİ ORMAN KAŞİFİ! 🌲</h2>
+      <p class="grand-victory-subtitle">Kemerburgaz Kent Ormanı'nın tüm etaplarını başarıyla tamamladın ve kadim Mağlova Su Kemeri'nin Muhafızı unvanını kazandın!</p>
+
+      <!-- 3D İnteraktif Altın Orman Kaşifi Rozeti -->
+      <div class="grand-badge-wrapper" id="grand-badge-container" onclick="if(window.triggerBadgeCelebration)window.triggerBadgeCelebration();" title="Rozete dokunarak kutla!">
+        <div class="badge-rays"></div>
+        <div class="grand-gold-medal">
+          <div class="medal-ribbon">
+            <span class="ribbon-tail left"></span>
+            <span class="ribbon-tail right"></span>
+          </div>
+          <div class="medal-outer-ring">
+            <div class="medal-inner-disc">
+              <div class="medal-crown">👑</div>
+              <div class="medal-emblem">🏛️</div>
+              <div class="medal-title">KEMERBURGAZ</div>
+              <div class="medal-rank">RESMİ ORMAN KAŞİFİ</div>
+              <div class="medal-stars">⭐⭐⭐⭐⭐</div>
+            </div>
+          </div>
+        </div>
+        <div class="badge-sparkle-prompt">✨ Dokun & Kutla! ✨</div>
+      </div>
+
+      <div class="grand-victory-stats">
+        <div class="g-stat-box">
+          <span class="g-stat-label">Toplam Puan</span>
+          <span class="g-stat-val" id="grand-final-score">10.000 ⭐</span>
+        </div>
+        <div class="g-stat-box">
+          <span class="g-stat-label">Toplanan Altın</span>
+          <span class="g-stat-val" id="grand-final-coins">🪙 500</span>
+        </div>
+        <div class="g-stat-box">
+          <span class="g-stat-label">Unvan</span>
+          <span class="g-stat-val gold-text">Kadim Muhafız</span>
+        </div>
+      </div>
+
+      <div class="grand-action-btns">
+        <button id="btn-grand-celebrate" class="btn-main pulse-btn" type="button" onclick="if(window.launchVictoryFireworks)window.launchVictoryFireworks();">🎆 KUTLAMA VE HAVAİ FİŞEK 🎆</button>
+        <button id="btn-grand-leaderboard" class="btn-secondary" style="border-color: #ffd166; color: #ffd166;" type="button" onclick="if(window.openLeaderboardModal)window.openLeaderboardModal();">🏆 Puan Tablosunda Gör</button>
+        <button id="btn-grand-finish" class="btn-secondary" type="button" onclick="if(window.returnToStartScreen)window.returnToStartScreen();">🌲 Ana Menüye Dön</button>
+      </div>
     </div>
   </div>
 
   <!-- ========================================================
        4.5 3 SORULUK DOĞA VE BİLİM YARIŞMASI MODALI (ETAP GEÇİŞİ)
   ======================================================== -->
+  <!-- ========================================================
+       4.5 3 SORULUK DOĞA VE BİLİM YARIŞMASI MODALI (ETAP GEÇİŞİ)
+  ======================================================== -->
   <div id="modal-nature-quiz" class="modal-overlay">
     <div class="modal-content quiz-modal-content">
-      <div class="modal-header-tag" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>🌿 DOĞA VE BİLİM YARIŞMASI</span>
-        <div style="font-size:12px; margin-left:10px;">
-          <span style="color:#52b788;">Doğru: <span id="quiz-stat-correct">0</span></span> | 
-          <span style="color:#e07a5f;">Yanlış: <span id="quiz-stat-wrong">0</span></span>
+
+      <!-- Üst Bar: Başlık + Canlı Altın/Puan Sayacı + Senkronizasyon Rozeti -->
+      <div class="quiz-top-bar">
+        <span class="quiz-title-label">🌿 DOĞA VE BİLİM YARIŞMASI</span>
+        <div class="quiz-live-coins-badge" id="quiz-live-coins-badge" title="Toplam Altın">
+          <span>🪙</span>
+          <span id="quiz-coins-counter">0</span>
         </div>
-        <span id="quiz-step-counter" class="quiz-step-badge">Soru 1 / 3</span>
+        <span id="quiz-sync-status" class="quiz-sync-badge live" title="Firebase Canlı Soru Havuzu">🟢 Canlı</span>
       </div>
 
+      <!-- Streak + İstatistik Şeridi -->
+      <div class="quiz-stats-row">
+        <div class="quiz-streak-badge" id="quiz-streak-badge">
+          <span id="quiz-streak-fire">🌱</span>
+          <span>Seri: <strong id="quiz-streak-count">0</strong></span>
+        </div>
+        <div class="quiz-mini-stats">
+          <span style="color:#52b788;">✅ <span id="quiz-stat-correct">0</span></span>
+          <span style="color:#e07a5f;">❌ <span id="quiz-stat-wrong">0</span></span>
+          <span id="quiz-step-counter" class="quiz-step-badge">Soru 1/3</span>
+        </div>
+      </div>
+
+      <!-- ⏱️ GERİ SAYIM ZAMANLAYICI ÇUBUĞU (15 sn) -->
+      <div class="quiz-timer-wrap" id="quiz-timer-wrap">
+        <div class="quiz-timer-track">
+          <div class="quiz-timer-bar" id="quiz-timer-bar"></div>
+        </div>
+        <span class="quiz-timer-text" id="quiz-timer-text">15</span>
+      </div>
+
+      <!-- Adım Göstergesi -->
       <div class="quiz-progress-track">
         <div id="quiz-step-1" class="quiz-step-indicator active">1</div>
         <div id="quiz-step-2" class="quiz-step-indicator">2</div>
@@ -393,9 +471,7 @@
       <!-- Soru Kartı -->
       <div id="quiz-question-box" class="quiz-question-box">
         <div id="quiz-category-tag" class="quiz-category-tag">🐿️ Yaban Hayatı & Doğa</div>
-        <h4 id="quiz-question-text" class="quiz-question-text">
-          Soru yükleniyor...
-        </h4>
+        <h4 id="quiz-question-text" class="quiz-question-text">Soru yükleniyor...</h4>
       </div>
 
       <!-- İki Seçenek (A ve B Şıkları) -->
@@ -412,28 +488,42 @@
 
       <!-- Açıklama ve Doğru/Yanlış Bildirimi -->
       <div id="quiz-feedback-box" class="quiz-feedback-box hidden">
-        <div id="quiz-feedback-icon" class="quiz-feedback-icon">🌟</div>
-        <div id="quiz-feedback-text" class="quiz-feedback-text">Açıklama</div>
-        <button id="btn-quiz-next-question" class="btn-main" style="margin-top:10px; width:100%;">Sonraki Soruya Geç ⏩</button>
+        <div class="quiz-feedback-header">
+          <div id="quiz-feedback-icon" class="quiz-feedback-icon">🌟</div>
+          <div id="quiz-feedback-text" class="quiz-feedback-text">Açıklama</div>
+        </div>
+        <button id="btn-quiz-next-question" class="btn-main wood-btn-main" style="margin-top:4px; width:100%;">Sonraki Soruya Geç ⏩</button>
       </div>
 
       <!-- Sonuç Ekranı -->
       <div id="quiz-summary-box" class="quiz-summary-box hidden">
-        <div class="summary-trophy-icon">🏆</div>
-        <h3 class="summary-title">Doğa Bilgini Tebrik Ederiz!</h3>
+        <div id="quiz-result-trophy" class="summary-trophy-icon">🏆</div>
+        <h3 id="quiz-result-title" class="summary-title">Doğa Bilgini Tebrik Ederiz!</h3>
         <p id="quiz-summary-score" class="summary-desc">3 sorudan 3 tanesini doğru bildin!</p>
-        <div class="summary-rewards-badge">
-          <span>Kazanılan Ödül: </span>
-          <strong id="quiz-summary-rewards">+60 🪙 • +90 XP ⭐</strong>
+
+        <!-- Animasyonlu Quiz Puan Sayacı -->
+        <div class="quiz-points-earned-box" id="quiz-points-earned-box">
+          <span class="quiz-points-label">🧠 Bilgi Puanı:</span>
+          <span class="quiz-points-val" id="quiz-points-val">+0</span>
         </div>
-        <div style="display:flex; gap:8px; width:100%; margin-top:8px;">
-          <button id="btn-quiz-proceed-next" class="btn-main" style="flex:1;">SONRAKİ ETABA GEÇ ⏩</button>
-          <button id="btn-quiz-back-map" class="btn-secondary">Kapat</button>
+
+        <!-- Ligte Yükselme Bildirimi -->
+        <div class="quiz-rank-badge" id="quiz-rank-up-badge" style="display:none;">
+          <span>🏅 Bilgi Liginde Yükseldin!</span>
+        </div>
+
+        <div class="summary-rewards-badge">
+          <span>Kazanılan Altın: </span>
+          <strong id="quiz-summary-rewards">+30 🪙</strong>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:8px;">
+          <button id="btn-quiz-proceed-next" class="btn-main wood-btn-main" style="width:100%;">🗺️ SONRAKİ ETABA GİT ⏩</button>
+          <button id="btn-quiz-back-map" class="btn-secondary" style="width:100%;">Haritaya Dön</button>
         </div>
       </div>
 
-      <button id="btn-quiz-skip" class="btn-secondary" style="font-size: 11px; padding: 6px; opacity: 0.8; margin-top: 4px;">
-        Yarışmayı Geç ⏭️
+      <button id="btn-quiz-skip" class="btn-secondary" style="font-size: 12px; padding: 8px 14px; margin-top: 6px; width: 100%;">
+        ⏭️ Soruları Atla &amp; Sonraki Etaba Geç
       </button>
     </div>
   </div>
@@ -493,15 +583,44 @@
 
   <!-- 10. Bölüm Büyük Şampiyonluk & Mağlova Kemeri Modalı -->
   <div id="modal-grand-victory" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş.</div>
+    <div class="modal-content grand-victory-modal-content">
+      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş. • 10. ETAP BÜYÜK FİNALİ</div>
       <h3 class="modal-title" style="color: #ffd166;">MAĞLOVA SU KEMERİ BÜYÜK ŞAMPİYONLUĞU</h3>
+      
+      <!-- 🎖️ İNTERAKTİF 3D ORMAN KAŞİFİ RESMİ ROZETİ -->
+      <div class="grand-badge-container" id="grand-badge-container" onclick="if(window.triggerBadgeCelebration)window.triggerBadgeCelebration();" title="Dokun ve Kutla!">
+        <div class="badge-rays"></div>
+        <div class="grand-gold-medal">
+          <div class="medal-outer-ring">
+            <div class="medal-inner-disc">
+              <span class="medal-crown">👑</span>
+              <div class="medal-emblem">🏛️</div>
+              <span class="medal-title-text">RESMİ ORMAN KAŞİFİ</span>
+              <span class="medal-sub-text">MAĞLOVA MUHAFIZI</span>
+              <div class="medal-stars">⭐⭐⭐⭐⭐</div>
+            </div>
+          </div>
+          <div class="medal-ribbon-left"></div>
+          <div class="medal-ribbon-right"></div>
+        </div>
+        <div class="badge-sparkle-prompt">✨ Rozete Dokun &amp; Havai Fişekleri Başlat! ✨</div>
+      </div>
+
       <img src="Assets/Sprites/mağlovakemeri.jpg" alt="Mağlova Su Kemeri" class="victory-photo">
-      <p id="grand-certificate-text" class="modal-desc" style="font-size: 12px; line-height: 1.45;">
-        Kemerburgaz Kent Ormanı'nın 10 etabını baştan başa tamamlayarak 'Doğa ve Tarih Muhafızı' unvanına hak kazandın!
+      <p id="grand-certificate-text" class="modal-desc" style="font-size: 12.5px; line-height: 1.45; margin-top: 6px;">
+        Tebrikler Küçük Kaşif! Kemerburgaz Kent Ormanı'nın 10 etabını baştan başa tamamlayarak 'Doğa ve Tarih Muhafızı' unvanına ve Resmi Berat Rozetine hak kazandın!
       </p>
-      <button id="btn-grand-view-voucher" class="btn-main" onclick="document.getElementById('modal-grand-victory').classList.remove('active');if(window.openRewardsModal)window.openRewardsModal();">🎟️ TESİS ÖDÜLLERİNİ GÖR</button>
-      <button id="btn-grand-menu" class="btn-secondary">Ana Menüye Dön</button>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 10px;">
+        <button id="btn-grand-celebrate" class="btn-main wood-btn-main" onclick="if(window.triggerBadgeCelebration)window.triggerBadgeCelebration();" type="button" style="background: linear-gradient(180deg, #ffd166 0%, #f59e0b 100%); color: #1e1002; font-size: 14px;">
+          🎆 HAVAİ FİŞEK &amp; KONFETİ KUTLAMASI
+        </button>
+        <button id="btn-grand-view-voucher" class="btn-main wood-btn-main" onclick="document.getElementById('modal-grand-victory').classList.remove('active');if(window.openRewardsModal)window.openRewardsModal();" type="button">
+          🎟️ RESMİ TESİS ÖDÜLLERİNİ GÖR
+        </button>
+        <button id="btn-grand-menu" class="btn-secondary wood-btn-secondary" type="button">
+          🏠 Ana Menüye Dön
+        </button>
+      </div>
     </div>
   </div>
 
@@ -520,11 +639,12 @@
         </div>
       </div>
 
-      <!-- 3 Sekmeli Gezinme Butonları (Doğal Ahşap / Orman Teması) -->
+      <!-- 4 Sekmeli Gezinme Butonları -->
       <div class="hub-tabs-row">
-        <button id="hub-tab-achieve" class="hub-tab-btn active" type="button">🎖️ Başarılar</button>
-        <button id="hub-tab-lb" class="hub-tab-btn" type="button">🏆 Canlı Sıralama</button>
-        <button id="hub-tab-rewards" class="hub-tab-btn" type="button">🎁 Tesis Ödülleri</button>
+        <button id="hub-tab-achieve" class="hub-tab-btn active" type="button">🏆 Başarılar</button>
+        <button id="hub-tab-lb" class="hub-tab-btn" type="button">🏆 Koşu Ligi</button>
+        <button id="hub-tab-quiz-lb" class="hub-tab-btn" type="button">🧠 Bilgi Ligi</button>
+        <button id="hub-tab-rewards" class="hub-tab-btn" type="button">🎁 Ödüller</button>
       </div>
 
       <!-- 1. SEKME: BAŞARIMLAR & GÖREVLER -->
@@ -548,7 +668,7 @@
         </div>
       </div>
 
-      <!-- 2. SEKME: CANLI SIRALAMA & PUAN TABLOSU -->
+      <!-- 2. SEKME: CANLI SIRALAMA (KOŞU) -->
       <div id="hub-view-lb" class="hub-view-pane" style="display: none;">
         <!-- Sıralama Filtre Sekmeleri -->
         <div class="leaderboard-tabs-row" style="margin-bottom: 8px;">
@@ -568,7 +688,7 @@
           </div>
           <div class="my-lb-right">
             <div class="my-lb-score" id="my-lb-score">0 Puan</div>
-            <div class="my-lb-coins" id="my-lb-coins">🪙 50</div>
+            <div class="my-lb-coins" id="my-lb-coins">🪙 0</div>
           </div>
         </div>
 
@@ -579,6 +699,37 @@
 
         <div style="display: flex; gap: 8px; margin-top: 6px;">
           <button id="btn-lb-refresh" class="btn-secondary" style="flex: 1;" type="button">🔄 Canlı Listeyi Yenile</button>
+        </div>
+      </div>
+
+      <!-- 3. SEKME: BİLGİ ŞAMPİYONU LİGİ -->
+      <div id="hub-view-quiz-lb" class="hub-view-pane" style="display: none;">
+        <!-- Quiz Puan Açıklaması -->
+        <div class="quiz-lb-header">
+          <span class="quiz-lb-title">🧠 Bilgi Şampiyonu Sıralaması</span>
+          <div class="quiz-lb-my-card" id="quiz-lb-my-card">
+            <span>🏅 Senin Bilgi Puanın:</span>
+            <strong id="quiz-lb-my-score">0 Puan</strong>
+            <span id="quiz-lb-my-rank" class="quiz-lb-rank-chip">#--</span>
+          </div>
+        </div>
+
+        <!-- Tab: Tüm Zamanlar / Haftalık -->
+        <div class="leaderboard-tabs-row" style="margin-bottom: 8px;">
+          <button id="btn-tab-quiz-all" class="lb-tab-btn active" type="button">🌟 Tüm Zamanlar</button>
+          <button id="btn-tab-quiz-weekly" class="lb-tab-btn" type="button">💫 Haftalık</button>
+        </div>
+
+        <!-- Quiz Sıralama Listesi -->
+        <div id="quiz-leaderboard-list" class="leaderboard-scroll-area">
+          <!-- Dinamik quiz satırları JS ile doldurulacak -->
+        </div>
+
+        <!-- Bilgi Puanı Nasıl Kazanılır -->
+        <div class="quiz-lb-info-box">
+          <div>🟢 Doğru Cevap: <strong>+100 puan</strong></div>
+          <div>⚡ Hızlı Cevap (&lt;5sn): <strong>+50 bonus</strong></div>
+          <div>🔥 Mükemmel (3/3): <strong>+200 bonus</strong></div>
         </div>
       </div>
 
@@ -607,31 +758,44 @@
   <!-- ========================================================
        7. GELİŞİM VADİSİ & KAŞİF KAMPI (GELİŞMİŞ YETENEK VE GÜÇLENDİRME MERKEZİ)
   ======================================================== -->
+  <!-- ========================================================
+       7. GELİŞİM VADİSİ & KAŞİF KAMPI (GELİŞMİŞ YETENEK VE GÜÇLENDİRME MERKEZİ)
+  ======================================================== -->
   <div id="modal-camp" class="modal-overlay">
     <div class="modal-content modal-content-large camp-modal-content">
       <div class="modal-header-tag" style="display:flex; justify-content:space-between; align-items:center;">
         <span>BOĞAZİÇİ YÖNETİM • GELİŞİM VADİSİ</span>
-        <span id="camp-cloud-indicator" class="cloud-sync-badge">⛺ Gelişim Vadisi</span>
+        <span id="camp-points-display" class="camp-points-badge">⭐ 0 Kaşif Puanı</span>
       </div>
       <h3 class="modal-title" style="color:#ffd166;">Gelişim Vadisi</h3>
-      <p class="modal-desc">Yeteneklerini geliştirerek koşularda can, süre ve mıknatıs avantajı kazan!</p>
+      <p class="modal-desc">Oyun oynadıkça puan topla, kahramanına can ve hız avantajı kazandırarak bölümleri kolayca geç!</p>
 
       <!-- Kaşif Seviye & Profil Kartı -->
       <div class="camp-profile-box">
         <div class="camp-avatar-circle" id="camp-avatar-icon">🦊</div>
         <div class="camp-profile-info">
-          <strong id="camp-rank-title">Seviye 2: Patika Kaşifi</strong>
+          <strong id="camp-rank-title">Seviye 1: Orman Çaylağı</strong>
           <div class="camp-xp-track">
-            <div id="camp-xp-fill" class="camp-xp-fill" style="width: 50%;"></div>
+            <div id="camp-xp-fill" class="camp-xp-fill" style="width: 0%;"></div>
           </div>
-          <div id="camp-xp-stat" style="font-size: 11px; color: #b7e4c7;">500 / 1000 XP • Seviye İlerlemesi</div>
+          <div id="camp-xp-stat" style="font-size: 11px; color: #b7e4c7;">0 / 300 XP • Seviye 2 için 300 XP Gerekli</div>
         </div>
       </div>
 
-      <!-- 3 Yükseltilebilir Gelişim Vadisi Güçlendirmesi (3 Yıldızlı / Her Yıldızda +3 Saniye Süre) -->
+      <!-- XP Nasıl Kazanılır Kılavuzu -->
+      <div class="camp-xp-explainer">
+        <div class="camp-xp-explainer-title">💡 Kaşif XP & Puanı Nasıl Kazanılır?</div>
+        <div class="camp-xp-explainer-grid">
+          <div class="camp-xp-item"><span class="camp-xp-item-icon">🏃</span> <span><strong>Etap Koşuları:</strong> Her tamamlanan etapta <strong>+120 XP</strong> ve koşuda toplanan puan havuzu</span></div>
+          <div class="camp-xp-item"><span class="camp-xp-item-icon">🌿</span> <span><strong>Doğa Yarışması:</strong> Doğru cevaplanan her soru için anında <strong>+20 XP</strong></span></div>
+          <div class="camp-xp-item"><span class="camp-xp-item-icon">🏆</span> <span><strong>Görevler & QR:</strong> Saha QR kodları ve başarımlardan <strong>+100 - 500 XP</strong></span></div>
+        </div>
+      </div>
+
+      <!-- 4 Yükseltilebilir Gelişim Vadisi Güçlendirmesi (Puanla Alınır, Oyun İlerledikçe Açılır) -->
       <div class="shelf-title" style="margin-top: 10px; display:flex; justify-content:space-between; align-items:center;">
-        <span>⛺ GELİŞİM VADİSİ GÜÇLENDİRMELERİ</span>
-        <span id="camp-user-coins-badge" style="font-size:12px; color:#ffd166; font-weight:800;">🪙 0 Altın</span>
+        <span>⛺ KAHRAMAN GÜÇLENDİRMELERİ</span>
+        <span id="camp-user-coins-badge" style="font-size:12px; color:#ffd166; font-weight:800;">⭐ 0 Harcanabilir Puan</span>
       </div>
 
       <div class="camp-upgrades-list" id="camp-upgrades-list">
@@ -644,10 +808,10 @@
           <div class="camp-perk-info-col">
             <div class="camp-perk-title">Dinlenme Çadırı</div>
             <div class="camp-perk-benefit" id="camp-tent-desc">Mevcut: Seviye 0 (Kalkan Yok)</div>
-            <div class="camp-perk-details">Koşu başında koruma kalkanı süresi sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn kalkan).</div>
+            <div class="camp-perk-details">Koşu başında koruma kalkanı verir. 3. Seviyede kahramana <strong>+1 Kalıcı Başlangıç Canı (4 Can!)</strong> kazandırır.</div>
           </div>
           <div class="camp-perk-action-col">
-            <button id="btn-upgrade-tent" class="btn-camp-upgrade" type="button">35 🪙 Yükselt</button>
+            <button id="btn-upgrade-tent" class="btn-camp-upgrade" type="button">300 ⭐ Yükselt</button>
           </div>
         </div>
 
@@ -660,10 +824,10 @@
           <div class="camp-perk-info-col">
             <div class="camp-perk-title">Kamp Ateşi</div>
             <div class="camp-perk-benefit" id="camp-fire-desc">Mevcut: Seviye 0 (Mıknatıs Yok)</div>
-            <div class="camp-perk-details">Koşu başında yakındaki altınları toplayan manyetik çekim süresi sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn mıknatıs).</div>
+            <div class="camp-perk-details">Koşuda altın ve palamutları mıknatıs gibi çeker. Seviye arttıkça çekim süresi ve etki alanı katlanır.</div>
           </div>
           <div class="camp-perk-action-col">
-            <button id="btn-upgrade-fire" class="btn-camp-upgrade" type="button">40 🪙 Yükselt</button>
+            <button id="btn-upgrade-fire" class="btn-camp-upgrade" type="button">450 ⭐ Yükselt</button>
           </div>
         </div>
 
@@ -676,10 +840,26 @@
           <div class="camp-perk-info-col">
             <div class="camp-perk-title">Orman İzcisi</div>
             <div class="camp-perk-benefit" id="camp-boots-desc">Mevcut: Seviye 0 (Standart)</div>
-            <div class="camp-perk-details">Koşu başında hafif süzülme ve zıplama çevikliği sağlar. Her yıldızda +3 saniye (1. Yıldız: 3 sn, 2. Yıldız: 6 sn, 3. Yıldız: 9 sn süzülme). 3. Yıldızda çift zıplama açar.</div>
+            <div class="camp-perk-details">Koşuda süzülme ve çeviklik sağlar. 3. Seviyede <strong>Kalıcı Çift Zıplama (Double Jump)</strong> yeteneği kazandırır.</div>
           </div>
           <div class="camp-perk-action-col">
-            <button id="btn-upgrade-boots" class="btn-camp-upgrade" type="button">45 🪙 Yükselt</button>
+            <button id="btn-upgrade-boots" class="btn-camp-upgrade" type="button">600 ⭐ Yükselt</button>
+          </div>
+        </div>
+
+        <!-- 4. Orman Pusulası -->
+        <div class="camp-perk-card" id="camp-card-compass">
+          <div class="camp-perk-icon-col">
+            <div class="camp-perk-avatar">🧭</div>
+            <div class="camp-perk-stars" id="camp-compass-stars">☆☆☆</div>
+          </div>
+          <div class="camp-perk-info-col">
+            <div class="camp-perk-title">Orman Pusulası</div>
+            <div class="camp-perk-benefit" id="camp-compass-desc">Mevcut: Seviye 0 (Normal Hız)</div>
+            <div class="camp-perk-details">Bölümü kolayca bitirmek için patika avansı verir. 3. Seviyede can 1'e düştüğünde <strong>Kurtarma Can Simidi</strong> devreye girer!</div>
+          </div>
+          <div class="camp-perk-action-col">
+            <button id="btn-upgrade-compass" class="btn-camp-upgrade" type="button">700 ⭐ Yükselt</button>
           </div>
         </div>
       </div>
@@ -793,6 +973,31 @@
       <p class="modal-desc">
         Puan tablosunda canlı sıralamanı görmek ve ormandaki ödülleri kazanmak için kaşif adını yaz ve yoldaşını seç:
       </p>
+
+      <!-- Oyuncu Canlı Profil Özeti (Puan, Altın, Rütbe & Etap) -->
+      <div class="onboarding-profile-stats" id="onboarding-profile-stats">
+        <div class="ob-stat-item">
+          <span class="ob-stat-icon">⭐</span>
+          <div class="ob-stat-meta">
+            <span class="ob-stat-label">Toplam Puan</span>
+            <strong id="onboarding-stat-score" class="ob-stat-val">0 Puan</strong>
+          </div>
+        </div>
+        <div class="ob-stat-item">
+          <span class="ob-stat-icon">🪙</span>
+          <div class="ob-stat-meta">
+            <span class="ob-stat-label">Toplam Altın</span>
+            <strong id="onboarding-stat-coins" class="ob-stat-val">0</strong>
+          </div>
+        </div>
+        <div class="ob-stat-item">
+          <span class="ob-stat-icon">🌲</span>
+          <div class="ob-stat-meta">
+            <span class="ob-stat-label">Rütbe &amp; Etap</span>
+            <strong id="onboarding-stat-rank" class="ob-stat-val">Orman Çaylağı</strong>
+          </div>
+        </div>
+      </div>
 
       <div class="onboarding-form">
         <label class="onboarding-label" for="onboarding-name-input">🏷️ Kaşif Adın veya Takma Adın:</label>
