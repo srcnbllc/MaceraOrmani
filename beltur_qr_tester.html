@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kemerburgaz Kent Ormanı - BELTUR Sabit Saha QR Kod Kartı</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #ffd166;
+      --wood-dark: #1b120c;
+      --forest-green: #2d6a4f;
+      --forest-dark: #081a11;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at top, #183a27 0%, #08150e 100%);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .qr-card {
+      background: linear-gradient(180deg, #241407 0%, #150b03 100%);
+      border: 3px solid #d4af37;
+      border-radius: 28px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7), inset 0 2px 0 rgba(255,255,255,0.2);
+      max-width: 420px;
+      width: 100%;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(45, 106, 79, 0.9);
+      border: 1px solid #52b788;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b7e4c7;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    h1 {
+      font-family: 'Fredoka', cursive;
+      font-size: 24px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .sub {
+      font-size: 13px;
+      color: #e2e8f0;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+    .qr-box {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 16px;
+      display: inline-block;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+    .qr-box img {
+      width: 220px;
+      height: 220px;
+      display: block;
+    }
+    .qr-info-code {
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px dashed var(--gold);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--gold);
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 12px;
+      text-align: left;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+    }
+    .instructions strong {
+      color: var(--gold);
+    }
+    .btn-test {
+      display: block;
+      width: 100%;
+      background: linear-gradient(180deg, #d4af37 0%, #aa8420 100%);
+      border: 2px solid #fff;
+      color: #11281c;
+      padding: 12px;
+      border-radius: 16px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      transition: transform 0.15s;
+    }
+    .btn-test:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="qr-card">
+    <div class="badge">☕ 4. ETAP SAHA DOĞRULAMA TOTEMİ</div>
+    <h1>İBB BELTUR Restoran &amp; Kafe</h1>
+    <p class="sub">Kemerburgaz Kent Ormanı Macera Parkuru<br>Masaya &amp; Toteme Özel Sabit QR Kod</p>
+
+    <!-- Sabit BELTUR QR Kodu (Canlı SVG / PNG) -->
+    <div class="qr-box">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://kemerburgazkentormani.istanbul/qr/beltur?code=BOLUM_4&color=11281c&bgcolor=ffffff&margin=1" alt="BELTUR QR Kodu">
+    </div>
+
+    <div class="qr-info-code">
+      KOD İÇERİĞİ: <strong>https://kemerburgazkentormani.istanbul/qr/beltur?code=BOLUM_4</strong>
+    </div>
+
+    <div class="instructions">
+      📌 <strong>Nasıl Test Edilir?</strong><br>
+      1. Telefonunuzda oyunu açın ve <strong>Etap Listesi</strong>'ne girin.<br>
+      2. <strong>4. Etap: BELTUR Restoran &amp; Kafe</strong> kartına dokunun.<br>
+      3. Açılan pencerede <strong>"📷 BELTUR QR Kodu ile Hemen Aç"</strong> butonuna basın.<br>
+      4. Kameranızı bilgisayar ekranındaki bu QR koda tutun!<br>
+      5. 4. Etap anında <strong>ÜCRETSİZ</strong> olarak açılacak ve <strong>+100 XP ⭐</strong> kazanacaksınız!
+    </div>
+
+    <a href="index.html" class="btn-test">🎮 Oyuna Dön ve Canlı Test Et</a>
+  </div>
+
+</body>
+</html>

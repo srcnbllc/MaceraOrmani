@@ -50,10 +50,16 @@ class LeaderboardRepository {
             }
     }
 
-    suspend fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int) {
+    suspend fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int, customDeviceInfo: String? = null) {
         try {
             val uid = FirebaseManager.auth.currentUser?.uid ?: "anonymous_${System.currentTimeMillis()}"
             val docRef = leaderboardCollection.document(uid)
+            val brand = android.os.Build.BRAND ?: ""
+            val model = android.os.Build.MODEL ?: ""
+            val manufacturer = android.os.Build.MANUFACTURER ?: ""
+            val osVer = "Android ${android.os.Build.VERSION.RELEASE}"
+            val deviceSummary = customDeviceInfo?.ifBlank { null } ?: "$manufacturer $model ($osVer)".trim()
+
             val data = hashMapOf(
                 "name" to name,
                 "score" to score,
@@ -61,10 +67,14 @@ class LeaderboardRepository {
                 "stages" to stages,
                 "coins" to coins,
                 "rankTitle" to getRankTitle(score),
+                "deviceBrand" to brand,
+                "deviceModel" to model,
+                "deviceManufacturer" to manufacturer,
+                "deviceInfo" to deviceSummary,
                 "updatedAt" to com.google.firebase.Timestamp.now()
             )
             docRef.set(data, SetOptions.merge()).await()
-            Log.d("LeaderboardRepository", "Score submitted successfully for $name: $score")
+            Log.d("LeaderboardRepository", "Score submitted successfully for $name ($deviceSummary): $score")
         } catch (e: Exception) {
             Log.w("LeaderboardRepository", "Failed to submit score: ${e.localizedMessage}")
         }

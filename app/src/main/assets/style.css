@@ -61,21 +61,21 @@ body {
 
 #app-container {
   position: relative;
-  width: 420px;
-  height: 840px;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   max-width: 100vw;
-  max-height: 100vh;
   max-height: 100dvh;
   background-color: var(--bg-dark);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(45, 106, 79, 0.35);
-  border-radius: 28px;
+  box-shadow: none;
+  border-radius: 0;
   overflow: hidden;
-  border: 3px solid rgba(212, 175, 55, 0.45);
+  border: none;
   display: flex;
   flex-direction: column;
 }
 
-/* Mobil, PWA ve WebView Cihaz Uyumluluğu (Tam Ekran & Ergonomi) */
+/* Mobil, Tablet, PWA ve WebView Cihaz Uyumluluğu (Tam Ekran, Yatay & Dikey Dinamik Uyum) */
 body.is-native-app {
   background: #07130c;
 }
@@ -179,20 +179,110 @@ body.is-native-app #app-container {
 }
 
 /* ==========================================================
-   1. MAIN MENU SCREEN (ORİJİNAL TEMİZ ARKA PLAN)
+   1. MAIN MENU SCREEN (ORİJİNAL TEMİZ ARKA PLAN & DİNAMİK UYUM)
 ========================================================== */
 #screen-menu {
-  background-image: url('Assets/Sprites/menu_arkaplan.png');
-  background-color: #11281c;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center top;
+  background: radial-gradient(circle at 50% 35%, #163d2a 0%, #0c2419 60%, #030a06 100%);
   position: relative;
   overflow: hidden;
   padding: 0;
   margin: 0;
   width: 100%;
   height: 100%;
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+#screen-menu:not(.active) {
+  display: none !important;
+}
+
+/* Ana Menü Ahşap Pano Tuvali (Dikeyde ve Yatayda 1:1 Orantılı ve Hizalı) */
+.menu-board-canvas {
+  position: relative;
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 420 / 840;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
+  background-image: url('Assets/Sprites/menu_arkaplan.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center top;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.85);
+  display: block;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Yatay / Tablet / Geniş Ekranlar İçin Süs Kanatları (Flanks) */
+.menu-landscape-flank {
+  display: none;
+  flex: 1;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.menu-landscape-flank .flank-card {
+  background: rgba(12, 34, 22, 0.78);
+  border: 1.5px solid rgba(212, 175, 55, 0.38);
+  border-radius: 20px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  max-width: 210px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.menu-landscape-flank .flank-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+
+.menu-landscape-flank .flank-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffd166;
+  letter-spacing: 0.4px;
+}
+
+.menu-landscape-flank .flank-desc {
+  font-size: 11px;
+  color: #d8f3dc;
+  font-weight: 600;
+}
+
+.menu-landscape-flank .flank-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #52b788;
+  background: rgba(82, 183, 136, 0.16);
+  border: 1px solid rgba(82, 183, 136, 0.4);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+@media (min-aspect-ratio: 1.2), (orientation: landscape) and (min-width: 650px) {
+  .menu-landscape-flank {
+    display: flex;
+  }
 }
 
 /* ==========================================================
@@ -210,18 +300,20 @@ body.is-native-app #app-container {
 /* Altın & Puan Panosunun Hemen Altında Ortalanmış Kaşif Profil Rozeti (Hapı) */
 .menu-profile-pill {
   position: absolute;
-  top: 41.4%;
+  top: 41.2%;
   left: 50%;
   transform: translateX(-50%);
-  width: 58%;
-  height: 38px;
+  width: 66%;
+  min-width: 220px;
+  max-width: 320px;
+  min-height: 42px;
   background: linear-gradient(180deg, rgba(20, 48, 30, 0.95) 0%, rgba(8, 26, 17, 0.98) 100%);
   border: 1.5px solid var(--border-gold);
-  border-radius: 20px;
+  border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px 0 6px;
+  padding: 0 12px 0 8px;
   cursor: pointer;
   z-index: 50;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -241,48 +333,55 @@ body.is-native-app #app-container {
 }
 
 .profile-pill-icon {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
   border: 1px solid #ffd166;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
 .profile-pill-content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   line-height: 1.15;
   flex: 1;
-  margin-left: 8px;
+  margin: 0 8px;
   overflow: hidden;
 }
 
 .profile-pill-sub {
   font-family: 'Fredoka', sans-serif;
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 800;
   color: var(--accent-gold);
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-}
-
-.profile-pill-name {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+.profile-pill-name {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.4px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
 }
 
 .profile-pill-edit {
@@ -530,12 +629,16 @@ body.is-native-app #app-container {
 }
 
 /* ==========================================================
-   2. HERO SELECTION SCREEN
+   2. HERO SELECTION SCREEN (YATAY & DİKEY DİNAMİK UYUM)
 ========================================================== */
 #screen-heroes {
   background: radial-gradient(circle at 50% 30%, #173d2b 0%, #0b2217 65%, #04120a 100%);
-  padding: 44px 18px 22px;
-  justify-content: space-between;
+  padding: max(38px, calc(env(safe-area-inset-top, 0px) + 26px)) max(14px, env(safe-area-inset-left, 14px)) max(14px, env(safe-area-inset-bottom, 14px)) max(14px, env(safe-area-inset-right, 14px));
+  justify-content: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 .top-bar, .wood-top-bar {
@@ -545,6 +648,9 @@ body.is-native-app #app-container {
   width: 100%;
   margin-bottom: 8px;
   gap: 8px;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .btn-back-pill, .wood-btn-back {
@@ -602,11 +708,62 @@ body.is-native-app #app-container {
   background: linear-gradient(180deg, rgba(16, 46, 32, 0.95) 0%, rgba(8, 26, 17, 0.95) 100%);
   border: 2px solid var(--border-gold);
   border-radius: 24px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.7);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.hero-card-col {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Yatay Mod ve Tablet Ekranları İçin Kahraman Seçim Ekranı 2 Sütun */
+@media (orientation: landscape) and (max-height: 580px), (min-aspect-ratio: 1.25) and (max-height: 640px) {
+  .hero-card.wood-hero-card {
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 16px;
+    align-items: start;
+    padding: 12px 16px;
+  }
+
+  .hero-card.wood-hero-card .hero-avatar-wrap {
+    width: 105px;
+    height: 105px;
+    margin-bottom: 4px;
+  }
+
+  .hero-card.wood-hero-card .hero-avatar-canvas,
+  .hero-card.wood-hero-card .hero-preview-animated-img {
+    width: 105px;
+    height: 105px;
+  }
+
+  .costume-wardrobe-box {
+    margin-top: 0;
+    padding: 8px 10px;
+  }
+
+  .wardrobe-item-btn {
+    padding: 5px 3px;
+  }
+
+  .wood-btn-main#btn-hero-select {
+    width: 100%;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    margin-top: 6px;
+  }
 }
 
 .hero-carousel {
@@ -699,8 +856,9 @@ body.is-native-app #app-container {
 ========================================================== */
 #screen-map {
   background: radial-gradient(circle at 50% 25%, #153825 0%, #0a2115 65%, #030f08 100%);
-  padding: 42px 14px 18px;
+  padding: calc(env(safe-area-inset-top, 0px) + 36px) 12px max(12px, env(safe-area-inset-bottom, 12px));
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .map-scroll-area {
@@ -897,11 +1055,11 @@ body.is-native-app #app-container {
   background: linear-gradient(180deg, #102f20 0%, #081a11 100%);
   border: 2px solid var(--border-gold);
   border-radius: 20px;
-  padding: 12px 10px;
+  padding: 14px 12px;
   width: 100%;
-  max-width: 100%;
-  max-height: 90vh;
-  max-height: 90dvh;
+  max-width: 520px;
+  max-height: 92vh;
+  max-height: 92dvh;
   box-sizing: border-box;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 20px 50px rgba(0, 0, 0, 0.9);
   display: flex;
@@ -1190,27 +1348,31 @@ body.is-native-app #app-container {
 }
 
 .toast {
-  background: rgba(8, 26, 17, 0.90);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 209, 102, 0.55);
-  padding: 3px 12px;
-  border-radius: 14px;
-  font-size: 10.5px;
+  background: rgba(8, 26, 17, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 209, 102, 0.65);
+  padding: 5px 14px;
+  border-radius: 16px;
+  font-size: 11px;
   font-weight: 700;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   gap: 6px;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 90vw;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
   animation: slideToastMicro 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 @keyframes slideToastMicro {
@@ -1225,6 +1387,23 @@ body.is-native-app #app-container {
 /* ==========================================================
    7. İKİLİ GÖRÜNÜM (HARİTA & LİSTE) VE İNTERAKTİF PİNLER
 ========================================================== */
+.map-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.map-top-bar #btn-map-back {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 6px 11px;
+  font-size: 12px;
+  border-radius: 18px;
+}
+
 .view-toggle-bar {
   display: flex;
   background: rgba(10, 30, 20, 0.92);
@@ -1233,6 +1412,16 @@ body.is-native-app #app-container {
   padding: 3px;
   margin: 2px 0 10px;
   gap: 4px;
+}
+
+.map-header-toggle {
+  flex: 1;
+  margin: 0;
+  padding: 2.5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 18px;
 }
 
 .btn-toggle-view {
@@ -1247,6 +1436,14 @@ body.is-native-app #app-container {
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.map-header-toggle .btn-toggle-view {
+  padding: 6px 4px;
+  font-size: 11.8px;
+  border-radius: 14px;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
 .btn-toggle-view.active {
@@ -1266,6 +1463,7 @@ body.is-native-app #app-container {
   background: #0d281a;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .map-interactive-area.hidden, .map-scroll-area.hidden {
@@ -1275,27 +1473,39 @@ body.is-native-app #app-container {
 .map-pan-viewport {
   flex: 1;
   width: 100%;
+  height: 100%;
   overflow: auto;
   position: relative;
-  scrollbar-width: thin;
-  scrollbar-color: #2d6a4f #0a2115;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+}
+
+.map-pan-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .map-canvas-wrap {
   position: relative;
-  width: 860px;
-  height: 540px;
-  min-width: 860px;
-  min-height: 540px;
+  height: 100%;
+  min-height: 100%;
+  width: auto;
+  min-width: 100%;
+  aspect-ratio: 16 / 10;
+  display: block;
 }
 
 .map-aerial-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center bottom;
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .map-pins-overlay {
@@ -1484,7 +1694,9 @@ body.is-native-app #app-container {
    8. BAŞARIMLAR, FİREBASE & MİKRO-ÖDÜL KUPONLARI
 ========================================================== */
 .modal-content-large {
-  max-height: 82vh;
+  max-width: 680px;
+  max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
 }
 
@@ -1564,37 +1776,42 @@ body.is-native-app #app-container {
   border-radius: 10px;
 }
 
-/* Başarım Kartı (Doğal Ahşap & Orman Temalı Hizalama) */
+/* Başarım Kartı (Modern, Okunaklı ve Şık Kart Düzeni) */
 .achievement-card {
-  background: rgba(12, 34, 22, 0.9);
-  border: 1.5px solid rgba(82, 183, 136, 0.3);
-  border-radius: 14px;
-  padding: 7px 10px;
+  background: rgba(20, 31, 46, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 11px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
-  transition: transform 0.15s, border-color 0.15s;
+  transition: all 0.16s ease;
+}
+
+.achievement-card:hover {
+  background: rgba(28, 43, 64, 0.95);
+  border-color: rgba(255, 209, 102, 0.4);
 }
 
 .achievement-card.completed {
-  border-color: #ffd166;
-  background: linear-gradient(135deg, rgba(32, 20, 12, 0.9) 0%, rgba(16, 46, 31, 0.95) 100%);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  border-color: rgba(255, 209, 102, 0.6);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(20, 32, 48, 0.95) 100%);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
 }
 
 .achievement-icon {
-  font-size: 20px;
+  font-size: 19px;
   width: 34px;
   height: 34px;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(12, 19, 28, 0.8);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255, 209, 102, 0.4);
+  border: 1px solid rgba(255, 209, 102, 0.4);
 }
 
 .achievement-details {
@@ -1611,7 +1828,7 @@ body.is-native-app #app-container {
   font-family: 'Fredoka', sans-serif;
   font-size: 12.5px;
   font-weight: 800;
-  color: #ffffff;
+  color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1623,7 +1840,7 @@ body.is-native-app #app-container {
 
 .achievement-desc {
   font-size: 10px;
-  color: #d8f3dc;
+  color: #94a3b8;
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -2012,9 +2229,16 @@ body.is-native-app #app-container {
    10. ETAP ARASI 3 SORULUK DOĞA VE BİLİM YARIŞMASI
 ========================================================== */
 .quiz-modal-content {
-  max-height: 94vh;
+  max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
-  gap: 12px;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
+  padding-left: max(12px, env(safe-area-inset-left, 12px));
+  padding-right: max(12px, env(safe-area-inset-right, 12px));
+  gap: 8px;
 }
 
 .quiz-step-badge {
@@ -2315,18 +2539,34 @@ body.is-native-app #app-container {
   100% { transform: scale(1); }
 }
 
+/* Genel Gizleme Kuralı */
+.hidden {
+  display: none !important;
+}
+
 /* Sonuç Ekranı */
 .quiz-summary-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 10px;
-  padding: 10px 4px;
+  gap: 12px;
+  padding: 8px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.quiz-summary-box.hidden {
+  display: none !important;
+}
+
+.quiz-feedback-box.hidden {
+  display: none !important;
 }
 
 .summary-trophy-icon {
-  font-size: 46px;
+  font-size: 48px;
   animation: trophyBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -2337,24 +2577,230 @@ body.is-native-app #app-container {
 
 .summary-title {
   font-family: 'Fredoka', sans-serif;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 900;
   color: #ffd166;
+  margin: 0;
 }
 
 .summary-desc {
   font-size: 13.5px;
   color: #d8f3dc;
   font-weight: 600;
+  margin: 0;
 }
 
-.summary-rewards-badge {
+/* Gerçek Sonuç Detay Kartı */
+.quiz-results-summary-card {
+  width: 100%;
   background: rgba(0, 0, 0, 0.45);
-  border: 1.5px solid #ffd166;
-  padding: 8px 16px;
+  border: 1.5px solid rgba(255, 209, 102, 0.5);
   border-radius: 14px;
-  font-size: 13px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.quiz-res-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  color: #d8f3dc;
+  font-weight: 600;
+}
+
+.quiz-res-highlight {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
   color: #ffd166;
+}
+
+/* Şık Alt Bilgi & Ödül Paneli (Anlık & Dinamik) */
+.quiz-bottom-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: rgba(8, 24, 16, 0.92);
+  border: 1.5px solid rgba(255, 209, 102, 0.45);
+  border-radius: 14px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quiz-bottom-stats-bar.hidden {
+  display: none !important;
+}
+
+.quiz-bottom-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  min-height: 42px;
+}
+
+.quiz-b-icon {
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.quiz-b-meta {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.quiz-b-label {
+  font-size: 8px;
+  color: #a7c4bc;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.quiz-b-val {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffd166;
+  white-space: nowrap;
+}
+
+/* Soru Ekranı Şık Alt Gezinme Butonları (Sonraki Etaba Geç & Ana Menüye Dön) */
+.quiz-nav-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.quiz-nav-row.hidden {
+  display: none !important;
+}
+
+.btn-quiz-nav-sub {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(18, 38, 28, 0.9);
+  border: 1.5px solid rgba(167, 196, 188, 0.45);
+  color: #e0f2e9;
+  border-radius: 12px;
+  padding: 10px 10px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.btn-quiz-nav-sub:hover,
+.btn-quiz-nav-sub:active {
+  background: rgba(30, 58, 44, 0.95);
+  border-color: #ffd166;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-quiz-nav-main {
+  flex: 1.25;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(45, 106, 79, 0.75) 0%, rgba(27, 67, 50, 0.9) 100%);
+  border: 1.5px solid #52b788;
+  color: #d8f3dc;
+  border-radius: 12px;
+  padding: 10px 10px;
+  font-family: 'Fredoka', 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(82, 183, 136, 0.3);
+}
+
+.btn-quiz-nav-main:hover,
+.btn-quiz-nav-main:active {
+  background: linear-gradient(135deg, rgba(82, 183, 136, 0.8) 0%, rgba(45, 106, 79, 0.95) 100%);
+  border-color: #ffd166;
+  color: #081c15;
+  transform: translateY(-1px);
+}
+
+/* Küçük Ekranlı iOS (iPhone SE) ve Kompakt Android Cihaz Uyumluluğu */
+@media (max-width: 380px), (max-height: 680px) {
+  .quiz-modal-content {
+    padding: 8px 8px max(10px, env(safe-area-inset-bottom, 10px));
+    gap: 6px;
+  }
+  .quiz-question-box {
+    padding: 10px 12px;
+  }
+  .quiz-question-text {
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+  .quiz-option-btn {
+    padding: 10px 10px;
+    min-height: 44px;
+  }
+  .opt-letter {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+  .opt-text {
+    font-size: 12px;
+  }
+  .quiz-bottom-stats-bar {
+    padding: 5px 6px;
+    gap: 4px;
+  }
+  .quiz-bottom-stat-item {
+    padding: 4px 5px;
+    min-height: 38px;
+  }
+  .quiz-b-icon {
+    font-size: 14px;
+  }
+  .quiz-b-label {
+    font-size: 7.5px;
+  }
+  .quiz-b-val {
+    font-size: 10px;
+  }
+  .btn-quiz-nav-sub,
+  .btn-quiz-nav-main {
+    font-size: 11px;
+    padding: 8px 6px;
+  }
 }
 
 /* ==========================================================
@@ -2406,10 +2852,11 @@ body.is-native-app #app-container {
 }
 
 .wardrobe-item-btn {
+  position: relative;
   background: linear-gradient(180deg, rgba(46, 26, 17, 0.85) 0%, rgba(28, 15, 9, 0.92) 100%);
   border: 1.5px solid rgba(180, 130, 60, 0.35);
   border-radius: 12px;
-  padding: 7px 4px;
+  padding: 8px 4px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2433,12 +2880,32 @@ body.is-native-app #app-container {
 
 .wardrobe-item-btn.active {
   border-color: #ffd166;
-  background: linear-gradient(180deg, rgba(45, 106, 79, 0.95) 0%, rgba(20, 56, 38, 0.98) 100%);
-  box-shadow: 0 0 14px rgba(255, 209, 102, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(180deg, #133863 0%, #0b2545 100%);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.wardrobe-item-btn.active::before {
+  content: "✓";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  background: #ffd166;
+  color: #0b2545;
+  border: 1.5px solid #0b2545;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  z-index: 5;
 }
 
 .wardrobe-item-btn.active .w-icon {
-  transform: scale(1.18);
+  transform: scale(1.15);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
 }
 
@@ -2460,6 +2927,33 @@ body.is-native-app #app-container {
   text-align: center;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+.wardrobe-item-btn .w-selected-tag {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: linear-gradient(135deg, #ffd166 0%, #f59e0b 100%);
+  color: #0b2545;
+  font-family: 'Outfit', sans-serif;
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  padding: 1.5px 5px;
+  border-radius: 999px;
+  margin-top: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+.wardrobe-item-btn .w-selected-tag .w-tag-check {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.wardrobe-item-btn.active .w-selected-tag {
+  display: inline-flex;
 }
 
 /* ==========================================================
@@ -2596,6 +3090,7 @@ body.is-native-app #app-container {
   border-radius: 10px;
   box-sizing: border-box;
   overflow: hidden;
+  min-height: 44px;
 }
 
 .ob-stat-icon {
@@ -2608,10 +3103,11 @@ body.is-native-app #app-container {
   flex-direction: column;
   overflow: hidden;
   text-align: left;
+  justify-content: center;
 }
 
 .ob-stat-label {
-  font-size: 8.5px;
+  font-size: 8px;
   color: #a7c4bc;
   font-weight: 700;
   text-transform: uppercase;
@@ -2621,12 +3117,31 @@ body.is-native-app #app-container {
 
 .ob-stat-val {
   font-family: 'Fredoka', sans-serif;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
   color: #ffd166;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.15;
+  word-break: normal;
+}
+
+.ob-stat-stage-tag {
+  display: block;
+  font-size: 8.5px;
+  color: #8be0a4;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.lb-user-rank-pill {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
 }
 
 .onboarding-form {
@@ -2746,18 +3261,22 @@ body.is-native-app #app-container {
   margin-bottom: 8px;
   width: 100%;
   box-sizing: border-box;
+  background: rgba(12, 19, 28, 0.7);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .lb-tab-btn {
   flex: 1;
-  background: rgba(14, 38, 26, 0.85);
-  border: 1.5px solid rgba(82, 183, 136, 0.35);
-  border-radius: 12px;
-  padding: 7px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 6px 8px;
   font-family: 'Fredoka', sans-serif;
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #d8f3dc;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -2767,26 +3286,31 @@ body.is-native-app #app-container {
   justify-content: center;
 }
 
-.lb-tab-btn.active {
-  background: linear-gradient(135deg, #2d6a4f, #1b4332);
-  border-color: #ffd166;
-  color: #ffd166;
-  box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+.lb-tab-btn:hover:not(.active) {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Oyuncunun Sıralama Özeti Şeridi (Ahşap Altın Plaka) */
+.lb-tab-btn.active {
+  background: rgba(255, 209, 102, 0.16);
+  border-color: rgba(255, 209, 102, 0.6);
+  color: #ffd166;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Oyuncunun Sıralama Özeti Şeridi */
 .my-leaderboard-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, rgba(46, 26, 16, 0.95) 0%, rgba(18, 48, 30, 0.96) 100%);
-  border: 2px solid #ffd166;
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(26, 38, 56, 0.95) 0%, rgba(16, 26, 38, 0.95) 100%);
+  border: 1.5px solid rgba(255, 209, 102, 0.5);
+  border-radius: 14px;
   padding: 8px 12px;
   margin-bottom: 8px;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 0 16px rgba(255, 209, 102, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   gap: 8px;
 }
 
@@ -2893,66 +3417,78 @@ body.is-native-app #app-container {
   border-radius: 10px;
 }
 
-/* Sıralama Satırı (Tam Hizalı Sütun Düzeni) */
-.leaderboard-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(14, 34, 22, 0.88);
-  border: 1.5px solid rgba(82, 183, 136, 0.28);
-  border-radius: 14px;
-  padding: 7px 10px;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-  transition: all 0.15s ease;
+/* Sıralama Satırı (Standart, Şık & Okunaklı Kart Düzeni) */
+.leaderboard-row,
+.lb-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: rgba(20, 31, 46, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+  gap: 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  transition: all 0.16s ease !important;
 }
 
-.leaderboard-row:hover {
-  background: rgba(20, 48, 32, 0.95);
-  border-color: rgba(255, 209, 102, 0.5);
-  transform: translateX(2px);
+.leaderboard-row:hover,
+.lb-row:hover {
+  background: rgba(28, 43, 64, 0.95) !important;
+  border-color: rgba(255, 209, 102, 0.4) !important;
+  transform: translateY(-1px);
 }
 
-.leaderboard-row.is-me {
-  border: 1.5px solid #ffd166;
-  background: linear-gradient(135deg, rgba(46, 26, 16, 0.9) 0%, rgba(20, 52, 34, 0.9) 100%);
+.leaderboard-row.is-me,
+.lb-row.is-me {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(24, 37, 56, 0.95) 100%) !important;
+  border: 1.5px solid #ffd166 !important;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.25) !important;
 }
 
-.lb-rank-badge {
+.lb-rank-badge,
+.lb-rank {
   font-family: 'Fredoka', sans-serif;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 900;
-  width: 30px;
+  width: 32px;
   flex-shrink: 0;
   text-align: center;
-}
-
-.lb-rank-badge.top-1 { color: #ffd700; font-size: 16px; }
-.lb-rank-badge.top-2 { color: #e0e0e0; font-size: 15px; }
-.lb-rank-badge.top-3 { color: #cd7f32; font-size: 14px; }
-.lb-rank-badge.other { color: #a7c4bc; font-size: 12px; }
-
-.lb-user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
-
-.lb-user-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
-  border: 1px solid #ffd166;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
+}
+
+.lb-rank-badge.top-1 { font-size: 18px; filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4)); }
+.lb-rank-badge.top-2 { font-size: 17px; filter: drop-shadow(0 2px 4px rgba(220, 220, 220, 0.3)); }
+.lb-rank-badge.top-3 { font-size: 16px; filter: drop-shadow(0 2px 4px rgba(205, 127, 50, 0.3)); }
+.lb-rank-badge.other,
+.lb-rank { color: #94a3b8; font-size: 11.5px; font-weight: 800; }
+
+.lb-user-info,
+.lb-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.lb-user-avatar,
+.lb-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, #1e2d42 0%, #0d1724 100%) !important;
+  border: 1.5px solid rgba(255, 209, 102, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 17px !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .lb-user-details {
@@ -2960,25 +3496,45 @@ body.is-native-app #app-container {
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
+  gap: 1px;
 }
 
-.lb-user-name {
+.lb-user-name,
+.lb-name {
   font-family: 'Fredoka', sans-serif;
   font-size: 12.5px;
   font-weight: 800;
-  color: #ffffff;
+  color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.leaderboard-row.is-me .lb-user-name {
+.leaderboard-row.is-me .lb-user-name,
+.lb-row.is-me .lb-name {
   color: #ffd166;
 }
 
-.lb-user-rank-title {
-  font-size: 9.5px;
-  color: #a7c4bc;
+.lb-me-pill,
+.lb-me-tag {
+  background: #ffd166;
+  color: #0b1523;
+  font-family: 'Outfit', sans-serif;
+  font-size: 8.5px;
+  font-weight: 900;
+  padding: 1.5px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+.lb-user-rank-title,
+.lb-sub {
+  font-size: 10px;
+  color: #94a3b8;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -2991,10 +3547,12 @@ body.is-native-app #app-container {
   align-items: flex-end;
   flex-shrink: 0;
   text-align: right;
-  min-width: 72px;
+  min-width: 78px;
+  gap: 1px;
 }
 
-.lb-score-val {
+.lb-score-val,
+.lb-score {
   font-family: 'Fredoka', sans-serif;
   font-size: 13px;
   font-weight: 900;
@@ -3004,7 +3562,7 @@ body.is-native-app #app-container {
 
 .lb-level-tag {
   font-size: 9.5px;
-  color: #52b788;
+  color: #38bdf8;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -3261,20 +3819,21 @@ body.is-native-app #app-container {
   max-width: 100% !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
-  background: radial-gradient(circle at 50% 15%, #163a27 0%, #0c2317 65%, #05140b 100%) !important;
-  border: 2px solid #ffd166 !important;
+  background: linear-gradient(180deg, #111a26 0%, #0c131c 100%) !important;
+  border: 1.5px solid rgba(255, 209, 102, 0.45) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Hub Master Header Bar (Doğal Ahşap & Orman Kimliği) */
+/* Hub Master Header Bar */
 .hub-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgba(32, 18, 10, 0.95) 0%, rgba(14, 38, 25, 0.95) 100%);
-  border: 1.5px solid #d4af37;
+  background: linear-gradient(135deg, rgba(23, 37, 54, 0.95) 0%, rgba(15, 24, 36, 0.95) 100%);
+  border: 1px solid rgba(255, 209, 102, 0.3);
   border-radius: 14px;
-  padding: 7px 10px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 3px 10px rgba(0, 0, 0, 0.5);
+  padding: 8px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 10px rgba(0, 0, 0, 0.4);
   width: 100%;
   box-sizing: border-box;
   gap: 8px;
@@ -3290,7 +3849,7 @@ body.is-native-app #app-container {
 .hub-forest-badge {
   font-size: 9px;
   font-weight: 800;
-  color: #52b788;
+  color: #34d399;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -3302,7 +3861,7 @@ body.is-native-app #app-container {
   font-family: 'Fredoka', sans-serif;
   font-size: 14.5px;
   font-weight: 900;
-  color: #ffd166;
+  color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3316,15 +3875,15 @@ body.is-native-app #app-container {
   align-items: center;
 }
 
-/* Cihaz Canlı Ağ ve Mobil Veri Durumu Rozeti (Gerçek Cihaz Verisi) */
+/* Cihaz Canlı Ağ ve Mobil Veri Durumu Rozeti */
 .device-network-badge {
   font-size: 10px;
   font-weight: 800;
   padding: 3px 8px;
   border-radius: 10px;
-  background: rgba(10, 32, 20, 0.92);
-  border: 1.5px solid #52b788;
-  color: #d8f3dc;
+  background: rgba(15, 23, 36, 0.92);
+  border: 1.5px solid rgba(52, 211, 153, 0.5);
+  color: #e2e8f0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -3334,41 +3893,41 @@ body.is-native-app #app-container {
 }
 
 .device-network-badge.is-online {
-  border-color: #52b788;
-  color: #b7e4c7;
-  background: rgba(16, 48, 30, 0.9);
+  border-color: #10b981;
+  color: #6ee7b7;
+  background: rgba(16, 48, 30, 0.85);
 }
 
 .device-network-badge.is-offline {
   border-color: #e63946;
   color: #ffb4a2;
-  background: rgba(48, 16, 16, 0.9);
+  background: rgba(48, 16, 16, 0.85);
 }
 
-/* 3 Sekmeli Gezinme Butonları (Doğal Ahşap / Orman Teması) */
+/* 4 Sekmeli Gezinme Butonları */
 .hub-tabs-row {
   display: flex;
   gap: 5px;
-  background: rgba(8, 24, 16, 0.92);
+  background: rgba(12, 19, 28, 0.9);
   padding: 4px;
   border-radius: 14px;
-  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
   box-sizing: border-box;
 }
 
 .hub-tab-btn {
   flex: 1;
-  background: rgba(14, 38, 26, 0.7);
-  border: 1px solid rgba(82, 183, 136, 0.25);
-  color: #a7c4bc;
+  background: rgba(22, 33, 49, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
   font-family: 'Fredoka', sans-serif;
-  font-size: 11.5px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   padding: 7px 4px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -3378,10 +3937,10 @@ body.is-native-app #app-container {
 }
 
 .hub-tab-btn.active {
-  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
   color: #ffd166;
   border: 1.5px solid #ffd166;
-  box-shadow: 0 2px 8px rgba(255, 209, 102, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .hub-tab-btn:hover:not(.active) {
@@ -3883,12 +4442,12 @@ body.is-native-app #app-container {
   display: none !important;
 }
 
-/* 🧢 Şapka: Kulakların tam üstünde konumlanan, yüzü ve burnu asla kapatmayan şapka */
+/* 🧢 Şapka: İBB & Boğaziçi koyu lacivert kaşif şapkası */
 .runner-wear-overlay.wear-hat {
   top: 10px;
   left: 34px;
   font-size: 11px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+  filter: drop-shadow(0 0 5px rgba(11, 37, 69, 0.95)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
   transform: rotate(-8deg);
 }
 
@@ -3901,12 +4460,12 @@ body.is-native-app #app-container {
   transform: scaleX(1.15) rotate(2deg);
 }
 
-/* 👖 Pantolon: Tilkinin ayaklarına dikey ve gövde altına giydirilen izci pantolonu */
+/* 👖 Pantolon: İBB & Boğaziçi koyu lacivert izci pantolonu */
 .runner-wear-overlay.wear-pants {
   top: 36px;
   left: 17px;
   font-size: 12px;
-  filter: drop-shadow(0 0 5px rgba(255, 209, 102, 0.7));
+  filter: drop-shadow(0 0 5px rgba(11, 37, 69, 0.95)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
   transform: scaleY(1.2) scaleX(1.1);
 }
 
@@ -3952,43 +4511,221 @@ body.is-native-app #app-container {
 }
 
 /* ==========================================================
-   KAHRAMAN SEÇİM EKRANI KOSTÜM ÖNİZLEME KATMANLARI
+   KAHRAMAN SEÇİM EKRANI (DOĞAL VE TEMİZ KAHRAMAN AVATARI)
+   (Kahramanlar doğal ve temiz görünür, aksesuarlar ekranda yüzmez)
    ========================================================== */
 .hero-avatar-wrap {
   position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d6a4f 0%, #0d281a 100%);
+  border: 3px solid #ffd166;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(255, 209, 102, 0.35);
+  overflow: hidden;
 }
 
-.preview-wear-overlay {
-  position: absolute;
+.hero-preview-animated-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
   pointer-events: none;
-  z-index: 15;
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.preview-wear-overlay.hidden {
+/* Kahraman seçiminde aksesuar katmanı kapalıdır - Karakter tamamen doğal görünür */
+.preview-wear-overlay {
   display: none !important;
 }
 
-.preview-wear-overlay.wear-hat {
-  top: 16px;
-  left: 56%;
-  transform: translateX(-50%) rotate(-6deg);
-  font-size: 22px;
+/* ----------------------------------------------------------
+   1. TİLKİ (FOX) - Kulak, Baş, Gövde ve Bacak Birebir Uyum
+   Tilki kafası sağ öndedir (X: ~78-86px, Y: ~44-52px). Koşarken ~0.56s trot ritminde yaylanır.
+   ---------------------------------------------------------- */
+.hero-avatar-wrap.hero-fox .preview-wear-overlay.wear-hat {
+  top: 36px;
+  left: 64px;
+  transform-origin: 65% 85%;
+  animation: heroFoxHatRun 0.56s infinite ease-in-out;
 }
 
-.preview-wear-overlay.wear-vest {
-  top: 48px;
-  left: 45%;
-  transform: translateX(-50%) scaleX(1.2);
-  font-size: 26px;
+.hero-avatar-wrap.hero-fox .preview-wear-overlay.wear-vest {
+  top: 54px;
+  left: 36px;
+  transform-origin: 50% 50%;
+  animation: heroFoxVestRun 0.56s infinite ease-in-out;
 }
 
-.preview-wear-overlay.wear-pants {
-  top: 76px;
-  left: 38%;
-  transform: translateX(-50%) scaleY(1.2);
-  font-size: 22px;
+.hero-avatar-wrap.hero-fox .preview-wear-overlay.wear-pants {
+  top: 58px;
+  left: 18px;
+  transform-origin: 50% 50%;
+  animation: heroFoxPantsRun 0.56s infinite ease-in-out;
+}
+
+@keyframes heroFoxHatRun {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-11deg) scale(0.95);
+  }
+  25% {
+    transform: translate3d(1px, 3.5px, 0) rotate(-8deg) scale(0.96);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0) rotate(-14deg) scale(0.94);
+  }
+  75% {
+    transform: translate3d(-0.8px, 3px, 0) rotate(-9deg) scale(0.96);
+  }
+}
+
+@keyframes heroFoxVestRun {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(4deg) scale(0.92, 0.88);
+  }
+  25% {
+    transform: translate3d(0.5px, 2px, 0) rotate(5deg) scale(0.94, 0.90);
+  }
+  50% {
+    transform: translate3d(0, -1.5px, 0) rotate(3deg) scale(0.90, 0.86);
+  }
+  75% {
+    transform: translate3d(-0.5px, 2px, 0) rotate(4deg) scale(0.93, 0.89);
+  }
+}
+
+@keyframes heroFoxPantsRun {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-6deg) scale(0.88, 0.85);
+  }
+  25% {
+    transform: translate3d(0, 2px, 0) rotate(-4deg) scale(0.90, 0.87);
+  }
+  50% {
+    transform: translate3d(0, -1px, 0) rotate(-7deg) scale(0.86, 0.83);
+  }
+  75% {
+    transform: translate3d(0, 2px, 0) rotate(-5deg) scale(0.89, 0.86);
+  }
+}
+
+/* ----------------------------------------------------------
+   2. MAYMUN (MONKEY) - Dik Duruş & Çevik Adımlar
+   Maymun daha dik koşar, başı üst ortadadır (X: ~52px, Y: ~22px).
+   ---------------------------------------------------------- */
+.hero-avatar-wrap.hero-monkey .preview-wear-overlay.wear-hat {
+  top: 18px;
+  left: 45px;
+  transform-origin: 50% 85%;
+  animation: heroMonkeyHatRun 0.48s infinite ease-in-out;
+}
+
+.hero-avatar-wrap.hero-monkey .preview-wear-overlay.wear-vest {
+  top: 46px;
+  left: 41px;
+  transform-origin: 50% 50%;
+  animation: heroMonkeyVestRun 0.48s infinite ease-in-out;
+}
+
+.hero-avatar-wrap.hero-monkey .preview-wear-overlay.wear-pants {
+  top: 66px;
+  left: 43px;
+  transform-origin: 50% 50%;
+  animation: heroMonkeyPantsRun 0.48s infinite ease-in-out;
+}
+
+@keyframes heroMonkeyHatRun {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg) scale(0.95); }
+  30% { transform: translate3d(0, 3px, 0) rotate(1deg) scale(0.96); }
+  60% { transform: translate3d(0, -2.5px, 0) rotate(-4deg) scale(0.94); }
+}
+@keyframes heroMonkeyVestRun {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.95, 0.95); }
+  30% { transform: translate3d(0, 2px, 0) scale(0.96, 0.96); }
+  60% { transform: translate3d(0, -1.5px, 0) scale(0.93, 0.93); }
+}
+@keyframes heroMonkeyPantsRun {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.9, 0.9); }
+  30% { transform: translate3d(0, 1.8px, 0) scale(0.92, 0.92); }
+  60% { transform: translate3d(0, -1.2px, 0) scale(0.88, 0.88); }
+}
+
+/* ----------------------------------------------------------
+   3. KAPLAN (TIGER) - Güçlü Gövde & Ağırbaşlı Adımlar
+   Kaplan daha iri ve geniştir (X: ~68px, Y: ~38px).
+   ---------------------------------------------------------- */
+.hero-avatar-wrap.hero-tiger .preview-wear-overlay.wear-hat {
+  top: 32px;
+  left: 58px;
+  transform-origin: 60% 85%;
+  animation: heroTigerHatRun 0.60s infinite ease-in-out;
+}
+
+.hero-avatar-wrap.hero-tiger .preview-wear-overlay.wear-vest {
+  top: 52px;
+  left: 36px;
+  transform-origin: 50% 50%;
+  animation: heroTigerVestRun 0.60s infinite ease-in-out;
+}
+
+.hero-avatar-wrap.hero-tiger .preview-wear-overlay.wear-pants {
+  top: 60px;
+  left: 18px;
+  transform-origin: 50% 50%;
+  animation: heroTigerPantsRun 0.60s infinite ease-in-out;
+}
+
+@keyframes heroTigerHatRun {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg) scale(1.05); }
+  25% { transform: translate3d(1px, 3px, 0) rotate(-6deg) scale(1.06); }
+  50% { transform: translate3d(0, -2px, 0) rotate(-10deg) scale(1.03); }
+  75% { transform: translate3d(-0.8px, 2.8px, 0) rotate(-7deg) scale(1.06); }
+}
+@keyframes heroTigerVestRun {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.08, 1.02); }
+  25% { transform: translate3d(0.5px, 2px, 0) scale(1.10, 1.04); }
+  50% { transform: translate3d(0, -1.5px, 0) scale(1.06, 1.0); }
+  75% { transform: translate3d(-0.5px, 2px, 0) scale(1.09, 1.03); }
+}
+@keyframes heroTigerPantsRun {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.0, 0.95); }
+  25% { transform: translate3d(0, 2px, 0) scale(1.02, 0.97); }
+  50% { transform: translate3d(0, -1px, 0) scale(0.98, 0.93); }
+  75% { transform: translate3d(0, 2px, 0) scale(1.01, 0.96); }
+}
+
+/* ----------------------------------------------------------
+   4. YATAY MOD & TABLET (105px ve 170px) ÖLÇEKLEME UYUMU
+   ---------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 580px), (min-aspect-ratio: 1.25) and (max-height: 640px) {
+  .hero-card.wood-hero-card .hero-avatar-wrap {
+    width: 105px;
+    height: 105px;
+  }
+  .hero-card.wood-hero-card .hero-avatar-wrap .hero-preview-animated-img {
+    width: 80px;
+    height: 80px;
+  }
+  .hero-card.wood-hero-card .hero-avatar-wrap .preview-wear-overlay {
+    zoom: 0.81;
+  }
+}
+
+@media (min-width: 768px) and (min-height: 768px) {
+  .hero-avatar-wrap {
+    width: 170px;
+    height: 170px;
+  }
+  .hero-avatar-wrap .hero-preview-animated-img {
+    width: 130px;
+    height: 130px;
+  }
+  .hero-avatar-wrap .preview-wear-overlay {
+    zoom: 1.30;
+  }
 }
 
 /* ==========================================================
@@ -5100,6 +5837,596 @@ body.is-native-app #app-container {
   z-index: 90;
 }
 
+/* ============================================================
+   DOPAMIN LOOP — QUIZ ZAMANLAYI​CI, STREAK & BİLGİ LİGİ
+============================================================ */
 
+.quiz-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+}
 
+.quiz-title-label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffd166;
+  letter-spacing: 0.4px;
+}
 
+.quiz-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 6px;
+  gap: 6px;
+}
+
+.quiz-streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 100, 0, 0.12);
+  border: 1.5px solid rgba(255, 150, 0, 0.4);
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd166;
+  transition: all 0.3s ease;
+}
+
+.quiz-streak-badge.on-fire {
+  background: rgba(255, 80, 0, 0.25);
+  border-color: #ff6400;
+  color: #ff9f1c;
+  box-shadow: 0 0 12px rgba(255, 100, 0, 0.5);
+  animation: streakPulse 0.8s ease infinite alternate;
+}
+
+@keyframes streakPulse {
+  from { box-shadow: 0 0 6px rgba(255, 100, 0, 0.4); }
+  to   { box-shadow: 0 0 18px rgba(255, 100, 0, 0.85); }
+}
+
+.quiz-mini-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ⏱️ Zamanlayıcı Çubuğu */
+.quiz-timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.quiz-timer-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quiz-timer-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #52b788, #ffd166);
+  transition: width 1s linear, background 0.5s ease;
+}
+
+.quiz-timer-bar.warning {
+  background: linear-gradient(90deg, #ffd166, #f4a261);
+}
+
+.quiz-timer-bar.danger {
+  background: linear-gradient(90deg, #e63946, #f4a261);
+  animation: timerDanger 0.4s ease infinite alternate;
+}
+
+@keyframes timerDanger {
+  from { opacity: 0.8; }
+  to   { opacity: 1; box-shadow: 0 0 8px #e63946; }
+}
+
+.quiz-timer-text {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffd166;
+  min-width: 22px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+.quiz-timer-text.danger { color: #e63946; }
+
+/* Quiz Sonuç Puan Kutusu */
+.quiz-points-earned-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 209, 102, 0.12);
+  border: 1.5px solid #ffd166;
+  border-radius: 14px;
+  padding: 8px 16px;
+  margin: 6px 0;
+  width: 100%;
+}
+
+.quiz-points-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b7e4c7;
+}
+
+.quiz-points-val {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffd166;
+  animation: countUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes countUp {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.quiz-rank-badge {
+  background: linear-gradient(135deg, #ffd166, #f4a261);
+  color: #1a0f00;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 5px 14px;
+  border-radius: 16px;
+  text-align: center;
+  width: 100%;
+  animation: fadeIn 0.4s ease;
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.6);
+}
+
+/* Bilgi Şampiyonu Liderlik Tablosu */
+.quiz-lb-header {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.quiz-lb-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #f8fafc;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.quiz-lb-my-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(26, 38, 56, 0.95) 0%, rgba(16, 26, 38, 0.95) 100%);
+  border: 1.5px solid rgba(255, 209, 102, 0.45);
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.quiz-lb-my-card strong {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13.5px;
+  color: #ffd166;
+  flex: 1;
+}
+
+.quiz-lb-rank-chip {
+  background: rgba(255, 209, 102, 0.16);
+  border: 1px solid #ffd166;
+  color: #ffd166;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.quiz-lb-info-box {
+  margin-top: 6px;
+  background: rgba(15, 23, 36, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+  font-size: 10.5px;
+  color: #cbd5e1;
+  font-weight: 600;
+  flex-wrap: nowrap;
+}
+
+.quiz-lb-info-box > div {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.quiz-lb-info-box strong {
+  color: #ffd166;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   30. EVRENSEL MOBİL, TABLET & LANDSCAPE (YATAY / DİKEY) UYUMLULUK SİSTEMİ
+   (iOS Safari Safe-Area, Android Çentik/Navigasyon, Tabletler & Geniş Ekranlar)
+   ========================================================================== */
+
+/* 1. Tüm Ekranlar ve Başlıklar İçin Güvenli Bölge (Safe-Area Inset) */
+.top-branding-bar {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.top-bar, .wood-top-bar, .map-top-bar {
+  padding-top: max(8px, env(safe-area-inset-top, 8px));
+  padding-left: max(10px, env(safe-area-inset-left, 10px));
+  padding-right: max(10px, env(safe-area-inset-right, 10px));
+  box-sizing: border-box;
+}
+
+/* 2. Etap Listesi Görünümü: Tablet ve Yatay Modda Çok Sütunlu Grid */
+@media (min-width: 600px) or (orientation: landscape) and (min-width: 580px) {
+  #map-scroll.map-scroll-area {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)) !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+    align-content: start;
+    box-sizing: border-box;
+  }
+}
+
+/* 3. Koşu Sahnesi (Runner Canvas): Yatay & Tablet Başparmak Ergonomisi */
+@media (orientation: landscape) and (max-height: 560px), (min-aspect-ratio: 1.3) and (max-height: 620px) {
+  .game-hud {
+    top: max(6px, env(safe-area-inset-top, 6px));
+    padding: 0 max(16px, env(safe-area-inset-left, 16px));
+    gap: 8px;
+  }
+
+  .hud-progress-wrap {
+    top: max(40px, calc(env(safe-area-inset-top, 0px) + 36px)) !important;
+    max-width: 420px;
+    padding: 3px 10px;
+  }
+
+  .hud-progress-info {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+
+  .hud-clothing-bar {
+    top: max(78px, calc(env(safe-area-inset-top, 0px) + 74px));
+    gap: 5px;
+  }
+
+  .hud-perks-bar {
+    top: max(104px, calc(env(safe-area-inset-top, 0px) + 100px));
+  }
+
+  /* Alt Kontroller: Sol Başparmağa EĞİL, Sağ Başparmağa ZIPLA, Orta Bölge Boş */
+  .game-action-buttons.centered-bottom-dock {
+    height: 64px;
+    padding: 0 max(24px, env(safe-area-inset-left, 24px)) 6px max(24px, env(safe-area-inset-right, 24px));
+    justify-content: space-between;
+  }
+
+  .dock-action-box {
+    flex: none;
+    width: 140px;
+    height: 48px;
+    font-size: 12.5px;
+    border-radius: 16px;
+  }
+
+  .dock-action-box .dock-box-icon {
+    font-size: 18px;
+  }
+
+  .game-boosters-dock {
+    right: max(14px, env(safe-area-inset-right, 14px));
+    bottom: 74px;
+    gap: 6px;
+  }
+
+  .in-game-booster-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* 4. Tüm Modalların Yatay / Kısa Ekran Uyumu */
+@media (orientation: landscape) and (max-height: 560px), (max-height: 520px) {
+  .modal-overlay {
+    padding: 6px max(14px, env(safe-area-inset-left, 14px)) 6px max(14px, env(safe-area-inset-right, 14px));
+  }
+
+  .modal-content {
+    max-height: 95vh;
+    max-height: 95dvh;
+    max-width: 660px;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .modal-desc {
+    font-size: 11.5px;
+    line-height: 1.3;
+  }
+
+  /* Doğa & Bilim Yarışması Yatay Mod: Şıklar 2 Sütun, Kompakt Yerleşim */
+  .quiz-modal-content {
+    max-width: 680px;
+    padding: 10px 14px;
+    gap: 5px;
+  }
+
+  .quiz-options-container {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .quiz-option-btn {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .quiz-question-box {
+    padding: 8px 12px;
+    gap: 3px;
+  }
+
+  .quiz-question-text {
+    font-size: 13.5px;
+    line-height: 1.25;
+  }
+
+  .quiz-bottom-stats-bar {
+    margin-top: 4px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .quiz-bottom-stat-item {
+    min-height: 36px;
+    padding: 4px 6px;
+  }
+
+  .btn-quiz-nav-sub,
+  .btn-quiz-nav-main {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+  }
+
+  /* Gelişim Vadisi & Kamp Modalı: Güçlendirmeler 2 Sütun */
+  .camp-modal-content {
+    max-width: 760px;
+  }
+
+  .camp-upgrades-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .camp-perk-card {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .camp-perk-title {
+    font-size: 12px;
+  }
+
+  .camp-perk-details {
+    display: none; /* Kompakt görünümde detay yazısı gizlenir */
+  }
+
+  .camp-xp-explainer-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  /* Koşu Eğitimi (Tutorial): 3 Adım Yan Yana */
+  .tutorial-modal-content {
+    max-width: 740px !important;
+    padding: 12px 16px !important;
+  }
+
+  .tutorial-steps-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  .tutorial-step-card {
+    padding: 8px 10px !important;
+  }
+
+  .step-text {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Kaşif Kaydı (Onboarding): 3 Kahraman Kartı Yan Yana */
+  .onboarding-content {
+    max-width: 650px;
+  }
+
+  .onboarding-heroes-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  /* Büyük Final Modalı */
+  .grand-victory-modal-content {
+    max-width: 700px;
+  }
+
+  .victory-photo {
+    max-height: 120px;
+    object-fit: cover;
+  }
+}
+
+/* 5. Büyük Tabletler (iPad, Galaxy Tab 768px+) İçin Merkezileştirme ve Zenginleştirme */
+@media (min-width: 768px) and (min-height: 768px) {
+  .modal-content {
+    max-width: 600px;
+    padding: 20px 24px;
+    border-radius: 24px;
+  }
+
+  .modal-content-large {
+    max-width: 760px;
+  }
+
+  .hero-card.wood-hero-card {
+    max-width: 580px;
+    padding: 24px;
+  }
+
+  .hero-avatar-wrap {
+    width: 170px;
+    height: 170px;
+  }
+
+  .hero-avatar-canvas,
+  .hero-preview-animated-img {
+    width: 170px;
+    height: 170px;
+  }
+
+  .wood-btn-main#btn-hero-select {
+    max-width: 580px;
+    margin: 8px auto 0;
+    font-size: 16px;
+    padding: 14px 28px;
+  }
+}
+
+/* ==========================================================================
+   26. AHŞAP ORMAN TEMALI LİSTEYİ YENİLE BUTONU (WOODEN REFRESH BUTTON)
+   ========================================================================== */
+.btn-wood-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #9C6644 0%, #7F4F24 45%, #582F0E 100%);
+  color: #FFF3D6;
+  border: 2px solid #DDB892;
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.45), 0 3px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85), 0 0 5px rgba(221, 184, 146, 0.4);
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-wood-refresh::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.btn-wood-refresh:hover {
+  background: linear-gradient(180deg, #AF7A54 0%, #8F5C30 45%, #663712 100%);
+  border-color: #E6CCB2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 5px 14px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.btn-wood-refresh:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, #6E3F1A 0%, #582F0E 100%);
+}
+
+.btn-wood-refresh .btn-refresh-icon {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.4s ease;
+}
+
+.btn-wood-refresh.is-refreshing {
+  cursor: wait !important;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.btn-wood-refresh.is-refreshing .btn-refresh-icon {
+  animation: woodRefreshSpin 0.75s linear infinite;
+}
+
+@keyframes woodRefreshSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-wood-refresh-sm {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  border-radius: 10px;
+}
+
+.btn-wood-refresh-wide {
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  border-radius: 14px;
+}

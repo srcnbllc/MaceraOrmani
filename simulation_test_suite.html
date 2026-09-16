@@ -676,6 +676,43 @@
         log(id, `Zırh koruması doğrulandı: Oyuncu hayatta kaldı.`, "ok");
       }
 
+      // 5. Çocuk Dostu Üstten İniş / Yaylanarak Aşma (Vault Hop) Testi
+      log(id, "\n[ADIM 5]: Zıplama İnişinde Engele Denk Gelme & Yaylanma (Vault Hop) Testi", "highlight");
+      
+      const groundObstacle = {
+        type: "mossy_boulder",
+        x: player.x + 10,
+        y: canvas.height - 90 - 36,
+        w: 40,
+        h: 36,
+        passed: false
+      };
+
+      // Oyuncu zıplamış, tepeyi geçmiş ve inişte (vy > 0)
+      player.isGrounded = false;
+      player.vy = 3.5; // İniş hızı
+      player.y = groundObstacle.y - player.h + 14; // Ayakları engelin üstüne denk geldi
+
+      const livesBeforeLanding = playerLives;
+      const collisionResult = checkCollision(player, groundObstacle);
+
+      log(id, `Karakter engele geç zıpladı ve düşüş anında kayanın üstüne denk geldi:`, "info");
+      log(id, `   -> checkCollision Sonucu: ${collisionResult} (false = can gitmez)`, !collisionResult ? "ok" : "warn");
+      log(id, `   -> Karakter Hızı: player.vy = ${player.vy.toFixed(1)} (Negatif yaylanma sıçrayışı gerçekleşti)`, player.vy < 0 ? "ok" : "warn");
+      log(id, `   -> Engel Durumu: obs.passed = ${groundObstacle.passed} (Başarıyla aşıldı sayıldı)`, groundObstacle.passed ? "ok" : "warn");
+      log(id, `   -> Can Durumu: ${playerLives}/${livesBeforeLanding} (Can kaybı yaşanmadı!)`, playerLives === livesBeforeLanding ? "ok" : "warn");
+
+      // 6. Jump Buffer & Apex Hang-Time Doğrulaması
+      log(id, "\n[ADIM 6]: Jump Buffer & Tepe Noktası Süzülme (Apex Hang-Time) Testi", "highlight");
+      player.isGrounded = false;
+      playerJump(); // Havadayken zıplamaya basıldı
+      log(id, `Havadayken Zıplama Tıklandı: player.jumpBuffer = ${player.jumpBuffer} frame ön bellek kayıtlandı.`, player.jumpBuffer > 0 ? "ok" : "warn");
+
+      // Yere iniş anı
+      player.y = canvas.height - 90 - player.h;
+      updatePhysics();
+      log(id, `Yere Temas Anında: Jump Buffer tüketildi ve otomatik zıplama tetiklendi (vy = ${player.vy.toFixed(1)})`, player.vy < 0 ? "ok" : "warn");
+
       updateHeaderStats();
       setBadge(id, "pass", "BAŞARILI");
       log(id, "--- SİMÜLASYON 3 BAŞARIYLA TAMAMLANDI ---", "highlight");

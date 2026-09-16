@@ -124,7 +124,8 @@ class AndroidFirebaseBridge(
                     val heroId = json.optInt("heroId", 1)
                     val stages = json.optInt("stages", 1)
                     val coins = json.optInt("coins", 0)
-                    submitScore(name, score, heroId, stages, coins)
+                    val deviceInfo = json.optString("deviceInfo", "")
+                    submitScore(name, score, heroId, stages, coins, deviceInfo)
                 }
             }
         } catch (_: Exception) {}
@@ -178,9 +179,26 @@ class AndroidFirebaseBridge(
     }
 
     @JavascriptInterface
+    fun getDeviceInfoJson(): String {
+        val obj = JSONObject()
+        obj.put("manufacturer", Build.MANUFACTURER ?: "")
+        obj.put("brand", Build.BRAND ?: "")
+        obj.put("model", Build.MODEL ?: "")
+        obj.put("device", Build.DEVICE ?: "")
+        obj.put("osVersion", "Android ${Build.VERSION.RELEASE}")
+        obj.put("apiLevel", Build.VERSION.SDK_INT)
+        return obj.toString()
+    }
+
+    @JavascriptInterface
     fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int) {
+        submitScore(name, score, heroId, stages, coins, null)
+    }
+
+    @JavascriptInterface
+    fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int, deviceInfo: String?) {
         coroutineScope.launch(Dispatchers.IO) {
-            leaderboardRepository.submitScore(name, score, heroId, stages, coins)
+            leaderboardRepository.submitScore(name, score, heroId, stages, coins, deviceInfo)
         }
     }
 

@@ -103,8 +103,20 @@ class MainActivity : ComponentActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (::webView.isInitialized && webView.canGoBack()) {
-            webView.goBack()
+        if (::webView.isInitialized) {
+            webView.evaluateJavascript(
+                "(function() { if (window.handleAndroidBackKey) { return window.handleAndroidBackKey(); } return false; })()"
+            ) { result ->
+                val handled = result?.replace("\"", "")?.trim() == "true"
+                if (!handled) {
+                    if (webView.canGoBack()) {
+                        webView.goBack()
+                    } else {
+                        @Suppress("DEPRECATION")
+                        super.onBackPressed()
+                    }
+                }
+            }
         } else {
             @Suppress("DEPRECATION")
             super.onBackPressed()

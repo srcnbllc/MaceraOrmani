@@ -151,7 +151,7 @@ const KOSTUMLER = [
   {
     id: "hat",
     name: "Kaşif Şapkası",
-    desc: "Boğaziçi armalı, taze meşe yapraklı kaşif safari şapkası.",
+    desc: "İBB & Boğaziçi kurumsal koyu lacivert renkli, altın amblemli kaşif şapkası.",
     icon: "🧢",
     unlockStage: 2,
     price: 60
@@ -159,7 +159,7 @@ const KOSTUMLER = [
   {
     id: "vest",
     name: "Muhafız Yeleği",
-    desc: "Boğaziçi orman muhafızı yeleği, altın düğmeler ve amblem.",
+    desc: "Orman muhafızı yeleği, altın düğmeler ve Boğaziçi arması.",
     icon: "🦺",
     unlockStage: 4,
     price: 120
@@ -167,7 +167,7 @@ const KOSTUMLER = [
   {
     id: "pants",
     name: "İzci Pantolonu",
-    desc: "Resmi izci haki kargo pantolonu, altın tokalı kemer.",
+    desc: "İBB & Boğaziçi koyu lacivert resmi izci pantolonu, altın tokalı kemer.",
     icon: "👖",
     unlockStage: 6,
     price: 180
@@ -630,6 +630,85 @@ class DeviceNetworkService {
   }
 }
 
+// ============================================================================
+// 1.2 CİHAZ MARKA, MODEL & PARMAK İZİ SERVİSİ (DEVICE INFO SERVICE)
+// ============================================================================
+const DeviceInfoService = {
+  getDeviceInfo() {
+    // 1. Android WebView JavascriptInterface
+    try {
+      const bridge = window.AndroidFirebaseBridge || window.AndroidBridge;
+      if (bridge && typeof bridge.getDeviceInfoJson === 'function') {
+        const jsonStr = bridge.getDeviceInfoJson();
+        if (jsonStr) {
+          const info = JSON.parse(jsonStr);
+          const brand = (info.brand || info.manufacturer || "Android").trim();
+          const model = (info.model || "Cihaz").trim();
+          const os = (info.osVersion || "Android").trim();
+          return {
+            brand: brand.charAt(0).toUpperCase() + brand.slice(1),
+            model: model,
+            manufacturer: info.manufacturer || brand,
+            os: os,
+            summary: `${brand.toUpperCase()} ${model} (${os})`.trim()
+          };
+        }
+      }
+    } catch(e) {}
+
+    // 2. Tarayıcı / iOS / Diğer ortamlar: User-Agent ve Client Bilgileri
+    const ua = navigator.userAgent || "";
+    let brand = "Web";
+    let model = "Tarayıcı";
+    let os = "Bilinmeyen";
+
+    if (/android/i.test(ua)) {
+      os = "Android";
+      brand = "Android";
+      const match = ua.match(/;\s*([^;]+?)\s*Build/i) || ua.match(/Android\s+[^;]+;\s*([^;)]+)/i);
+      if (match && match[1]) {
+        model = match[1].trim();
+        const mLower = model.toLowerCase();
+        if (mLower.includes("samsung") || mLower.startsWith("sm-")) brand = "Samsung";
+        else if (mLower.includes("xiaomi") || mLower.includes("redmi") || mLower.includes("poco")) brand = "Xiaomi";
+        else if (mLower.includes("huawei")) brand = "Huawei";
+        else if (mLower.includes("oppo")) brand = "Oppo";
+        else if (mLower.includes("pixel")) brand = "Google";
+      }
+    } else if (/iphone|ipad|ipod/i.test(ua)) {
+      brand = "Apple";
+      os = "iOS";
+      model = /ipad/i.test(ua) ? "iPad" : "iPhone";
+    } else if (/windows/i.test(ua)) {
+      brand = "PC";
+      os = "Windows";
+      model = "Masaüstü";
+    } else if (/macintosh|mac os x/i.test(ua)) {
+      brand = "Apple";
+      os = "macOS";
+      model = "Mac";
+    }
+
+    return {
+      brand: brand,
+      model: model,
+      manufacturer: brand,
+      os: os,
+      summary: `${brand} ${model} (${os})`.trim()
+    };
+  },
+
+  getDeviceId() {
+    let id = localStorage.getItem("kemerburgaz_device_id");
+    if (!id) {
+      id = "dev_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+      localStorage.setItem("kemerburgaz_device_id", id);
+    }
+    return id;
+  }
+};
+window.DeviceInfoService = DeviceInfoService;
+
 class FirebaseSimService {
   static getCloudStatusText() {
     return DeviceNetworkService.getStatus().text;
@@ -653,11 +732,84 @@ class FirebaseSimService {
   }
 
   static getPlayerRank(xp = this.getXp()) {
-    if (xp < 300) return { rank: 1, title: "Orman Çaylağı", minXp: 0, maxXp: 300, icon: "🌱" };
-    if (xp < 700) return { rank: 2, title: "Patika Kaşifi", minXp: 300, maxXp: 700, icon: "🐾" };
-    if (xp < 1200) return { rank: 3, title: "Doğa İz Sürücüsü", minXp: 700, maxXp: 1200, icon: "🌲" };
-    if (xp < 1800) return { rank: 4, title: "Gölet & Vadi Muhafızı", minXp: 1200, maxXp: 1800, icon: "🦅" };
-    return { rank: 5, title: "Mağlova Baş Muhafızı", minXp: 1800, maxXp: 2500, icon: "👑" };
+    let completedCount = 0;
+    let highestStage = 1;
+    if (typeof GameState !== "undefined" && typeof GameState.getLevelState === "function") {
+      for (let i = 0; i < 10; i++) {
+        const st = GameState.getLevelState(i);
+        if (st === 3) completedCount++;
+        if (st >= 2) highestStage = Math.max(highestStage, i + 1);
+      }
+    }
+
+    // 1. Final Tamamlandı (10. Etap Tamamlandı - Profesyonel Statü)
+    const isFinalComplete = (typeof GameState !== "undefined" && GameState.getLevelState(9) === 3) || completedCount >= 10;
+    if (isFinalComplete || xp >= 2500) {
+      return { 
+        rank: 5, 
+        title: "Profesyonel Muhafız", 
+        badge: "PROFESYONEL",
+        minXp: 2000, 
+        maxXp: 3000, 
+        icon: "👑",
+        tier: "profesyonel",
+        description: "10 Etabı ve Büyük Finali tamamlamış resmi usta muhafız!"
+      };
+    }
+
+    // 2. İleri Seviye Kaşif (8-9. Bölümler)
+    if (highestStage >= 8 || completedCount >= 7 || xp >= 1800) {
+      return { 
+        rank: 4, 
+        title: "Usta Orman Kaşifi", 
+        badge: "USTA KAŞİF",
+        minXp: 1400, 
+        maxXp: 2000, 
+        icon: "🦅",
+        tier: "kasif",
+        description: "Ormanın derinliklerine hakim, tecrübeli kaşif!"
+      };
+    }
+
+    // 3. 5. Bölüme Gelindiğinde (5-7. Bölümler - Yeni Statü: Orman Kaşifi)
+    if (highestStage >= 5 || completedCount >= 4 || xp >= 800) {
+      return { 
+        rank: 3, 
+        title: "Orman Kaşifi", 
+        badge: "ORMAN KAŞİFİ",
+        minXp: 600, 
+        maxXp: 1400, 
+        icon: "🧭",
+        tier: "kasif",
+        description: "5. etaba ulaşmış, doğanın sırlarını keşfeden kaşif!"
+      };
+    }
+
+    // 4. Doğa İz Sürücüsü (3-4. Bölümler)
+    if (highestStage >= 3 || completedCount >= 2 || xp >= 300) {
+      return { 
+        rank: 2, 
+        title: "Doğa İz Sürücüsü", 
+        badge: "İZ SÜRÜCÜ",
+        minXp: 300, 
+        maxXp: 600, 
+        icon: "🐾",
+        tier: "izci",
+        description: "Orman patikalarını öğrenen aktif iz sürücü!"
+      };
+    }
+
+    // 5. Başlangıç (1-2. Bölümler - Orman Çaylağı)
+    return { 
+      rank: 1, 
+      title: "Orman Çaylağı", 
+      badge: "ÇAYLAK",
+      minXp: 0, 
+      maxXp: 300, 
+      icon: "🌱",
+      tier: "caylak",
+      description: "Maceraya yeni adım atan hevesli doğa dostu!"
+    };
   }
 
   static getAchievements() {
@@ -792,6 +944,11 @@ class SoundService {
     } catch (e) {
       console.warn("Ses yüklenemedi:", e);
     }
+    this.ambienceGain = null;
+    this.ambienceSource = null;
+    this.ambienceLFO = null;
+    this.ambienceFilter = null;
+    this.currentAmbienceStage = null;
   }
 
   getAudioCtx() {
@@ -814,10 +971,197 @@ class SoundService {
     this.musicEnabled = this.sfxEnabled;
     if (this.musicEnabled) {
       this.playMusic();
+      if (typeof gameRunning !== 'undefined' && gameRunning && typeof currentLevelNumber !== 'undefined') {
+        this.startWeatherAmbience(currentLevelNumber);
+      }
     } else {
       this.stopMusic();
+      this.stopWeatherAmbience();
     }
     return this.sfxEnabled;
+  }
+
+  startWeatherAmbience(stageNum) {
+    if (!this.musicEnabled && !this.sfxEnabled) return;
+    if (typeof getStageAtmosphere !== 'function') return;
+    const atmos = getStageAtmosphere(stageNum);
+    if (!atmos || (atmos.id !== "rainy" && atmos.id !== "winter")) {
+      this.stopWeatherAmbience();
+      return;
+    }
+    if (this.currentAmbienceStage === atmos.id && this.ambienceSource) {
+      return;
+    }
+    this.stopWeatherAmbience();
+    this.currentAmbienceStage = atmos.id;
+
+    try {
+      const ctx = this.getAudioCtx();
+      if (!ctx) return;
+
+      const bufferSize = ctx.sampleRate * 2;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.07;
+        b6 = white * 0.115926;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+
+      if (atmos.id === "rainy") {
+        // YAĞMUR AMBİYANSI: Çiseleyen dinlendirici yağmur ve su pıtırtısı
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(1350, ctx.currentTime);
+        filter.Q.setValueAtTime(0.85, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.042, ctx.currentTime + 1.2);
+      } else if (atmos.id === "winter") {
+        // KIŞ RÜZGARI: Masalsı hafif dağ esintisi ve uğultu
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(420, ctx.currentTime);
+        filter.Q.setValueAtTime(3.0, ctx.currentTime);
+
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.setValueAtTime(0.32, ctx.currentTime);
+        lfoGain.gain.setValueAtTime(160, ctx.currentTime);
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+        lfo.start();
+        this.ambienceLFO = lfo;
+
+        gain.gain.exponentialRampToValueAtTime(0.035, ctx.currentTime + 1.2);
+      }
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      whiteNoise.start();
+
+      this.ambienceSource = whiteNoise;
+      this.ambienceGain = gain;
+      this.ambienceFilter = filter;
+    } catch (e) {
+      console.warn("Weather ambience error:", e);
+    }
+  }
+
+  stopWeatherAmbience() {
+    this.currentAmbienceStage = null;
+    if (this.ambienceLFO) {
+      try { this.ambienceLFO.stop(); this.ambienceLFO.disconnect(); } catch (_) {}
+      this.ambienceLFO = null;
+    }
+    if (this.ambienceGain && this.audioCtx) {
+      try {
+        const now = this.audioCtx.currentTime;
+        this.ambienceGain.gain.setValueAtTime(this.ambienceGain.gain.value, now);
+        this.ambienceGain.gain.linearRampToValueAtTime(0.0001, now + 0.3);
+      } catch (_) {}
+    }
+    if (this.ambienceSource) {
+      const src = this.ambienceSource;
+      setTimeout(() => {
+        try { src.stop(); src.disconnect(); } catch (_) {}
+      }, 350);
+      this.ambienceSource = null;
+    }
+  }
+
+  playSplash() {
+    if (!this.sfxEnabled) return;
+    try {
+      const ctx = this.getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      // 1. Su 'plop' damlası
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+      oscGain.gain.setValueAtTime(0.20, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+
+      // 2. Islak su şapırtı sıçraması
+      const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.09), ctx.sampleRate);
+      const out = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < out.length; i++) {
+        out[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.022));
+      }
+      const nSrc = ctx.createBufferSource();
+      nSrc.buffer = noiseBuffer;
+      const nFilter = ctx.createBiquadFilter();
+      nFilter.type = "bandpass";
+      nFilter.frequency.setValueAtTime(1600, now);
+      const nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.16, now);
+      nGain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+      nSrc.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(ctx.destination);
+      nSrc.start(now);
+      nSrc.stop(now + 0.09);
+    } catch (_) {}
+  }
+
+  playSnowPuff() {
+    if (!this.sfxEnabled) return;
+    try {
+      const ctx = this.getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      // Karda pofuduk adım / ezilme tonu
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(170, now);
+      osc.frequency.exponentialRampToValueAtTime(75, now + 0.13);
+      oscGain.gain.setValueAtTime(0.18, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.13);
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+
+      // Kar çıtırtısı / puf sesi
+      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.11), ctx.sampleRate);
+      const out = buffer.getChannelData(0);
+      for (let i = 0; i < out.length; i++) {
+        out[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.028));
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(700, now);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.20, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.10);
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      src.start(now);
+      src.stop(now + 0.11);
+    } catch (_) {}
   }
 
   playJump() {
@@ -897,6 +1241,7 @@ class SoundService {
     if (this.bgMusic) {
       try { this.bgMusic.pause(); } catch (e) {}
     }
+    this.stopWeatherAmbience();
   }
 }
 
@@ -915,22 +1260,65 @@ const sounds = new Proxy(rawSoundService, {
 // 4. TOAST NOTIFICATION SERVICE
 // ============================================================================
 
+let lastToastMessage = "";
+let lastToastTime = 0;
+
 function showToast(msg, type = "info") {
-  const container = document.getElementById("toast-container");
-  if (!container) return;
+  if (!msg) return;
+
+  // 1. Mükerrer Spam Engeli (Aynı mesaj 1.8 saniye içinde tekrar gelirse yutulur)
+  const now = Date.now();
+  if (msg === lastToastMessage && (now - lastToastTime) < 1800) {
+    return;
+  }
+  lastToastMessage = msg;
+  lastToastTime = now;
+
+  // 2. Korumalı Container: DOM'da yoksa otomatik oluştur
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  // 3. Maksimum Eşzamanlı Toast Sayısı (Ekranda en fazla 2 adet tut, fazlaysa eskiyi temizle)
+  while (container.children.length >= 2) {
+    const oldest = container.firstElementChild;
+    if (oldest) oldest.remove();
+  }
 
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = msg;
+  toast.style.pointerEvents = "auto";
+  toast.style.cursor = "pointer";
+  toast.title = "Kapatmak için dokun";
+
+  // Kullanıcı dokunarak hemen kapatabilsin
+  toast.onclick = () => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(-15px) scale(0.95)";
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 180);
+  };
 
   container.appendChild(toast);
 
+  // Otomatik pürüzsüz kaybolma
   setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(-15px)";
-    setTimeout(() => toast.remove(), 300);
-  }, 2800);
+    if (toast.parentNode) {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-15px) scale(0.95)";
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 320);
+    }
+  }, 2600);
 }
+window.showToast = showToast;
 
 // ============================================================================
 // 5. EKRAN & MODAL YÖNETİCİSİ
@@ -947,6 +1335,14 @@ function showScreen(screenId) {
   const runnerWrap = document.getElementById("runner-player-sprite-wrap");
   if (runnerWrap && screenId !== "screen-game") {
     runnerWrap.style.display = "none";
+  }
+
+  if (screenId !== "screen-game" && typeof gameRunning !== "undefined" && gameRunning) {
+    gameRunning = false;
+    if (typeof gameLoopId !== "undefined" && gameLoopId) {
+      cancelAnimationFrame(gameLoopId);
+      gameLoopId = null;
+    }
   }
 
   updateMenuUI();
@@ -968,9 +1364,10 @@ function updateMenuUI() {
   const scoreEl = document.getElementById("menu-high-score");
   if (scoreEl) scoreEl.textContent = GameState.getTotalStagePoints();
 
-  // Kaşif Profil Rozeti Güncellemesi
+  // Kaşif Profil Rozeti Güncellemesi (Büyük, Ortalanmış ve Dinamik Rütbeli)
   const profileNameEl = document.getElementById("menu-profile-name");
   const profileAvatarEl = document.getElementById("menu-profile-avatar");
+  const profileSubEl = document.querySelector("#menu-profile-pill .profile-pill-sub");
   const profileHeroId = GameState.getProfileHero();
   const heroIcons = { 1: "🦊", 2: "🐵", 3: "🐯", 4: "🐿️", 5: "🦉" };
 
@@ -979,6 +1376,19 @@ function updateMenuUI() {
   const expName = GameState.getExplorerName();
   if (profileNameEl) {
     profileNameEl.textContent = expName ? expName : "Kaşif Kaydı";
+  }
+
+  // Dinamik Rütbe Başlığı
+  const rank = FirebaseSimService.getPlayerRank();
+  if (profileSubEl) {
+    profileSubEl.innerHTML = `${rank.icon} ${rank.title.toUpperCase()}`;
+    if (rank.tier === "profesyonel") {
+      profileSubEl.style.color = "#ffd700";
+      profileSubEl.style.textShadow = "0 0 6px rgba(255, 215, 0, 0.7)";
+    } else {
+      profileSubEl.style.color = "var(--accent-gold)";
+      profileSubEl.style.textShadow = "none";
+    }
   }
 
   const heroImg = document.getElementById("menu-hero-img");
@@ -1202,19 +1612,50 @@ function renderHeroCard() {
     }
   });
 
-  // Önizleme görseli üzerinde kıyafet katmanlarını güncelle
-  const prevHat = document.getElementById("preview-wear-hat");
-  const prevVest = document.getElementById("preview-wear-vest");
-  const prevPants = document.getElementById("preview-wear-pants");
-  if (prevHat) prevHat.classList.toggle("hidden", activeCostume !== "hat");
-  if (prevVest) prevVest.classList.toggle("hidden", activeCostume !== "vest");
-  if (prevPants) prevPants.classList.toggle("hidden", activeCostume !== "pants");
+  // Kahraman avatar kapsayıcısına türe özel sınıf ekle (Tilki, Maymun, Kaplan)
+  const avatarWrap = document.getElementById("hero-avatar-wrap") || document.querySelector(".hero-avatar-wrap");
+  if (avatarWrap) {
+    avatarWrap.classList.remove("hero-fox", "hero-monkey", "hero-tiger");
+    if (hero.id === 2) avatarWrap.classList.add("hero-monkey");
+    else if (hero.id === 3) avatarWrap.classList.add("hero-tiger");
+    else avatarWrap.classList.add("hero-fox");
+  }
 
   // Animasyonu garantile
   if (!heroPreviewAnimId) {
     startHeroPreviewAnimation();
   }
 }
+
+// 🔓 TÜM BÖLÜMLERİN KİLİDİNİ GEÇİCİ AÇMA / KİLİTLEME TEST MOTORU
+window.toggleUnlockAllStages = function() {
+  let allUnlocked = true;
+  for (let i = 0; i < 10; i++) {
+    if (GameState.getLevelState(i) === 0) {
+      allUnlocked = false;
+      break;
+    }
+  }
+
+  if (!allUnlocked) {
+    for (let i = 0; i < 10; i++) {
+      if (GameState.getLevelState(i) === 0) {
+        GameState.setLevelState(i, 2);
+      }
+    }
+    showToast("🔓 Tüm 10 Bölümün Kilidi Açıldı! Haritadan dilediğin etaba dokunarak test edebilirsin!", "success");
+  } else {
+    GameState.setLevelState(0, 2);
+    for (let i = 1; i < 10; i++) {
+      GameState.setLevelState(i, 0);
+    }
+    showToast("🔒 Bölümler Başlangıç Durumuna Kilitlendi (Yalnızca 1. Etap Açık)!", "info");
+  }
+
+  if (typeof renderMapScreen === "function") {
+    renderMapScreen();
+  }
+};
 
 // ============================================================================
 // 7. BÖLÜM SEÇİM HARİTASI (ORMAN ETAPLARI - HARİTA & LİSTE GÖRÜNÜMÜ)
@@ -1269,12 +1710,51 @@ function setupMapViewToggles() {
   }
 }
 
+function adjustMapDimensions() {
+  const viewport = document.getElementById("map-pan-viewport");
+  const canvasWrap = document.querySelector(".map-canvas-wrap");
+  const img = document.getElementById("map-aerial-img");
+  if (!viewport || !canvasWrap) return;
+
+  const vpH = viewport.clientHeight;
+  const vpW = viewport.clientWidth;
+  if (vpH <= 0) return;
+
+  // NewMap.png görselinin doğal en-boy oranı (varsayılan 1.6)
+  let ratio = 1.6;
+  if (img && img.naturalWidth && img.naturalHeight && img.naturalHeight > 0) {
+    ratio = img.naturalWidth / img.naturalHeight;
+  }
+
+  // Yükseklik daima viewport'un tamamını kaplasın (alttaki karanlık boşluk tamamen kapanır)
+  const targetH = vpH;
+  // Genişlik orantılı olarak büyüsün, haritanın rahatça kaydırılabilmesi için en az 1.55 kat genişlik
+  const minW = Math.max(Math.round(vpW * 1.55), 880);
+  const targetW = Math.max(minW, Math.round(targetH * ratio));
+
+  canvasWrap.style.height = `${targetH}px`;
+  canvasWrap.style.minHeight = `${targetH}px`;
+  canvasWrap.style.maxHeight = `${targetH}px`;
+  canvasWrap.style.width = `${targetW}px`;
+  canvasWrap.style.minWidth = `${targetW}px`;
+}
+window.adjustMapDimensions = adjustMapDimensions;
+
 let mapPanningInitialized = false;
 function initMapPanning() {
   if (mapPanningInitialized) return;
   const viewport = document.getElementById("map-pan-viewport");
   if (!viewport) return;
   mapPanningInitialized = true;
+
+  const mapImg = document.getElementById("map-aerial-img");
+  if (mapImg) {
+    if (mapImg.complete) {
+      adjustMapDimensions();
+    } else {
+      mapImg.onload = adjustMapDimensions;
+    }
+  }
 
   let isDown = false;
   let startX, startY, scrollLeft, scrollTop;
@@ -1307,6 +1787,36 @@ function initMapPanning() {
     const walkY = (y - startY) * 1.3;
     viewport.scrollLeft = scrollLeft - walkX;
     viewport.scrollTop = scrollTop - walkY;
+  });
+
+  // Mobil Dokunmatik / Touch Panning
+  let touchStartX = 0, touchStartY = 0, touchScrollLeft = 0, touchScrollTop = 0;
+  viewport.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].pageX;
+      touchStartY = e.touches[0].pageY;
+      touchScrollLeft = viewport.scrollLeft;
+      touchScrollTop = viewport.scrollTop;
+    }
+  }, { passive: true });
+
+  viewport.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].pageX - touchStartX;
+      const dy = e.touches[0].pageY - touchStartY;
+      viewport.scrollLeft = touchScrollLeft - dx;
+      viewport.scrollTop = touchScrollTop - dy;
+    }
+  }, { passive: true });
+
+  window.addEventListener("resize", () => {
+    const screenMap = document.getElementById("screen-map");
+    if (screenMap && screenMap.classList.contains("active")) {
+      adjustMapDimensions();
+      if (focusedMapStageIndex !== null) {
+        focusOnMapPin(focusedMapStageIndex);
+      }
+    }
   });
 }
 
@@ -1453,21 +1963,22 @@ function renderMapList() {
     const card = document.createElement("div");
     const state = GameState.getLevelState(idx); // 0=Locked, 2=Unlocked, 3=Completed
 
+    const isBeltur = (etap.id === 4);
     let statusBadge = `<div class="stage-status-badge locked">🔒</div>`;
     if (state === 3) {
       statusBadge = `<div class="stage-status-badge completed">✅</div>`;
     } else if (state === 2) {
       statusBadge = `<div class="stage-status-badge active">▶️</div>`;
-    } else if (state === 0 && idx >= 2) {
-      statusBadge = `<div class="stage-status-badge locked qr-needed" title="İşletme QR Kodu ile Ücretsiz Aç">📷 QR</div>`;
+    } else if (state === 0 && isBeltur) {
+      statusBadge = `<div class="stage-status-badge locked qr-needed" title="BELTUR Masasındaki QR Kodu ile Ücretsiz Aç">📷 QR</div>`;
     }
 
     let rewardTag = "";
     if (etap.id === 5) rewardTag = ` <div class="stage-reward-pill beltur">☕ BELTUR Kuponu</div>`;
     if (etap.id === 10) rewardTag = ` <div class="stage-reward-pill zipline">🏆 Muhafız Beratı</div>`;
 
-    if (state === 0 && idx >= 2) {
-      rewardTag += ` <div class="stage-reward-pill qr-tag">📍 ${etap.business} [QR ile Ücretsiz Aç]</div>`;
+    if (state === 0 && isBeltur) {
+      rewardTag += ` <div class="stage-reward-pill qr-tag">📍 BELTUR [QR ile Ücretsiz Aç]</div>`;
     }
 
     card.className = `stage-card ${state === 2 ? 'is-active-stage' : (state === 3 ? 'is-completed-stage' : 'is-locked-stage')}`;
@@ -1503,6 +2014,27 @@ function renderMapScreen() {
     if (mapListView) mapListView.classList.add("hidden");
     if (btnMap) btnMap.classList.add("active");
     if (btnList) btnList.classList.remove("active");
+
+    // Cihaz boyutuna göre haritayı uyarla ve güncel etaba otomatik odaklanarak aç
+    setTimeout(() => {
+      adjustMapDimensions();
+      let activeIdx = 0;
+      for (let i = 0; i < 10; i++) {
+        if (GameState.getLevelState(i) === 2) {
+          activeIdx = i;
+          break;
+        }
+      }
+      if (activeIdx === 0 && GameState.getLevelState(0) === 3) {
+        for (let i = 9; i >= 0; i--) {
+          if (GameState.getLevelState(i) === 3) {
+            activeIdx = Math.min(9, i + 1);
+            break;
+          }
+        }
+      }
+      focusOnMapPin(activeIdx);
+    }, 60);
   } else {
     if (mapInteractiveView) mapInteractiveView.classList.add("hidden");
     if (mapListView) mapListView.classList.remove("hidden");
@@ -1516,6 +2048,7 @@ function openLevelModal(idx) {
   activeLevelIndex = idx;
   const etap = RESMI_ETAPLAR[idx];
   const state = GameState.getLevelState(idx);
+  const isBeltur = (etap.id === 4);
 
   document.getElementById("modal-level-title").textContent = etap.title;
   document.getElementById("modal-level-facilities").textContent = etap.facilities;
@@ -1539,17 +2072,25 @@ function openLevelModal(idx) {
         startRunnerGame(activeLevelIndex + 1);
       };
     } else {
-      descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Önceki ${idx}. etabı başarıyla tamamlayarak VEYA <strong>${etap.business}</strong> noktasındaki QR kodu okutarak <strong>ÜCRETSİZ</strong> açabilirsiniz.`;
-      startBtn.textContent = "🔒 KİLİTLİ (Önceki Etabı Tamamla)";
-      startBtn.disabled = true;
-      startBtn.style.opacity = "0.6";
+      if (isBeltur) {
+        descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Önceki 3. etabı başarıyla tamamlayarak VEYA <strong>BELTUR Restoran &amp; Kafe</strong> masasındaki QR kodu okutarak <strong>ÜCRETSİZ</strong> açabilirsiniz.`;
+        startBtn.textContent = "🔒 KİLİTLİ (Önceki Etabı Tamamla)";
+        startBtn.disabled = true;
+        startBtn.style.opacity = "0.6";
 
-      if (qrBtn) {
-        qrBtn.style.display = "flex";
-        qrBtn.textContent = `📷 ${etap.business} QR Kodu ile Hemen Aç`;
-        qrBtn.onclick = () => {
-          openQRScannerModal(idx);
-        };
+        if (qrBtn) {
+          qrBtn.style.display = "flex";
+          qrBtn.textContent = `📷 BELTUR QR Kodu ile Hemen Aç`;
+          qrBtn.onclick = () => {
+            openQRScannerModal(idx);
+          };
+        }
+      } else {
+        descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Bu etabı açmak için önceki ${idx}. etabı başarıyla tamamlamalısınız.`;
+        startBtn.textContent = "🔒 KİLİTLİ (Önceki Etabı Tamamla)";
+        startBtn.disabled = true;
+        startBtn.style.opacity = "0.6";
+        if (qrBtn) qrBtn.style.display = "none";
       }
     }
   } else {
@@ -2272,6 +2813,26 @@ function getQuestionsForStage(stageIdx) {
   return DOGA_SORU_HAVUZU[safeIdx] || DOGA_SORU_HAVUZU[0];
 }
 
+function updateQuizBottomStatsUI() {
+  const pointsEl = document.getElementById("quiz-live-points");
+  const coinsEl = document.getElementById("quiz-live-coins");
+  const answersEl = document.getElementById("quiz-live-answers");
+  const stepLabel = document.getElementById("quiz-bottom-step-label");
+
+  if (pointsEl) {
+    pointsEl.textContent = `+${quizSessionPoints} ⭐`;
+  }
+  if (coinsEl) {
+    coinsEl.textContent = `+${quizCorrectCount * 10} 🪙`;
+  }
+  if (stepLabel) {
+    stepLabel.textContent = `Soru ${Math.min(3, currentQuizQuestionIndex + 1)}/3`;
+  }
+  if (answersEl) {
+    answersEl.innerHTML = `<span style="color:#52b788; font-weight:800;">✅ ${quizCorrectCount}</span> &nbsp; <span style="color:#e07a5f; font-weight:800;">❌ ${quizWrongCount}</span>`;
+  }
+}
+
 function startNatureQuiz(stageIndex, onComplete = null) {
   currentQuizStageIndex = stageIndex;
   currentQuizQuestionIndex = 0;
@@ -2282,21 +2843,7 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   quizStreak = 0;
   quizSessionPoints = 0;
 
-  const statCorrect = document.getElementById("quiz-stat-correct");
-  const statWrong = document.getElementById("quiz-stat-wrong");
-  if (statCorrect) statCorrect.textContent = "0";
-  if (statWrong) statWrong.textContent = "0";
-
-  const liveCoins = document.getElementById("quiz-coins-counter");
-  if (liveCoins) liveCoins.textContent = GameState.getCoins();
-
-  // Streak göstergesini sıfırla
-  const streakEl = document.getElementById("quiz-streak-count");
-  const streakFire = document.getElementById("quiz-streak-fire");
-  const streakBadge = document.getElementById("quiz-streak-badge");
-  if (streakEl) streakEl.textContent = "0";
-  if (streakFire) streakFire.textContent = "🌱";
-  if (streakBadge) streakBadge.classList.remove("on-fire");
+  updateQuizBottomStatsUI();
 
   const nextBtn = document.getElementById("btn-quiz-next-question");
   if (nextBtn) {
@@ -2304,6 +2851,7 @@ function startNatureQuiz(stageIndex, onComplete = null) {
       currentQuizQuestionIndex++;
       if (currentQuizQuestionIndex < 3) {
         renderQuizQuestion(currentQuizQuestionIndex);
+        updateQuizBottomStatsUI();
       } else {
         clearQuizTimer();
         showQuizSummary();
@@ -2317,18 +2865,30 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   const questionBox = document.getElementById("quiz-question-box");
   const optionsBox = document.getElementById("quiz-options-container");
   const feedbackBox = document.getElementById("quiz-feedback-box");
+  const bottomBar = document.getElementById("quiz-bottom-stats-bar");
+  const navRow = document.getElementById("quiz-nav-row");
   const skipBtn = document.getElementById("btn-quiz-skip");
+  const navMenuBtn = document.getElementById("btn-quiz-nav-menu");
   const timerWrap = document.getElementById("quiz-timer-wrap");
 
   if (summaryBox) summaryBox.classList.add("hidden");
   if (questionBox) questionBox.classList.remove("hidden");
   if (optionsBox) optionsBox.classList.remove("hidden");
   if (feedbackBox) feedbackBox.classList.add("hidden");
+  if (bottomBar) bottomBar.classList.remove("hidden");
+  if (navRow) navRow.classList.remove("hidden");
   if (timerWrap) timerWrap.style.display = "";
 
+  if (navMenuBtn) {
+    navMenuBtn.onclick = () => {
+      clearQuizTimer();
+      const modal = document.getElementById("modal-nature-quiz");
+      if (modal) modal.classList.remove("active");
+      if (window.showScreen) window.showScreen("screen-menu");
+    };
+  }
+
   if (skipBtn) {
-    skipBtn.style.display = "block";
-    skipBtn.textContent = "⏭️ Soruları Atla & Sonraki Etaba Geç";
     skipBtn.onclick = () => {
       clearQuizTimer();
       const modal = document.getElementById("modal-nature-quiz");
@@ -2342,6 +2902,8 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   }
 
   renderQuizQuestion(0);
+  updateQuizBottomStatsUI();
+
   if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.updateUIStatus) {
     RemoteQuizService.updateUIStatus();
   }
@@ -2523,7 +3085,7 @@ function handleQuizAnswer(selectedOption) {
   const nextQBtn = document.getElementById("btn-quiz-next-question");
 
   if (nextQBtn) {
-    nextQBtn.textContent = (currentQuizQuestionIndex === 2) ? "🏆 Sonuçları ve Ödülleri Gör ⏩" : "Sonraki Soruya Geç ⏩";
+    nextQBtn.textContent = (currentQuizQuestionIndex === 2) ? "🏆 Sonuçları Tamamla & Ödülleri Al ⏩" : "Sonraki Soruya Geç ⏩";
   }
 
   if (isCorrect) {
@@ -2540,9 +3102,6 @@ function handleQuizAnswer(selectedOption) {
 
     quizSessionPoints += earnedPoints;
 
-    const statCorrect = document.getElementById("quiz-stat-correct");
-    if (statCorrect) statCorrect.textContent = quizCorrectCount;
-
     if (selectedBtn) {
       selectedBtn.classList.add("correct");
       const badge = document.createElement("span");
@@ -2555,21 +3114,8 @@ function handleQuizAnswer(selectedOption) {
     GameState.addCoins(10);
     GameState.addQuizPoints(earnedPoints);
 
-    const liveCoins = document.getElementById("quiz-coins-counter");
-    if (liveCoins) {
-      liveCoins.textContent = GameState.getCoins();
-      liveCoins.classList.add("punch-scale");
-      setTimeout(() => liveCoins.classList.remove("punch-scale"), 350);
-    }
     updateMenuUI();
-
-    updateStreakUI();
-
-    if (quizStreak === 3) {
-      showToast("🔥 MÜKEMMEL! 3 Seri Doğru! +30 🪙 Bonus!", "success");
-      GameState.addCoins(30);
-      if (liveCoins) liveCoins.textContent = GameState.getCoins();
-    }
+    updateQuizBottomStatsUI();
 
     if (feedbackIcon) feedbackIcon.textContent = "🌟";
     if (feedbackText) feedbackText.innerHTML = `<strong>Tebrikler, Doğru!</strong> 🎉 +10 🪙 Altın, +${earnedPoints} Bilgi Puanı${bonusMsg}<br><span style="color:#b7e4c7; font-size:11.5px;">${q.fact}</span>`;
@@ -2580,10 +3126,8 @@ function handleQuizAnswer(selectedOption) {
   } else {
     quizWrongCount++;
     quizStreak = 0;
-    updateStreakUI();
 
-    const statWrong = document.getElementById("quiz-stat-wrong");
-    if (statWrong) statWrong.textContent = quizWrongCount;
+    updateQuizBottomStatsUI();
 
     if (selectedBtn) {
       selectedBtn.classList.add("wrong");
@@ -2609,6 +3153,7 @@ function handleQuizAnswer(selectedOption) {
     }
   }
 
+  updateQuizBottomStatsUI();
   if (feedbackBox) feedbackBox.classList.remove("hidden");
 }
 
@@ -2619,12 +3164,16 @@ function showQuizSummary() {
   const questionBox = document.getElementById("quiz-question-box");
   const optionsBox = document.getElementById("quiz-options-container");
   const feedbackBox = document.getElementById("quiz-feedback-box");
+  const bottomBar = document.getElementById("quiz-bottom-stats-bar");
+  const navRow = document.getElementById("quiz-nav-row");
   const skipBtn = document.getElementById("btn-quiz-skip");
   const timerWrap = document.getElementById("quiz-timer-wrap");
 
   if (questionBox) questionBox.classList.add("hidden");
   if (optionsBox) optionsBox.classList.add("hidden");
   if (feedbackBox) feedbackBox.classList.add("hidden");
+  if (bottomBar) bottomBar.classList.add("hidden");
+  if (navRow) navRow.classList.add("hidden");
   if (timerWrap) timerWrap.style.display = "none";
   if (skipBtn) skipBtn.style.display = "none";
 
@@ -2641,59 +3190,51 @@ function showQuizSummary() {
 
   const earnedCoins = quizCorrectCount * 10;
 
-  // Bilgi puanını kaydet (koşu puanından bağımsız)
-  const prevPoints = GameState.getQuizTotalPoints();
+  // Bilgi puanını kaydet
   GameState.addQuizPoints(quizSessionPoints);
   GameState.addQuizWeeklyPoints(quizSessionPoints);
-  const newPoints = GameState.getQuizTotalPoints();
+
+  // Firestore Bilgi Ligi puanını güncelle (cihaz & profil adıyla)
+  if (typeof QuizLeaderboardService !== 'undefined' && QuizLeaderboardService.submitQuizScore) {
+    QuizLeaderboardService.submitQuizScore();
+  }
 
   // XP ekle
   FirebaseSimService.addXp(quizCorrectCount * 20);
 
-  // Sonuç kartı metnini ayarla
+  // Sonuç kartı metinlerini DİNAMİK ayarla
   const scoreEl = document.getElementById("quiz-summary-score");
   const rewardsEl = document.getElementById("quiz-summary-rewards");
+  const pointsValEl = document.getElementById("quiz-points-val");
+  const breakdownEl = document.getElementById("quiz-summary-breakdown");
   const trophyEl = document.getElementById("quiz-result-trophy");
   const titleEl = document.getElementById("quiz-result-title");
+
+  if (scoreEl) {
+    scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru bildin!`;
+  }
+  if (pointsValEl) {
+    pointsValEl.textContent = `+${quizSessionPoints} ⭐`;
+  }
+  if (rewardsEl) {
+    rewardsEl.textContent = `+${earnedCoins} 🪙`;
+  }
+  if (breakdownEl) {
+    breakdownEl.innerHTML = `<span style="color:#52b788; font-weight:800;">${quizCorrectCount} Doğru</span> • <span style="color:#e07a5f; font-weight:800;">${quizWrongCount} Yanlış</span>`;
+  }
 
   if (quizCorrectCount === 3) {
     if (trophyEl) trophyEl.textContent = "🏆";
     if (titleEl) titleEl.textContent = "Mükemmel Doğa Bilgini!";
   } else if (quizCorrectCount === 2) {
     if (trophyEl) trophyEl.textContent = "🥈";
-    if (titleEl) titleEl.textContent = "Harika Gitti!";
+    if (titleEl) titleEl.textContent = "Harika Başarı!";
+  } else if (quizCorrectCount === 1) {
+    if (trophyEl) trophyEl.textContent = "🥉";
+    if (titleEl) titleEl.textContent = "Güzel Deneme!";
   } else {
-    if (trophyEl) trophyEl.textContent = "📚";
+    if (trophyEl) trophyEl.textContent = "🌱";
     if (titleEl) titleEl.textContent = "Öğrenmeye Devam!";
-  }
-
-  if (scoreEl) scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru cevapladın!`;
-  if (rewardsEl) rewardsEl.textContent = `+${earnedCoins} 🪙 Altın`;
-
-  // Animasyonlu Bilgi Puanı Sayacı
-  const pointsValEl = document.getElementById("quiz-points-val");
-  if (pointsValEl && quizSessionPoints > 0) {
-    let displayed = 0;
-    const step = Math.ceil(quizSessionPoints / 20);
-    const counter = setInterval(() => {
-      displayed = Math.min(displayed + step, quizSessionPoints);
-      pointsValEl.textContent = `+${displayed}`;
-      if (displayed >= quizSessionPoints) clearInterval(counter);
-    }, 50);
-  } else if (pointsValEl) {
-    pointsValEl.textContent = "+0";
-  }
-
-  // Liderlik tablosu sıra değişimi bildirimi
-  const rankUpBadge = document.getElementById("quiz-rank-up-badge");
-  const prevRankData = QuizLeaderboardService.getFullData("all", prevPoints);
-  const newRankData = QuizLeaderboardService.getFullData("all", newPoints);
-  const prevRank = prevRankData.find(r => r.isMe)?.rank || 99;
-  const newRank = newRankData.find(r => r.isMe)?.rank || 99;
-  if (newRank < prevRank && rankUpBadge) {
-    rankUpBadge.style.display = "block";
-  } else if (rankUpBadge) {
-    rankUpBadge.style.display = "none";
   }
 
   // Kostüm ödülü (3/3 ise)
@@ -2707,11 +3248,13 @@ function showQuizSummary() {
     }
   }
 
-  if (summaryBox) summaryBox.classList.remove("hidden");
+  if (summaryBox) {
+    summaryBox.classList.remove("hidden");
+  }
 
   const proceedBtn = document.getElementById("btn-quiz-proceed-next");
   if (proceedBtn) {
-    proceedBtn.textContent = "🗺️ SONRAKİ ETABA GİT ⏩";
+    proceedBtn.textContent = "🗺️ SONRAKİ ETABA DEVAM ET ⏩";
     proceedBtn.onclick = () => {
       document.getElementById("modal-nature-quiz").classList.remove("active");
       if (timerWrap) timerWrap.style.display = "";
@@ -2728,7 +3271,17 @@ function showQuizSummary() {
     mapBtn.onclick = () => {
       document.getElementById("modal-nature-quiz").classList.remove("active");
       if (timerWrap) timerWrap.style.display = "";
-      proceedToNextStageOnMap(currentQuizStageIndex + 1);
+      if (window.showScreen) window.showScreen("screen-map");
+      if (window.renderMapScreen) window.renderMapScreen();
+    };
+  }
+
+  const menuBtn = document.getElementById("btn-quiz-back-menu");
+  if (menuBtn) {
+    menuBtn.onclick = () => {
+      document.getElementById("modal-nature-quiz").classList.remove("active");
+      if (timerWrap) timerWrap.style.display = "";
+      if (window.showScreen) window.showScreen("screen-menu");
     };
   }
 }
@@ -2740,6 +3293,15 @@ function initNatureQuizEvents() {
   if (btnA) btnA.onclick = () => handleQuizAnswer("A");
   if (btnB) btnB.onclick = () => handleQuizAnswer("B");
 
+  const navMenuBtn = document.getElementById("btn-quiz-nav-menu");
+  if (navMenuBtn) {
+    navMenuBtn.onclick = () => {
+      clearQuizTimer();
+      document.getElementById("modal-nature-quiz").classList.remove("active");
+      if (window.showScreen) window.showScreen("screen-menu");
+    };
+  }
+
   const skipBtn = document.getElementById("btn-quiz-skip");
   if (skipBtn) {
     skipBtn.onclick = () => {
@@ -2750,6 +3312,15 @@ function initNatureQuizEvents() {
       } else {
         proceedToNextStageOnMap(currentQuizStageIndex + 1);
       }
+    };
+  }
+
+  const summaryMenuBtn = document.getElementById("btn-quiz-back-menu");
+  if (summaryMenuBtn) {
+    summaryMenuBtn.onclick = () => {
+      clearQuizTimer();
+      document.getElementById("modal-nature-quiz").classList.remove("active");
+      if (window.showScreen) window.showScreen("screen-menu");
     };
   }
 }
@@ -2944,8 +3515,8 @@ let player = {
   origW: 60,
   origH: 60,
   vy: 0,
-  gravity: 0.68,
-  jumpStrength: -13.2,
+  gravity: 0.62,
+  jumpStrength: -14.0,
   isGrounded: true,
   wasGrounded: true,
   landingSquash: 0,
@@ -2953,6 +3524,7 @@ let player = {
   slideTimer: 0,
   invulnerable: 0,
   animTick: 0,
+  jumpBuffer: 0,
   img: new Image()
 };
 
@@ -3004,6 +3576,7 @@ function startRunnerGame(levelId) {
 
   // Kemerburgaz Kent Ormanı Mevsimsel & Atmosferik Hava Parçacıklarını Başlat
   initWeatherParticles(levelId);
+  sounds.startWeatherAmbience(levelId);
   snowFootprints = [];
   waterRipples = [];
   winterSnowman = null;
@@ -3089,20 +3662,20 @@ function startRunnerGame(levelId) {
   const jumpBonus = bootsBonus >= 1 ? -0.5 : 0;
 
   if (hero.id === 2) {
-    player.jumpStrength = -14.2 + jumpBonus;
-    player.gravity = 0.68;
+    player.jumpStrength = -14.8 + jumpBonus;
+    player.gravity = 0.58; // Maymun: Çevik ve esnek
   } else if (hero.id === 3) {
-    player.jumpStrength = -12.8 + jumpBonus;
-    player.gravity = 0.72; // Muhafız Kaplan: Tok ve dayanıklı gövde
+    player.jumpStrength = -13.8 + jumpBonus;
+    player.gravity = 0.64; // Muhafız Kaplan: Güçlü ve dayanıklı sıçrama
   } else if (hero.id === 4) {
-    player.jumpStrength = -13.7 + jumpBonus;
-    player.gravity = 0.65; // Kızıl Sincap: Çevik ve yaylanan sıçrayış
-  } else if (hero.id === 5) {
     player.jumpStrength = -14.6 + jumpBonus;
-    player.gravity = 0.52; // Bilge Baykuş: Düşük yerçekimi ile kanat süzülmesi
+    player.gravity = 0.56; // Kızıl Sincap: Çevik ve süzülen sıçrayış
+  } else if (hero.id === 5) {
+    player.jumpStrength = -15.0 + jumpBonus;
+    player.gravity = 0.48; // Bilge Baykuş: Düşük yerçekimi ile kanat süzülmesi
   } else {
-    player.jumpStrength = -13.4 + jumpBonus;
-    player.gravity = 0.68; // Tilki: Dengeli koşucu
+    player.jumpStrength = -14.2 + jumpBonus;
+    player.gravity = 0.60; // Tilki: Dengeli ve akıcı koşucu
   }
 
   // Zemin pozisyonu (Ekranın altından 90px yükseklikte sabit orman patikası)
@@ -3242,17 +3815,19 @@ function handleSpawning() {
         // 1. Ahşap Parkur Çiti (Hurdle)
         // 2. Yosunlu Orman Kayası (Mossy Boulder)
         // 3. Dev Mantarlı Ağaç Kökü (Gnarled Root)
-        // 4. Çamur / Su Birikintisi (Puddle)
+        // 4. Çamur & Balçık Birikintisi (Mud Puddle)
+        // 5. Sevimli Kardan Adam (Snowman - Kış Etapları)
         let groundType = "mossy_boulder";
         const r = Math.random();
         if (currentLevelNumber <= 3) {
           groundType = r < 0.55 ? "mossy_boulder" : "hurdle";
         } else if (currentLevelNumber <= 6) {
-          groundType = r < 0.35 ? "puddle" : (r < 0.68 ? "hurdle" : "gnarled_root");
+          groundType = r < 0.40 ? "mud_puddle" : (r < 0.70 ? "hurdle" : "gnarled_root");
         } else if (currentLevelNumber <= 8) {
           groundType = r < 0.50 ? "gnarled_root" : "mossy_boulder";
         } else {
-          groundType = r < 0.55 ? "hurdle" : "mossy_boulder";
+          // ❄️ Etap 9 ve 10 (Masalsı Kış): Kardan Adam (%45 ihtimal), Kış Kayası veya Parkur Çiti
+          groundType = r < 0.45 ? "snowman" : (r < 0.75 ? "mossy_boulder" : "hurdle");
         }
 
         let obsW = 40;
@@ -3260,9 +3835,12 @@ function handleSpawning() {
         if (groundType === "hurdle") {
           obsW = 44;
           obsH = 36;
-        } else if (groundType === "puddle") {
-          obsW = 54;
-          obsH = 18;
+        } else if (groundType === "puddle" || groundType === "mud_puddle") {
+          obsW = 56;
+          obsH = 20;
+        } else if (groundType === "snowman") {
+          obsW = 44;
+          obsH = 48;
         } else if (groundType === "gnarled_root") {
           obsW = 46;
           obsH = 35;
@@ -3434,14 +4012,30 @@ function gameLoop() {
 function updatePhysics() {
   const groundY = canvas.height - 90;
 
-  // Yerçekimi & Zemin Teması
-  player.vy += player.gravity;
+  // 1. Zıplama Girdisi Ön Belleği (Jump Buffer zaman aşımı)
+  if (player.jumpBuffer > 0) player.jumpBuffer--;
+
+  // 2. Çocuk Dostu Yerçekimi & Tepe Noktası Süzülmesi (Apex Hang-Time)
+  // Engele yakın mesafede zıplansa dahi tepe noktasında hafifçe süzülerek engelin altından akmasına fırsat tanır!
+  let effGravity = player.gravity;
+  if (!player.isGrounded && Math.abs(player.vy) < 3.2) {
+    effGravity *= 0.50; // Tepe noktasında yerçekimi %50 hafifler
+  }
+  player.vy += effGravity;
+  if (player.vy > 9.8) player.vy = 9.8; // Aşırı sert ve hızlı çakılmayı önle
   player.y += player.vy;
 
   if (player.y >= groundY - player.h) {
     player.y = groundY - player.h;
     player.vy = 0;
     player.isGrounded = true;
+
+    // Yere basmadan hemen önce zıplamaya basılmışsa anında zıpla (Jump Buffer)
+    if (player.jumpBuffer > 0) {
+      player.jumpBuffer = 0;
+      playerJump();
+      return;
+    }
 
     // Yere ilk basış anı (İniş yaylanması, toz, kar ve yağmur fiziği)
     if (!player.wasGrounded) {
@@ -3713,7 +4307,35 @@ function updatePhysics() {
     // Çocuk Dostu Hassas Çarpışma Kontrolü (Geniş Paylar)
     if (player.invulnerable <= 0 && checkCollision(player, obs)) {
       try {
+        if (obs.type === "snowman") {
+          sounds.playSnowPuff();
+          for (let k = 0; k < 15; k++) {
+            particles.push({
+              x: obs.x + obs.w * 0.5 + (Math.random() - 0.5) * 16,
+              y: obs.y + obs.h * 0.5 + (Math.random() - 0.5) * 16,
+              vx: (Math.random() - 0.5) * 6.5,
+              vy: -2 - Math.random() * 3.5,
+              size: 3.5,
+              alpha: 0.95,
+              color: k % 3 === 0 ? "#ffffff" : (k % 3 === 1 ? "#bae6fd" : "#ea580c")
+            });
+          }
+        } else if (obs.type === "mud_puddle" || obs.type === "puddle") {
+          sounds.playSplash();
+          for (let k = 0; k < 14; k++) {
+            particles.push({
+              x: player.x + player.w * 0.5 + (Math.random() - 0.5) * 16,
+              y: canvas.height - 90 - 2,
+              vx: (Math.random() - 0.5) * 5.5,
+              vy: -1.6 - Math.random() * 2.8,
+              size: 3.0,
+              alpha: 0.9,
+              color: k % 2 === 0 ? "#5c3317" : "#38bdf8"
+            });
+          }
+        }
         playerTakesDamage();
+        if (!gameRunning) return;
       } catch (err) {
         console.error("playerTakesDamage hatası:", err);
       }
@@ -3946,16 +4568,90 @@ function checkCollision(player, obs) {
   }
 
   // ZEMİN ENGELİ (ÇİT / KAYA / KÜTÜK / MANTARLI KÖK / SU BİRİKİNTİSİ):
-  // Karakter üzerinden ZIPLAMALIDIR. İç paylar sayesindeki tolerans ile haksız hasar engellendi.
-  const pLeft = player.x + (player.w * 0.32);
-  const pRight = player.x + (player.w * 0.70);
-  const pTop = player.y + (player.h * 0.22);
-  const pBottom = player.y + (player.h * 0.95);
+  // Karakter üzerinden ZIPLAMALIDIR.
 
-  const oLeft = obs.x + (obs.w * 0.22);
-  const oRight = obs.x + (obs.w * 0.78);
-  const oTop = obs.y + (obs.h * 0.20);
-  const oBottom = obs.y + (obs.h * 0.96);
+  // 1. 🌟 ÇOCUK DOSTU ÜSTTEN İNİŞ / SEKME KORUMASI (VAULT HOP):
+  // Engele kısa süre kala zıplandığında, iniş sırasında karakter engele denk gelse bile
+  // can gitmek yerine neşeyle engelin üzerinden yaylanarak aşar!
+  if (!player.isGrounded && (player.vy > 0 || Math.abs(player.vy) < 2.5)) {
+    const playerFeet = player.y + (player.h * 0.96);
+    const obsTop = obs.y + (obs.h * 0.18);
+    const playerWaist = player.y + (player.h * 0.62);
+
+    // Gövde engelin üzerinde veya üst kenarındaysa ve ayaklar engel seviyesine inmişse
+    if (playerWaist <= obsTop + 18 && playerFeet >= obsTop - 12) {
+      const pCenterX = player.x + (player.w * 0.5);
+      const oLeftMargin = obs.x - 14;
+      const oRightMargin = obs.x + obs.w + 16;
+
+      if (pCenterX >= oLeftMargin && pCenterX <= oRightMargin) {
+        // Neşeli yaylanma sıçrayışı!
+        player.vy = -7.8;
+        obs.passed = true;
+
+        if (obs.type === "snowman") {
+          sounds.playSnowPuff();
+          for (let k = 0; k < 12; k++) {
+            particles.push({
+              x: obs.x + obs.w * 0.5 + (Math.random() - 0.5) * 18,
+              y: obs.y + 6 + (Math.random() - 0.5) * 12,
+              vx: (Math.random() - 0.5) * 5.0,
+              vy: -2.5 - Math.random() * 2.5,
+              size: 3.5,
+              alpha: 0.95,
+              color: k % 3 === 0 ? "#ffffff" : (k % 3 === 1 ? "#bae6fd" : "#ea580c")
+            });
+          }
+          score = Math.min(currentMaxStageScore, score + 50);
+          showToast("☃️ Kardan Adamın Üzerinden Uçtun! +50 Puan!", "success");
+        } else if (obs.type === "mud_puddle" || obs.type === "puddle") {
+          sounds.playSplash();
+          for (let k = 0; k < 12; k++) {
+            particles.push({
+              x: obs.x + obs.w * 0.5 + (Math.random() - 0.5) * 22,
+              y: (canvas.height - 90) - 2,
+              vx: (Math.random() - 0.5) * 5.0,
+              vy: -2.0 - Math.random() * 2.5,
+              size: 3.2,
+              alpha: 0.9,
+              color: k % 2 === 0 ? "#5c3317" : "#38bdf8"
+            });
+          }
+          score = Math.min(currentMaxStageScore, score + 40);
+          showToast("💦 Çamur Birikintisini Aştın! +40 Puan!", "success");
+        } else {
+          sounds.playJump();
+          // Altın ve yeşil doğa kıvılcım parçacıkları
+          for (let k = 0; k < 7; k++) {
+            particles.push({
+              x: player.x + player.w * 0.5,
+              y: obs.y + 4,
+              vx: (Math.random() - 0.5) * 4.5,
+              vy: -2.5 - Math.random() * 2.5,
+              size: 3.5,
+              alpha: 1.0,
+              color: "#ffd166"
+            });
+          }
+          score = Math.min(currentMaxStageScore, score + 40);
+        }
+        updateHUD();
+        return false; // Can kesinlikle gitmez!
+      }
+    }
+  }
+
+  // 2. İNİŞTE ARKA KENAR (TOPUK) VE ÇIKIŞ TOLERANSI:
+  // Karakter havadayken engelin sağ/arka kenarı çok daha erken serbest kalır (topuk takılmasını engelle)
+  const oRight = !player.isGrounded ? obs.x + (obs.w * 0.44) : obs.x + (obs.w * 0.74);
+  const oLeft = obs.x + (obs.w * 0.24);
+  const oTop = obs.y + (!player.isGrounded ? (obs.h * 0.38) : (obs.h * 0.20));
+  const oBottom = obs.y + (obs.h * 0.95);
+
+  const pLeft = player.x + (player.w * 0.34);
+  const pRight = player.x + (player.w * 0.66);
+  const pTop = player.y + (player.h * 0.24);
+  const pBottom = player.y + (player.h * 0.90);
 
   return (pLeft < oRight && pRight > oLeft && pTop < oBottom && pBottom > oTop);
 }
@@ -4077,6 +4773,7 @@ function playerTakesDamage() {
 }
 
 function renderCanvas() {
+  if (!ctx || !canvas) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const groundY = canvas.height - 90;
@@ -4133,8 +4830,10 @@ function renderCanvas() {
       drawMossyBoulder(ctx, o, groundY);
     } else if (o.type === "gnarled_root") {
       drawGnarledRootWithMushrooms(ctx, o, groundY);
-    } else if (o.type === "puddle") {
-      drawPuddleObstacle(ctx, o, groundY);
+    } else if (o.type === "mud_puddle" || o.type === "puddle") {
+      drawMudPuddleObstacle(ctx, o, groundY);
+    } else if (o.type === "snowman") {
+      drawSnowmanObstacle(ctx, o, groundY);
     } else {
       drawMossyBoulder(ctx, o, groundY);
     }
@@ -4455,9 +5154,23 @@ function drawAnimatedHero(ctx, p, heroId, groundY) {
     drawHeroLimb(ctx, 12, 4, armFrontAngle, 20, colors.bodyMain, colors.limbsLight, "arm", isJumpingHigh);
   }
 
-  // 6. KUŞANILAN KOSTÜM & AKSESUAR (Ahşap Gardırop Seçimi)
+  // 6. KUŞANILAN KOSTÜM & AKTİF BOOSTERLAR (Ahşap Gardırop Seçimi & Oyun İçi Güçlendirmeler)
   const activeCostume = GameState.getSelectedCostume();
-  drawHeroCostume(ctx, activeCostume, colors, isJumpingHigh, p.isSliding);
+  if (activeCostume && activeCostume !== "none") {
+    drawHeroCostume(ctx, activeCostume, colors, isJumpingHigh, p.isSliding);
+  }
+  // Koşu esnasında aktif edilen geçici boosterlar
+  if (typeof activeClothingBuffs !== "undefined") {
+    if (activeClothingBuffs.hat > 0 && activeCostume !== "hat") {
+      drawHeroCostume(ctx, "hat", colors, isJumpingHigh, p.isSliding);
+    }
+    if (activeClothingBuffs.vest > 0 && activeCostume !== "vest") {
+      drawHeroCostume(ctx, "vest", colors, isJumpingHigh, p.isSliding);
+    }
+    if (activeClothingBuffs.pants > 0 && activeCostume !== "pants") {
+      drawHeroCostume(ctx, "pants", colors, isJumpingHigh, p.isSliding);
+    }
+  }
 
   ctx.restore();
 }
@@ -4932,7 +5645,7 @@ function drawHeroCostume(ctx, costumeId, colors, isJumping, isSliding) {
   ctx.save();
 
   if (costumeId === "hat") {
-    // ORMAN KAŞİF ŞAPKASI (Kulakların tam üstünde, yüzü asla kapatmayan şapka)
+    // İBB & BOĞAZİÇİ KOYU LACİVERT KAŞİF ŞAPKASI (Kulakların üstünde, yüzü asla kapatmayan şapka)
     ctx.save();
     // Tilki için kulakların tepe noktası: X: 13, Y: -27
     const headX = colors.hero === 1 ? 13 : 14;
@@ -4940,24 +5653,35 @@ function drawHeroCostume(ctx, costumeId, colors, isJumping, isSliding) {
     ctx.translate(headX, headY);
     ctx.rotate(colors.hero === 1 ? -0.08 : 0.06);
 
-    // 1. Şapka Kenarı (Brim)
-    ctx.fillStyle = "#3a5a40";
+    // 1. Şapka Kenarı (Brim) - İBB Koyu Lacivert
+    ctx.fillStyle = "#0b2545";
+    ctx.strokeStyle = "#051329";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.ellipse(2, 2, 14, 4, -0.05, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
 
-    // 2. Şapka Tepesi (Crown)
-    ctx.fillStyle = "#588157";
+    // 2. Şapka Tepesi (Crown) - İBB & Boğaziçi Koyu Lacivert
+    ctx.fillStyle = "#133863";
+    ctx.strokeStyle = "#0b2545";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.roundRect(-6, -9, 14, 9, [3, 3, 1, 1]);
     ctx.fill();
+    ctx.stroke();
 
-    // 3. Kahverengi Deri Kordon Bandı
-    ctx.fillStyle = "#3e2723";
+    // 3. İBB & Boğaziçi Altın Sarısı Kordon Şeridi
+    ctx.fillStyle = "#ffd166";
     ctx.fillRect(-6, -2, 14, 2.5);
 
-    // 4. Kemerburgaz Meşe Yaprağı Detayı
-    ctx.fillStyle = "#52b788";
+    // 4. İBB / Boğaziçi Altın Amblem & Pırıltı
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(1, -2, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffd166";
     ctx.beginPath();
     ctx.ellipse(5, -3, 3.5, 2, -0.6, 0, Math.PI * 2);
     ctx.fill();
@@ -5003,14 +5727,14 @@ function drawHeroCostume(ctx, costumeId, colors, isJumping, isSliding) {
     ctx.restore();
 
   } else if (costumeId === "pants") {
-    // İZCİ PANTOLONU (Ayaklara dikey giydirilen resmi kargo izci pantolonu)
+    // İBB & BOĞAZİÇİ KOYU LACİVERT İZCİ PANTOLONU
     ctx.save();
     const pantsY = isSliding ? 4 : 6;
     ctx.translate(-2, pantsY);
 
-    // 1. Kemer & Bel Bölgesi
-    ctx.fillStyle = "#3d5a36";
-    ctx.strokeStyle = "#1b3318";
+    // 1. Kemer & Bel Bölgesi - Koyu Lacivert
+    ctx.fillStyle = "#0b2545";
+    ctx.strokeStyle = "#051329";
     ctx.lineWidth = 1;
 
     ctx.beginPath();
@@ -5022,12 +5746,13 @@ function drawHeroCostume(ctx, costumeId, colors, isJumping, isSliding) {
     ctx.fill();
     ctx.stroke();
 
-    // 2. 4 Ayağa Dikey Olarak İnen İzci Paçaları
-    ctx.fillStyle = "#3d5a36";
+    // 2. 4 Ayağa Dikey Olarak İnen Koyu Lacivert İzci Paçaları
+    ctx.fillStyle = "#133863";
     // Arka bacak dikey paçası
     ctx.beginPath();
     ctx.roundRect(-9, 3, 6.5, 9, 2);
     ctx.fill();
+    ctx.strokeStyle = "#051329";
     ctx.stroke();
 
     // Ön bacak dikey paçası
@@ -5036,11 +5761,18 @@ function drawHeroCostume(ctx, costumeId, colors, isJumping, isSliding) {
     ctx.fill();
     ctx.stroke();
 
+    // Yan cep detayları
+    ctx.fillStyle = "#0b2545";
+    ctx.fillRect(-8, 5, 2, 4);
+    ctx.fillRect(5, 5, 2, 4);
+
     // Deri Kemer ve Altın Toka
-    ctx.fillStyle = "#3e2723";
+    ctx.fillStyle = "#051329";
     ctx.fillRect(isSliding ? -10 : -8, -5, isSliding ? 18 : 16, 2.5);
     ctx.fillStyle = "#ffd166";
     ctx.fillRect(-2, -6, 4, 4);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(-1, -5, 2, 2);
 
     ctx.restore();
   }
@@ -5356,20 +6088,46 @@ function drawMossyBoulder(ctx, obs, groundY) {
   ctx.fill();
   ctx.stroke();
 
-  // Canlı Yeşil Orman Yosunu Şapkası (Kayanın tepesinde parıldar)
-  ctx.fillStyle = "#4ade80";
-  ctx.beginPath();
-  ctx.moveTo(obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
-  ctx.quadraticCurveTo(obs.x + obs.w * 0.45, obs.y - 1, obs.x + obs.w * 0.75, obs.y + obs.h * 0.30);
-  ctx.quadraticCurveTo(obs.x + obs.w * 0.50, obs.y + obs.h * 0.40, obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
-  ctx.fill();
+  // Kış Etaplarında (9-10) Beyaz Kar Tepesi, Diğer Etaplarda Canlı Yeşil Orman Yosunu
+  if (typeof currentLevelNumber !== 'undefined' && currentLevelNumber >= 9) {
+    // ❄️ Masalsı Kış Karı Şapkası
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(186, 230, 253, 0.8)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(obs.x + obs.w * 0.20, obs.y + obs.h * 0.38);
+    ctx.quadraticCurveTo(obs.x + obs.w * 0.45, obs.y - 3, obs.x + obs.w * 0.78, obs.y + obs.h * 0.32);
+    ctx.quadraticCurveTo(obs.x + obs.w * 0.50, obs.y + obs.h * 0.44, obs.x + obs.w * 0.20, obs.y + obs.h * 0.38);
+    ctx.fill();
+    ctx.stroke();
 
-  // Yosun benekleri
-  ctx.fillStyle = "#86efac";
-  ctx.beginPath();
-  ctx.arc(obs.x + obs.w * 0.42, obs.y + obs.h * 0.20, 2.5, 0, Math.PI * 2);
-  ctx.arc(obs.x + obs.w * 0.58, obs.y + obs.h * 0.22, 2, 0, Math.PI * 2);
-  ctx.fill();
+    // Küçük sarkan kar damlaları
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(obs.x + obs.w * 0.38, obs.y + obs.h * 0.42, 2.2, 0, Math.PI * 2);
+    ctx.arc(obs.x + obs.w * 0.58, obs.y + obs.h * 0.40, 2.0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // 🌿 Canlı Yeşil Orman Yosunu Şapkası
+    ctx.fillStyle = "#4ade80";
+    ctx.beginPath();
+    ctx.moveTo(obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
+    ctx.quadraticCurveTo(obs.x + obs.w * 0.45, obs.y - 1, obs.x + obs.w * 0.75, obs.y + obs.h * 0.30);
+    ctx.quadraticCurveTo(obs.x + obs.w * 0.50, obs.y + obs.h * 0.40, obs.x + obs.w * 0.22, obs.y + obs.h * 0.35);
+    ctx.fill();
+
+    ctx.fillStyle = "#86efac";
+    ctx.beginPath();
+    ctx.arc(obs.x + obs.w * 0.42, obs.y + obs.h * 0.20, 2.5, 0, Math.PI * 2);
+    ctx.arc(obs.x + obs.w * 0.58, obs.y + obs.h * 0.22, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Üst Tepe Zıplama İpucu Yıldızı (Zıplayarak aşma işareti)
+  ctx.fillStyle = (typeof currentLevelNumber !== 'undefined' && currentLevelNumber >= 9) ? "#38bdf8" : "#ffd166";
+  ctx.font = "bold 9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("▲ ZIPLA", obs.x + obs.w / 2, obs.y - 4);
 
   ctx.restore();
 }
@@ -5404,13 +6162,10 @@ function drawGnarledRootWithMushrooms(ctx, obs, groundY) {
   ctx.stroke();
 
   // Kırmızı Benekli Masalsı Mantarlar (🍄)
-  // 1. Büyük Mantar
   const m1X = obs.x + obs.w * 0.32;
   const m1Y = obs.y + 4;
-  // Mantar sapı
   ctx.fillStyle = "#fef08a";
   ctx.fillRect(m1X - 2.5, m1Y, 5, 8);
-  // Mantar şapkası
   ctx.fillStyle = "#ef4444";
   ctx.strokeStyle = "#991b1b";
   ctx.lineWidth = 1;
@@ -5418,7 +6173,6 @@ function drawGnarledRootWithMushrooms(ctx, obs, groundY) {
   ctx.arc(m1X, m1Y, 7, Math.PI, 0);
   ctx.fill();
   ctx.stroke();
-  // Beyaz benekler
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(m1X - 3, m1Y - 3, 1.3, 0, Math.PI * 2);
@@ -5426,7 +6180,6 @@ function drawGnarledRootWithMushrooms(ctx, obs, groundY) {
   ctx.arc(m1X, m1Y - 5, 1.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // 2. Küçük Mantar
   const m2X = obs.x + obs.w * 0.65;
   const m2Y = obs.y + 8;
   ctx.fillStyle = "#fef08a";
@@ -5441,48 +6194,200 @@ function drawGnarledRootWithMushrooms(ctx, obs, groundY) {
   ctx.arc(m2X + 1.5, m2Y - 2.5, 1.1, 0, Math.PI * 2);
   ctx.fill();
 
+  // Üst Tepe Zıplama İpucu
+  ctx.fillStyle = "#ffd166";
+  ctx.font = "bold 9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("▲ ZIPLA", obs.x + obs.w / 2, obs.y - 4);
+
   ctx.restore();
 }
 
-// 5. Çamur & Su Birikintisi (Puddle - Zemin Engeli / Üzerinden Zıplanır)
-function drawPuddleObstacle(ctx, obs, groundY) {
+// 5. Çamur & Su Birikintisi (Mud Puddle - Yağmur Dönemi Zemin Engeli / Üzerinden Zıplanır)
+function drawMudPuddleObstacle(ctx, obs, groundY) {
   ctx.save();
 
-  // Su birikintisi çamurlu toprak kenarı
-  ctx.fillStyle = "#271406";
+  // Dış derin çamurlu balçık toprağı
+  const mudGrad = ctx.createRadialGradient(
+    obs.x + obs.w / 2, groundY - obs.h / 2, obs.w * 0.15,
+    obs.x + obs.w / 2, groundY - obs.h / 2, obs.w * 0.55
+  );
+  mudGrad.addColorStop(0, "#3e1f07");
+  mudGrad.addColorStop(0.65, "#271406");
+  mudGrad.addColorStop(1, "rgba(25, 12, 4, 0.85)");
+  ctx.fillStyle = mudGrad;
+
   ctx.beginPath();
-  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 3, obs.w * 0.52, obs.h * 0.52, 0, 0, Math.PI * 2);
+  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 3, obs.w * 0.54, obs.h * 0.55, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Parıldayan berrak/mavi orman suyu katmanı
+  // Çamur çevresinde toprak sıçrantıları ve benekleri
+  ctx.fillStyle = "#3e1f07";
+  ctx.beginPath();
+  ctx.arc(obs.x + 3, groundY - 3, 2.8, 0, Math.PI * 2);
+  ctx.arc(obs.x + obs.w - 2, groundY - 2, 2.5, 0, Math.PI * 2);
+  ctx.arc(obs.x + obs.w * 0.2, groundY - obs.h + 2, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Parıldayan ıslak yağmur suyu yüzeyi
   const waterGrad = ctx.createLinearGradient(obs.x, obs.y, obs.x + obs.w, obs.y + obs.h);
   waterGrad.addColorStop(0, "#38bdf8");
-  waterGrad.addColorStop(0.5, "#0284c7");
-  waterGrad.addColorStop(1, "#0369a1");
+  waterGrad.addColorStop(0.45, "#0284c7");
+  waterGrad.addColorStop(1, "#1e3a5f");
 
   ctx.fillStyle = waterGrad;
   ctx.strokeStyle = "#bae6fd";
   ctx.lineWidth = 1.6;
 
   ctx.beginPath();
-  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 2, obs.w * 0.44, obs.h * 0.42, 0, 0, Math.PI * 2);
+  ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 2, obs.w * 0.44, obs.h * 0.40, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // Su yüzeyi dalga halkaları (Ripples)
-  const rippleR = ((levelTimeElapsed * 40) % 18) + 4;
+  const rippleR = ((levelTimeElapsed * 42) % 20) + 4;
   ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.1;
   ctx.beginPath();
   ctx.ellipse(obs.x + obs.w / 2, groundY - obs.h / 2 + 2, rippleR, rippleR * 0.35, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Kenar taşları
-  ctx.fillStyle = "#94a3b8";
+  // Çamur kenarı ıslak orman taşları
+  ctx.fillStyle = "#64748b";
   ctx.beginPath();
-  ctx.arc(obs.x + 6, groundY - 2, 2.5, 0, Math.PI * 2);
-  ctx.arc(obs.x + obs.w - 8, groundY - 3, 3, 0, Math.PI * 2);
+  ctx.arc(obs.x + 6, groundY - 2, 2.6, 0, Math.PI * 2);
+  ctx.arc(obs.x + obs.w - 8, groundY - 3, 3.2, 0, Math.PI * 2);
   ctx.fill();
+
+  // Üst Tepe Zıplama İpucu
+  ctx.fillStyle = "#38bdf8";
+  ctx.font = "bold 9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("▲ ZIPLA", obs.x + obs.w / 2, obs.y - 4);
+
+  ctx.restore();
+}
+
+function drawPuddleObstacle(ctx, obs, groundY) {
+  drawMudPuddleObstacle(ctx, obs, groundY);
+}
+
+// 6. Masalsı Kardan Adam (Snowman - Kış Dönemi Zemin Engeli / Üzerinden Zıplanır)
+function drawSnowmanObstacle(ctx, obs, groundY) {
+  ctx.save();
+  const sx = obs.x + obs.w / 2;
+  const sy = groundY;
+
+  // Buz mavisi zemin temas gölgesi
+  ctx.fillStyle = "rgba(15, 23, 42, 0.36)";
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + 2, obs.w * 0.48, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 1. Alt Gövde Kar Küresi
+  const rBottom = obs.h * 0.34;
+  const yBottom = sy - rBottom;
+  const gradBottom = ctx.createRadialGradient(sx - 3, yBottom - 3, 3, sx, yBottom, rBottom);
+  gradBottom.addColorStop(0, "#ffffff");
+  gradBottom.addColorStop(0.7, "#f0f9ff");
+  gradBottom.addColorStop(1, "#bae6fd");
+  ctx.fillStyle = gradBottom;
+  ctx.strokeStyle = "rgba(186, 230, 253, 0.8)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(sx, yBottom, rBottom, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Alt gövde kömür düğmeleri
+  ctx.fillStyle = "#1e293b";
+  ctx.beginPath();
+  ctx.arc(sx, yBottom - 3, 1.8, 0, Math.PI * 2);
+  ctx.arc(sx, yBottom + 4, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dal Kollar (Sol ve Sağ ağaç dalı kolları)
+  ctx.strokeStyle = "#78350f";
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(sx - rBottom + 2, yBottom - 2);
+  ctx.lineTo(sx - rBottom - 9, yBottom - 7);
+  ctx.lineTo(sx - rBottom - 13, yBottom - 12);
+  ctx.moveTo(sx + rBottom - 2, yBottom - 2);
+  ctx.lineTo(sx + rBottom + 9, yBottom - 8);
+  ctx.lineTo(sx + rBottom + 12, yBottom - 5);
+  ctx.stroke();
+
+  // 2. Kırmızı Yün Atkı
+  const rHead = obs.h * 0.24;
+  const yHead = yBottom - rBottom * 0.82 - rHead;
+  const scarfY = yHead + rHead * 0.75;
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(sx - rHead - 2, scarfY - 3, (rHead + 2) * 2, 5, 2) : ctx.rect(sx - rHead - 2, scarfY - 3, (rHead + 2) * 2, 5);
+  ctx.fill();
+  // Sarkık atkı ucu
+  ctx.beginPath();
+  ctx.moveTo(sx + 3, scarfY);
+  ctx.lineTo(sx + 8, scarfY + 11);
+  ctx.lineTo(sx + 4, scarfY + 11);
+  ctx.closePath();
+  ctx.fill();
+
+  // 3. Baş Kar Küresi
+  const gradHead = ctx.createRadialGradient(sx - 2, yHead - 2, 2, sx, yHead, rHead);
+  gradHead.addColorStop(0, "#ffffff");
+  gradHead.addColorStop(0.75, "#f0f9ff");
+  gradHead.addColorStop(1, "#bae6fd");
+  ctx.fillStyle = gradHead;
+  ctx.strokeStyle = "rgba(186, 230, 253, 0.8)";
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.arc(sx, yHead, rHead, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Kömür Gözler
+  ctx.fillStyle = "#0f172a";
+  ctx.beginPath();
+  ctx.arc(sx - 3.5, yHead - 2, 1.4, 0, Math.PI * 2);
+  ctx.arc(sx + 3.5, yHead - 2, 1.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Havuç Burun (Sola dönük canlı turuncu havuç)
+  ctx.fillStyle = "#ea580c";
+  ctx.beginPath();
+  ctx.moveTo(sx, yHead);
+  ctx.lineTo(sx - 9, yHead + 1.5);
+  ctx.lineTo(sx, yHead + 3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Sevimli Gülümseme (Kömür noktaları)
+  ctx.fillStyle = "#334155";
+  for (let m = -2; m <= 2; m++) {
+    ctx.beginPath();
+    ctx.arc(sx + m * 2, yHead + 4.5 + Math.abs(m) * 0.5, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Sevimli Mini Silindir Şapka
+  const hatBaseW = rHead * 2 + 4;
+  const hatTopW = rHead * 1.3;
+  const hatH = 9;
+  const hatY = yHead - rHead;
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(sx - hatBaseW / 2, hatY - 2, hatBaseW, 2.5);
+  ctx.fillRect(sx - hatTopW / 2, hatY - hatH - 2, hatTopW, hatH);
+  // Şapka Kırmızı Kurdele
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(sx - hatTopW / 2, hatY - 4.5, hatTopW, 2.5);
+
+  // Üst Tepe Zıplama İpucu
+  ctx.fillStyle = "#38bdf8";
+  ctx.font = "bold 9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("▲ ZIPLA", sx, obs.y - 4);
 
   ctx.restore();
 }
@@ -6409,6 +7314,9 @@ function playerJump() {
         color: activeClothingBuffs.pants > 0 ? "#38bdf8" : "#52b788"
       });
     }
+  } else if (!player.isGrounded) {
+    // Çocuk yere inmeden hemen önce (havadayken) zıplamaya basmışsa girdiyi hafızaya al
+    player.jumpBuffer = 10; // ~160ms Jump Buffer toleransı
   }
 }
 
@@ -6450,6 +7358,7 @@ function onLevelVictory() {
     cancelAnimationFrame(gameLoopId);
     gameLoopId = null;
   }
+  sounds.stopWeatherAmbience();
   sounds.playCollect();
 
   // Bölüm Tamamlandı Kaydı & Sonraki Bölüm Kilidi Açılışı
@@ -6507,6 +7416,11 @@ function onLevelVictory() {
       GameState.unlockCostume("vest");
       showToast("🎉 4. Etap Zaferi! 🦺 Muhafız Yeleği kilidi açıldı!", "success");
     }
+    if (currentLevelNumber === 4) {
+      showToast("🧭 TEBRİKLER! 5. Etaba ulaştın ve yeni statün 'ORMAN KAŞİFİ' oldu!", "success");
+      updateMenuUI();
+      LeaderboardService.syncMyScore();
+    }
   }
   if (currentLevelNumber >= 5) {
     if (!GameState.isHeroUnlocked(4)) {
@@ -6531,6 +7445,11 @@ function onLevelVictory() {
     if (finalScoreEl) finalScoreEl.textContent = `${score.toLocaleString("tr-TR")} ⭐`;
     const finalCoinsEl = document.getElementById("grand-final-coins");
     if (finalCoinsEl) finalCoinsEl.textContent = `🪙 ${coinsCollected}`;
+
+    updateMenuUI();
+    LeaderboardService.syncMyScore();
+    showToast("👑 EFSANEVİ ZAFER! Büyük Finali tamamladın, 'PROFESYONEL MUHAFIZ' rütbesine eriştin!", "success");
+
     document.getElementById("modal-grand-victory").classList.add("active");
     setTimeout(() => {
       if (window.launchVictoryFireworks) window.launchVictoryFireworks();
@@ -6609,6 +7528,7 @@ function returnToStartScreen() {
     cancelAnimationFrame(gameLoopId);
     gameLoopId = null;
   }
+  sounds.stopWeatherAmbience();
   
   // Modalleri kapat
   const modals = ["modal-gameover", "modal-victory", "modal-grand-victory", "modal-level-info", "modal-pause"];
@@ -6638,6 +7558,7 @@ function pauseOrReturnGame() {
     cancelAnimationFrame(gameLoopId);
     gameLoopId = null;
   }
+  sounds.stopWeatherAmbience();
   if (sounds && sounds.bgm) {
     try { sounds.bgm.pause(); } catch(e) {}
   }
@@ -6661,6 +7582,8 @@ function resumeGame() {
   if (!isGamePaused) return;
   isGamePaused = false;
   gameRunning = true;
+
+  sounds.startWeatherAmbience(currentLevelNumber);
 
   if (sounds && sounds.bgm) {
     try { sounds.bgm.play(); } catch(e) {}
@@ -6688,6 +7611,7 @@ function onGameOver() {
     cancelAnimationFrame(gameLoopId);
     gameLoopId = null;
   }
+  sounds.stopWeatherAmbience();
 
   // Bölüm geçilemedi: başarısızlık serisini artır (tekrarlandığında destek palamudu çıkması için)
   stageFailureStreaks[currentLevelNumber] = (stageFailureStreaks[currentLevelNumber] || 0) + 1;
@@ -7113,6 +8037,167 @@ function initNavigationEvents() {
 
 
 // ============================================================================
+// 9.5 BILGI SAMPIYONU LIG SERVISI (QuizLeaderboardService)
+// ============================================================================
+
+const QUIZ_BOT_PLAYERS = [
+  { name: "Zeynep K.",  icon: "🦊", quizPts: 2450, weeklyPts: 380 },
+  { name: "Ali Rıza T.", icon: "🐺", quizPts: 2100, weeklyPts: 210 },
+  { name: "Defne S.",   icon: "🦥", quizPts: 1870, weeklyPts: 450 },
+  { name: "Mert B.",    icon: "🐾", quizPts: 1650, weeklyPts: 150 },
+  { name: "Selin D.",   icon: "🦮", quizPts: 1420, weeklyPts: 320 },
+  { name: "Ömer F.",    icon: "🌲", quizPts: 1200, weeklyPts: 100 },
+  { name: "Büşra Y.",   icon: "🌿", quizPts:  980, weeklyPts: 280 },
+  { name: "Kaan A.",    icon: "🐿️", quizPts:  750, weeklyPts:  90 },
+  { name: "Nisa M.",    icon: "🦹", quizPts:  520, weeklyPts: 130 },
+  { name: "Ege T.",     icon: "🌱", quizPts:  300, weeklyPts:  50 }
+];
+
+const QuizLeaderboardService = {
+  remotePlayersCache: null,
+
+  async fetchRemote() {
+    try {
+      const res = await fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/quiz_leaderboard", { cache: "no-cache" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.documents && Array.isArray(data.documents)) {
+          this.remotePlayersCache = data.documents.map(doc => {
+            const f = doc.fields || {};
+            return {
+              name: f.name?.stringValue || "Bilgi Kaşifi",
+              icon: f.avatar?.stringValue || "🧠",
+              quizPts: parseInt(f.quizScore?.integerValue || f.quizScore?.doubleValue || "0", 10),
+              weeklyPts: parseInt(f.weeklyQuizScore?.integerValue || f.weeklyQuizScore?.doubleValue || "0", 10)
+            };
+          });
+          console.log("🧠 Live Firestore Quiz leaderboard fetched:", this.remotePlayersCache.length);
+          this.render();
+          return true;
+        }
+      }
+      return false;
+    } catch(e) {
+      console.warn("Quiz remote fetch notice:", e);
+      return false;
+    }
+  },
+
+  async submitQuizScore() {
+    try {
+      const myName = GameState.getExplorerName() || "Kaşif";
+      const myPts = GameState.getQuizTotalPoints();
+      const weeklyPts = GameState.getQuizWeeklyPoints();
+      const myHeroId = GameState.getSelectedHero() || 1;
+      const HERO_ICONS = ["🦊","🐺","🐻","🐾","🦔","🌲","🐿️","🦸"];
+      const myIcon = HERO_ICONS[(myHeroId - 1) % HERO_ICONS.length];
+      const device = (typeof DeviceInfoService !== "undefined" && DeviceInfoService.getDeviceInfo)
+        ? DeviceInfoService.getDeviceInfo()
+        : { brand: "Android", model: "Cihaz", summary: "Mobil Cihaz" };
+      const safeName = (myName || "player").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
+      const docId = `quiz_${safeName}`;
+
+      const url = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/quiz_leaderboard/${docId}`;
+      await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            name: { stringValue: myName },
+            quizScore: { integerValue: myPts.toString() },
+            weeklyQuizScore: { integerValue: weeklyPts.toString() },
+            heroId: { integerValue: myHeroId.toString() },
+            avatar: { stringValue: myIcon },
+            rankTitle: { stringValue: `Bilgi Kaşifi (Sv. ${Math.min(10, Math.ceil(myPts / 500))})` },
+            deviceBrand: { stringValue: device.brand },
+            deviceModel: { stringValue: device.model },
+            deviceInfo: { stringValue: device.summary },
+            updatedAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      });
+      console.log("🧠 Quiz score submitted to Firestore for", myName, "with device", device.summary);
+    } catch(e) {
+      console.warn("Quiz score submit notice:", e);
+    }
+  },
+
+  getFullData(mode, myPointsOverride) {
+    const myPts = myPointsOverride !== undefined
+      ? myPointsOverride
+      : (mode === "weekly" ? GameState.getQuizWeeklyPoints() : GameState.getQuizTotalPoints());
+    const myName = GameState.getExplorerName() || "Sen";
+    const myHeroId = GameState.getSelectedHero() || 1;
+    const HERO_ICONS = ["🦊","🐺","🐻","🐾","🦔","🌲","🐿️","🦸"];
+    const myIcon = HERO_ICONS[(myHeroId - 1) % HERO_ICONS.length];
+
+    const sourceList = (this.remotePlayersCache && this.remotePlayersCache.length > 0)
+      ? this.remotePlayersCache
+      : QUIZ_BOT_PLAYERS;
+
+    const bots = sourceList.filter(b => b.name !== myName).map(b => ({
+      name: b.name,
+      icon: b.icon || "🧠",
+      pts: mode === "weekly" ? (b.weeklyPts !== undefined ? b.weeklyPts : Math.floor((b.quizPts || 0) * 0.35)) : (b.quizPts || 0),
+      isMe: false
+    }));
+
+    const meEntry = { name: myName, icon: myIcon, pts: myPts, isMe: true };
+    const all = [...bots, meEntry].sort((a, b) => b.pts - a.pts);
+    return all.map((entry, i) => ({ ...entry, rank: i + 1 }));
+  },
+
+  render(mode) {
+    mode = mode || "all";
+    const container = document.getElementById("quiz-leaderboard-list");
+    if (!container) return;
+
+    const data = this.getFullData(mode);
+    const meEntry = data.find(r => r.isMe);
+
+    const myScoreEl = document.getElementById("quiz-lb-my-score");
+    const myRankEl  = document.getElementById("quiz-lb-my-rank");
+    if (myScoreEl) myScoreEl.textContent = (meEntry ? meEntry.pts : 0).toLocaleString("tr-TR") + " Puan";
+    if (myRankEl)  myRankEl.textContent  = meEntry ? "#" + meEntry.rank : "#--";
+
+    container.innerHTML = data.map(entry => {
+      const isMe = !!entry.isMe;
+      let rankClass = "other";
+      let rankLabel = `#${entry.rank}`;
+      if (entry.rank === 1) { rankClass = "top-1"; rankLabel = "🥇 1"; }
+      else if (entry.rank === 2) { rankClass = "top-2"; rankLabel = "🥈 2"; }
+      else if (entry.rank === 3) { rankClass = "top-3"; rankLabel = "🥉 3"; }
+
+      return `
+        <div class="leaderboard-row ${isMe ? 'is-me' : ''}">
+          <div class="lb-rank-badge ${rankClass}">${rankLabel}</div>
+          <div class="lb-user-info">
+            <div class="lb-user-avatar">${entry.icon || "🦊"}</div>
+            <div class="lb-user-details">
+              <div class="lb-user-name">
+                <span class="lb-name-text">${entry.name}</span>
+                ${isMe ? '<span class="lb-me-tag">(SEN)</span>' : ''}
+              </div>
+              <div class="lb-user-rank-title">Bilgi Ligi • Seviye ${Math.min(10, Math.ceil(entry.pts / 500))}</div>
+            </div>
+          </div>
+          <div class="lb-score-col">
+            <div class="lb-score-val">🧠 ${entry.pts.toLocaleString("tr-TR")} P</div>
+            <div class="lb-level-tag">#${entry.rank}. Sırada</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const tabAll    = document.getElementById("btn-tab-quiz-all");
+    const tabWeekly = document.getElementById("btn-tab-quiz-weekly");
+    if (tabAll)    { tabAll.classList.toggle("active", mode === "all");    tabAll.onclick    = () => QuizLeaderboardService.render("all"); }
+    if (tabWeekly) { tabWeekly.classList.toggle("active", mode === "weekly"); tabWeekly.onclick = () => QuizLeaderboardService.render("weekly"); }
+  }
+};
+window.QuizLeaderboardService = QuizLeaderboardService;
+
+// ============================================================================
 // 10. ÇOCUKLAR İÇİN İNTERAKTİF BAŞARIMLAR & FİREBASE SİSTEMİ
 // ============================================================================
 
@@ -7188,7 +8273,7 @@ function renderAchievementsUI() {
 }
 
 function switchHubTab(tabName) {
-  const tabs = ["achieve", "lb", "rewards"];
+  const tabs = ["achieve", "lb", "quiz-lb", "rewards"];
   tabs.forEach(t => {
     const btn = document.getElementById(`hub-tab-${t}`);
     const view = document.getElementById(`hub-view-${t}`);
@@ -7205,10 +8290,68 @@ function switchHubTab(tabName) {
     renderAchievementsUI();
   } else if (tabName === "lb") {
     LeaderboardService.render();
+  } else if (tabName === "quiz-lb") {
+    if (!QuizLeaderboardService.remotePlayersCache) {
+      QuizLeaderboardService.fetchRemote();
+    } else {
+      QuizLeaderboardService.render();
+    }
   } else if (tabName === "rewards") {
-    RewardsService.render();
+    if (!RewardsService.remoteRewardsCache) {
+      RewardsService.fetchRemote();
+    } else {
+      RewardsService.render();
+    }
   }
 }
+
+async function refreshLiveGameData() {
+  const refreshBtns = document.querySelectorAll("#btn-hub-refresh, #btn-lb-refresh, #btn-standalone-sync-refresh, #btn-standalone-lb-refresh");
+  refreshBtns.forEach(b => {
+    b.classList.add("is-refreshing");
+    b.disabled = true;
+  });
+
+  try {
+    const pLeaderboard = LeaderboardService.fetchWebLeaderboard();
+    const pQuiz = QuizLeaderboardService.fetchRemote();
+    const pRewards = RewardsService.fetchRemote();
+
+    const [lbRes, quizRes, rewRes] = await Promise.allSettled([pLeaderboard, pQuiz, pRewards]);
+    const anySuccess = (lbRes.status === "fulfilled" && lbRes.value === true) ||
+                       (quizRes.status === "fulfilled" && quizRes.value === true) ||
+                       (rewRes.status === "fulfilled" && rewRes.value === true);
+
+    // Kendi puanımızı ve cihaz bilgilerini de Firestore'a yaz
+    LeaderboardService.syncMyScore();
+    if (GameState.getQuizTotalPoints() > 0) {
+      QuizLeaderboardService.submitQuizScore();
+    }
+
+    if (anySuccess) {
+      showToast("🌿 Canlı sıralama ve ödüller başarıyla güncellendi!", "success");
+      if (typeof sounds !== "undefined" && sounds.playCollect) sounds.playCollect();
+    } else {
+      showToast("⚠️ Canlı liste güncellenemedi! İnternet bağlantınızı kontrol ediniz.", "error");
+    }
+
+    // Aktif sekmenin içeriğini anında yeniden çiz
+    const activeTab = document.querySelector(".hub-tab-btn.active");
+    const tabName = activeTab ? activeTab.id.replace("hub-tab-", "") : "lb";
+    if (tabName === "lb") LeaderboardService.render();
+    else if (tabName === "quiz-lb") QuizLeaderboardService.render();
+    else if (tabName === "rewards") RewardsService.render();
+  } catch (err) {
+    console.warn("refreshLiveGameData error:", err);
+    showToast("⚠️ Canlı liste güncellenemedi! Lütfen bağlantınızı kontrol edin.", "error");
+  } finally {
+    refreshBtns.forEach(b => {
+      b.classList.remove("is-refreshing");
+      b.disabled = false;
+    });
+  }
+}
+window.refreshLiveGameData = refreshLiveGameData;
 
 function openAchievementsHub(activeTab = "achieve") {
   const modal = document.getElementById("modal-achievements");
@@ -7243,6 +8386,10 @@ function initHubEvents() {
   if (hubTabAchieve) hubTabAchieve.onclick = () => switchHubTab("achieve");
   const hubTabLb = document.getElementById("hub-tab-lb");
   if (hubTabLb) hubTabLb.onclick = () => switchHubTab("lb");
+  const hubTabQuizLb = document.getElementById("hub-tab-quiz-lb");
+  if (hubTabQuizLb) hubTabQuizLb.onclick = () => {
+    switchHubTab("quiz-lb");
+  };
   const hubTabRewards = document.getElementById("hub-tab-rewards");
   if (hubTabRewards) hubTabRewards.onclick = () => switchHubTab("rewards");
 
@@ -7259,6 +8406,20 @@ function initHubEvents() {
       document.getElementById("modal-achievements").classList.remove("active");
     };
   }
+
+  // Ahşap Orman Yenile Butonları Dinleyicileri
+  const refreshHandler = (e) => {
+    if (e) e.stopPropagation();
+    refreshLiveGameData();
+  };
+  const btnHubRefresh = document.getElementById("btn-hub-refresh");
+  if (btnHubRefresh) btnHubRefresh.onclick = refreshHandler;
+  const btnLbRefresh = document.getElementById("btn-lb-refresh");
+  if (btnLbRefresh) btnLbRefresh.onclick = refreshHandler;
+  const btnStandSync = document.getElementById("btn-standalone-sync-refresh");
+  if (btnStandSync) btnStandSync.onclick = refreshHandler;
+  const btnStandLb = document.getElementById("btn-standalone-lb-refresh");
+  if (btnStandLb) btnStandLb.onclick = refreshHandler;
 }
 
 // ============================================================================
@@ -7647,7 +8808,13 @@ function openOnboardingModal() {
   if (statCoins) statCoins.textContent = totalCoins.toLocaleString("tr-TR");
 
   const statRank = document.getElementById("onboarding-stat-rank");
-  if (statRank) statRank.textContent = `${rank.title} (${completedCount}/10)`;
+  if (statRank) {
+    statRank.innerHTML = `${rank.title}<span class="ob-stat-stage-tag">${completedCount}/10 Etap</span>`;
+  }
+  const statRankIcon = document.querySelector("#modal-onboarding .ob-stat-item:nth-child(3) .ob-stat-icon");
+  if (statRankIcon) {
+    statRankIcon.textContent = rank.icon;
+  }
 
   onboardingSelectedHero = GameState.getProfileHero() || 1;
   updateOnboardingHeroSelectionUI();
@@ -7723,14 +8890,14 @@ function initOnboardingEvents() {
 // ============================================================================
 
 const SAHA_KASIFLERI = [
-  { id: "k1", name: "Eren", heroId: 3, rankTitle: "Mağlova Baş Muhafızı", stages: 10, baseScore: 4850, coins: 340 },
-  { id: "k2", name: "Duru", heroId: 1, rankTitle: "Gölet & Vadi Muhafızı", stages: 9, baseScore: 4210, coins: 280 },
-  { id: "k3", name: "Mert", heroId: 2, rankTitle: "Gölet & Vadi Muhafızı", stages: 8, baseScore: 3680, coins: 240 },
-  { id: "k4", name: "Zeynep", heroId: 3, rankTitle: "Doğa İz Sürücüsü", stages: 7, baseScore: 3120, coins: 210 },
-  { id: "k5", name: "Ali", heroId: 2, rankTitle: "Doğa İz Sürücüsü", stages: 6, baseScore: 2650, coins: 180 },
-  { id: "k6", name: "Selim", heroId: 1, rankTitle: "Patika Kaşifi", stages: 5, baseScore: 2190, coins: 150 },
-  { id: "k7", name: "Ayşe", heroId: 1, rankTitle: "Patika Kaşifi", stages: 4, baseScore: 1740, coins: 120 },
-  { id: "k8", name: "Can", heroId: 3, rankTitle: "Orman Çaylağı", stages: 3, baseScore: 1320, coins: 90 },
+  { id: "k1", name: "Eren", heroId: 3, rankTitle: "Profesyonel Muhafız", stages: 10, baseScore: 4850, coins: 340 },
+  { id: "k2", name: "Duru", heroId: 1, rankTitle: "Usta Orman Kaşifi", stages: 9, baseScore: 4210, coins: 280 },
+  { id: "k3", name: "Mert", heroId: 2, rankTitle: "Usta Orman Kaşifi", stages: 8, baseScore: 3680, coins: 240 },
+  { id: "k4", name: "Zeynep", heroId: 3, rankTitle: "Orman Kaşifi", stages: 7, baseScore: 3120, coins: 210 },
+  { id: "k5", name: "Ali", heroId: 2, rankTitle: "Orman Kaşifi", stages: 6, baseScore: 2650, coins: 180 },
+  { id: "k6", name: "Selim", heroId: 1, rankTitle: "Orman Kaşifi", stages: 5, baseScore: 2190, coins: 150 },
+  { id: "k7", name: "Ayşe", heroId: 1, rankTitle: "Doğa İz Sürücüsü", stages: 4, baseScore: 1740, coins: 120 },
+  { id: "k8", name: "Can", heroId: 3, rankTitle: "Doğa İz Sürücüsü", stages: 3, baseScore: 1320, coins: 90 },
   { id: "k9", name: "Defne", heroId: 2, rankTitle: "Orman Çaylağı", stages: 2, baseScore: 940, coins: 70 },
   { id: "k10", name: "Emir", heroId: 3, rankTitle: "Orman Çaylağı", stages: 1, baseScore: 620, coins: 50 }
 ];
@@ -7840,9 +9007,14 @@ class LeaderboardService {
         const myScoreEl = document.getElementById(`${prefix}my-lb-score`);
         const myCoinsEl = document.getElementById(`${prefix}my-lb-coins`);
 
+        const isProf = (me.rankTitle || "").includes("Profesyonel");
+        const badgeStyle = isProf 
+          ? 'background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%); color: #1a0f00; font-weight: 800; border: 1px solid #ffffff; box-shadow: 0 0 8px rgba(255,215,0,0.5);' 
+          : 'background: rgba(45, 106, 79, 0.45); color: #8be0a4; border: 1px solid rgba(139, 224, 164, 0.4);';
+
         if (myRankEl) myRankEl.textContent = `#${me.rank}`;
         if (myAvatarEl) myAvatarEl.textContent = heroIcons[me.heroId] || "🦊";
-        if (myNameEl) myNameEl.textContent = me.name;
+        if (myNameEl) myNameEl.innerHTML = `<span class="lb-name-text">${me.name}</span> <span class="lb-user-rank-pill" style="${badgeStyle}">[${me.rankTitle}]</span>`;
         if (mySubEl) mySubEl.textContent = `${me.rankTitle} • ${me.stages}/10 Etap`;
         if (myScoreEl) myScoreEl.textContent = `${me.score.toLocaleString()} Puan`;
         if (myCoinsEl) myCoinsEl.textContent = `🪙 ${me.coins}`;
@@ -7864,12 +9036,21 @@ class LeaderboardService {
         else if (item.rank === 2) { rankClass = "top-2"; rankText = "🥈 2"; }
         else if (item.rank === 3) { rankClass = "top-3"; rankText = "🥉 3"; }
 
+        const isItemProf = (item.rankTitle || "").includes("Profesyonel");
+        const itemBadgeStyle = isItemProf 
+          ? 'background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%); color: #1a0f00; font-weight: 800; border: 1px solid #ffffff; box-shadow: 0 0 8px rgba(255,215,0,0.5);' 
+          : 'background: rgba(45, 106, 79, 0.45); color: #8be0a4; border: 1px solid rgba(139, 224, 164, 0.4);';
+
         row.innerHTML = `
           <div class="lb-rank-badge ${rankClass}">${rankText}</div>
           <div class="lb-user-info">
             <div class="lb-user-avatar">${heroIcons[item.heroId] || "🦊"}</div>
             <div class="lb-user-details">
-              <div class="lb-user-name">${item.name} ${item.isMe ? '<span style="font-size:10px; color:#ffd166;">(SEN)</span>' : ''}</div>
+              <div class="lb-user-name">
+                <span class="lb-name-text">${item.name}</span>
+                <span class="lb-user-rank-pill" style="${itemBadgeStyle}">[${item.rankTitle}]</span>
+                ${item.isMe ? '<span style="font-size:10px; color:#ffd166; font-weight:800; margin-left:4px;">(SEN)</span>' : ''}
+              </div>
               <div class="lb-user-rank-title">${item.rankTitle} • ${item.stages}/10 Etap</div>
             </div>
           </div>
@@ -7911,7 +9092,7 @@ class LeaderboardService {
   static syncMyScore() {
     DeviceNetworkService.triggerSaveFeedback();
 
-    const myName = GameState.getExplorerName() || "Sen (Kaşif)";
+    const myName = GameState.getExplorerName() || "Kaşif";
     const myProfileHeroId = GameState.getProfileHero();
     const myTotalPoints = GameState.getTotalStagePoints();
     const myCoins = GameState.getCoins();
@@ -7921,15 +9102,18 @@ class LeaderboardService {
     }
 
     const rankTitle = FirebaseSimService.getPlayerRank().title;
+    const device = (typeof DeviceInfoService !== 'undefined' && DeviceInfoService.getDeviceInfo)
+      ? DeviceInfoService.getDeviceInfo()
+      : { brand: "Android", model: "Cihaz", summary: "Mobil Cihaz" };
 
-    // 1. Android Native Firebase Bridge ile Firestore'a kaydet
+    // 1. Android Native Firebase Bridge ile Firestore'a kaydet (marka ve model ile)
     const bridge = window.AndroidFirebaseBridge || window.AndroidBridge;
     let bridgeSubmitted = false;
     if (bridge && typeof bridge.submitScore === 'function') {
       try {
-        bridge.submitScore(myName, myTotalPoints, myProfileHeroId, completedCount, myCoins);
+        bridge.submitScore(myName, myTotalPoints, myProfileHeroId, completedCount, myCoins, device.summary);
         bridgeSubmitted = true;
-        console.log("📱 Android Firebase bridge.submitScore executed for " + myName);
+        console.log("📱 Android Firebase bridge.submitScore executed for " + myName + " [" + device.summary + "]");
       } catch(e) {
         console.warn("bridge.submitScore error:", e);
       }
@@ -7942,7 +9126,8 @@ class LeaderboardService {
           score: myTotalPoints,
           heroId: myProfileHeroId,
           stages: completedCount,
-          coins: myCoins
+          coins: myCoins,
+          deviceInfo: device.summary
         }));
         bridgeSubmitted = true;
       } catch(e) {
@@ -7950,7 +9135,7 @@ class LeaderboardService {
       }
     }
 
-    // 2. Web / iOS Direct Firestore REST API (hem Web'de hem de çift katman koruması olarak çalışır)
+    // 2. Web / iOS Direct Firestore REST API (marka, model ve profil ismiyle)
     try {
       const safeName = (myName || "player").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
       const docId = `user_${safeName}`;
@@ -7966,11 +9151,14 @@ class LeaderboardService {
             stages: { integerValue: completedCount.toString() },
             coins: { integerValue: myCoins.toString() },
             rankTitle: { stringValue: rankTitle },
+            deviceBrand: { stringValue: device.brand || "" },
+            deviceModel: { stringValue: device.model || "" },
+            deviceInfo: { stringValue: device.summary || "" },
             updatedAt: { timestampValue: new Date().toISOString() }
           }
         })
       }).then(res => res.json()).then(resData => {
-        console.log("🌐 Firestore leaderboard score synced successfully:", resData);
+        console.log("🌐 Firestore leaderboard score synced successfully with device info:", resData);
         LeaderboardService.updateSyncBadge("live");
       }).catch(err => {
         console.warn("Firestore leaderboard score sync notice:", err);
@@ -8001,22 +9189,26 @@ class LeaderboardService {
               heroId: f.heroId ? parseInt(f.heroId.integerValue || "1", 10) : 1,
               stages: f.stages ? parseInt(f.stages.integerValue || "0", 10) : 0,
               coins: f.coins ? parseInt(f.coins.integerValue || "0", 10) : 0,
-              rankTitle: f.rankTitle ? f.rankTitle.stringValue : "Doğa Kaşifi"
+              rankTitle: f.rankTitle ? f.rankTitle.stringValue : "Doğa Kaşifi",
+              deviceInfo: f.deviceInfo ? f.deviceInfo.stringValue : ""
             };
           });
           if (list.length > 0) {
             LeaderboardService.setRemoteLeaderboard(list);
             LeaderboardService.updateSyncBadge("live");
             console.log("🌐 Live Firestore leaderboard fetched: " + list.length + " players.");
-            return;
+            return true;
           }
         }
       }
       LeaderboardService.updateSyncBadge("cached");
+      return false;
     } catch(e) {
       console.warn("Web Firestore leaderboard fetch error:", e);
       LeaderboardService.updateSyncBadge("offline");
+      return false;
     }
+  }
   }
 
   static fetchWebZones() {
@@ -8063,21 +9255,11 @@ function initLeaderboardEvents() {
     };
   }
 
-  const handleRefresh = () => {
-    LeaderboardService.updateSyncBadge("syncing");
-    showToast("🔄 Puan tablosu canlı olarak güncelleniyor...", "info");
-    LeaderboardService.syncMyScore();
-    LeaderboardService.fetchWebLeaderboard();
-    if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.syncFromRemote) {
-      RemoteQuizService.syncFromRemote();
+  const handleRefresh = (e) => {
+    if (e) e.stopPropagation();
+    if (typeof refreshLiveGameData === 'function') {
+      refreshLiveGameData();
     }
-    if (typeof CrossPlatformBridge !== "undefined" && CrossPlatformBridge.syncFirebaseData) {
-      CrossPlatformBridge.syncFirebaseData();
-    }
-    setTimeout(() => {
-      LeaderboardService.render();
-      showToast("✅ Canlı Puan Tablosu Firebase ile Senkronize Edildi!", "success");
-    }, 600);
   };
 
   const refreshBtn = document.getElementById("btn-lb-refresh");
@@ -8085,6 +9267,9 @@ function initLeaderboardEvents() {
 
   const standaloneRefreshBtn = document.getElementById("btn-standalone-lb-refresh");
   if (standaloneRefreshBtn) standaloneRefreshBtn.onclick = handleRefresh;
+
+  const standaloneSyncRefreshBtn = document.getElementById("btn-standalone-sync-refresh");
+  if (standaloneSyncRefreshBtn) standaloneSyncRefreshBtn.onclick = handleRefresh;
 
   const openRewardsBtn = document.getElementById("btn-lb-open-rewards");
   if (openRewardsBtn) {
@@ -8193,6 +9378,55 @@ const ORMAN_ODULLERI = [
 ];
 
 class RewardsService {
+  static remoteRewardsCache = null;
+
+  static async fetchRemote() {
+    try {
+      const res = await fetch("https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/rewards", { cache: "no-cache" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.documents && Array.isArray(data.documents)) {
+          const list = data.documents.map(doc => {
+            const f = doc.fields || {};
+            const docId = doc.name ? doc.name.split("/").pop() : "";
+            const isActive = f.isActive ? f.isActive.booleanValue !== false : true;
+            return {
+              id: f.id?.stringValue || docId,
+              biz: f.partnerName?.stringValue || f.title?.stringValue || "İşletme",
+              title: f.description?.stringValue || f.title?.stringValue || "Ödül",
+              icon: f.icon?.stringValue || "🎁",
+              targetPoints: parseInt(f.requiredScore?.integerValue || f.requiredScore?.doubleValue || "500", 10),
+              stageReq: parseInt(f.requiredStages?.integerValue || "1", 10),
+              couponPrefix: f.couponPrefix?.stringValue || "KNT",
+              desc: f.description?.stringValue || "",
+              isActive: isActive,
+              orderIndex: parseInt(f.orderIndex?.integerValue || "99", 10)
+            };
+          }).filter(r => r.isActive); // SADECE AKTİF ANLAŞMALI İŞLETMELER — SİLİNENLER VEYA PASİFLER OTOMATİK KALKAR
+
+          list.sort((a, b) => (a.orderIndex || 99) - (b.orderIndex || 99));
+
+          if (list.length > 0) {
+            RewardsService.remoteRewardsCache = list;
+            console.log("🎁 Live Firestore active rewards fetched: " + list.length);
+            RewardsService.render();
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch(e) {
+      console.warn("Rewards fetchRemote error:", e);
+      return false;
+    }
+  }
+
+  static getRewardsList() {
+    return (RewardsService.remoteRewardsCache && RewardsService.remoteRewardsCache.length > 0)
+      ? RewardsService.remoteRewardsCache
+      : ORMAN_ODULLERI;
+  }
+
   static render() {
     const container = document.getElementById("rewards-grid-container");
     if (!container) return;
@@ -8206,13 +9440,15 @@ class RewardsService {
     if (bannerPoints) bannerPoints.textContent = `⭐ ${userPoints.toLocaleString()} PUAN`;
     if (bannerCoins) bannerCoins.textContent = `🪙 ${userCoins} Altın`;
 
-    ORMAN_ODULLERI.forEach(reward => {
+    const rewardsList = this.getRewardsList();
+
+    rewardsList.forEach(reward => {
       const isStageCompleted = GameState.getLevelState(reward.stageReq - 1) === 3;
       const isPointsReached = userPoints >= reward.targetPoints;
       const isUnlocked = isPointsReached || isStageCompleted;
       const isUsed = GameState.isVoucherUsed(reward.id);
 
-      const pct = Math.min(100, Math.floor((userPoints / reward.targetPoints) * 100));
+      const pct = Math.min(100, Math.floor((userPoints / Math.max(1, reward.targetPoints)) * 100));
 
       const card = document.createElement("div");
       card.className = `reward-card ${isUnlocked ? 'is-unlocked' : ''} ${isUsed ? 'is-used' : ''}`;
@@ -8251,7 +9487,7 @@ class RewardsService {
       btn.onclick = (e) => {
         e.stopPropagation();
         const rId = btn.getAttribute("data-reward-id");
-        const reward = ORMAN_ODULLERI.find(r => r.id === rId);
+        const reward = rewardsList.find(r => r.id === rId);
         if (reward) openVoucherDetail(reward);
       };
     });
@@ -8262,16 +9498,76 @@ function openRewardsModal() {
   openAchievementsHub("rewards");
 }
 
-function openVoucherDetail(reward) {
+async function openVoucherDetail(reward) {
   const modal = document.getElementById("modal-voucher-detail");
   if (!modal) return;
 
-  const code = GameState.getVoucherCode(reward.id);
-  const isUsed = GameState.isVoucherUsed(reward.id);
+  const deviceId = (typeof DeviceInfoService !== 'undefined' && DeviceInfoService.getDeviceId)
+    ? DeviceInfoService.getDeviceId()
+    : "dev_default";
+  const device = (typeof DeviceInfoService !== 'undefined' && DeviceInfoService.getDeviceInfo)
+    ? DeviceInfoService.getDeviceInfo()
+    : { brand: "Android", model: "Cihaz", summary: "Mobil Cihaz" };
+  const myName = GameState.getExplorerName() || "Kaşif";
+  const docId = `coupon_${reward.id}_${deviceId}`;
+  const codeEl = document.getElementById("voucher-popup-code");
 
   document.getElementById("voucher-popup-biz").textContent = reward.biz.toUpperCase();
   document.getElementById("voucher-popup-title").textContent = reward.title;
-  document.getElementById("voucher-popup-code").textContent = code;
+
+  let localCode = GameState.getVoucherCode(reward.id);
+  let isUsed = GameState.isVoucherUsed(reward.id);
+  if (codeEl) codeEl.textContent = localCode || "Üretiliyor...";
+
+  modal.classList.add("active");
+
+  // Firebase Firestore'dan bu cihaz için üretilmiş kuponu kontrol et / üret (1 cihaz = 1 kupon)
+  try {
+    const couponUrl = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/coupons/${docId}`;
+    const checkRes = await fetch(couponUrl, { cache: "no-cache" });
+    if (checkRes.ok) {
+      const existing = await checkRes.json();
+      if (existing && existing.fields && existing.fields.code) {
+        localCode = existing.fields.code.stringValue;
+        if (existing.fields.isUsed && existing.fields.isUsed.booleanValue === true) {
+          isUsed = true;
+          GameState.markVoucherUsed(reward.id);
+        }
+        localStorage.setItem(`VoucherCode_${reward.id}`, localCode);
+        if (codeEl) codeEl.textContent = localCode;
+      }
+    } else if (checkRes.status === 404) {
+      // Kupon henüz Firestore'da yok -> Bu cihaz için benzersiz tek kullanımlık kod üret
+      const prefix = (reward.couponPrefix || "KB").toUpperCase();
+      const rnd = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const newCode = `${prefix}-${rnd}-2026`;
+      localCode = newCode;
+      localStorage.setItem(`VoucherCode_${reward.id}`, newCode);
+      if (codeEl) codeEl.textContent = newCode;
+
+      // Firestore'a kaydet
+      await fetch(couponUrl, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            code: { stringValue: newCode },
+            rewardId: { stringValue: reward.id },
+            deviceId: { stringValue: deviceId },
+            playerName: { stringValue: myName },
+            deviceBrand: { stringValue: device.brand },
+            deviceModel: { stringValue: device.model },
+            deviceInfo: { stringValue: device.summary },
+            isUsed: { booleanValue: false },
+            createdAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      });
+      console.log(`🎟️ Single-use coupon created on Firebase for ${reward.id}: ${newCode}`);
+    }
+  } catch(e) {
+    console.warn("Coupon Firebase check notice:", e);
+  }
 
   const confirmBtn = document.getElementById("btn-use-voucher-confirm");
   if (confirmBtn) {
@@ -8286,17 +9582,34 @@ function openVoucherDetail(reward) {
       confirmBtn.style.opacity = "1";
       confirmBtn.style.cursor = "pointer";
       confirmBtn.disabled = false;
-      confirmBtn.onclick = () => {
-        if (confirm(`⚠️ DİKKAT: "${reward.title}" kuponu yalnızca 1 DEFA kullanılabilir.\n\nİşletme görevlisine (${reward.biz}) kupon kodunu (${code}) gösterdiniz mi?\nOnaylarsanız kupon kullanılmış olarak işaretlenecek ve tekrar kullanılamayacaktır.`)) {
+      confirmBtn.onclick = async () => {
+        if (confirm(`⚠️ DİKKAT: "${reward.title}" kuponu yalnızca 1 DEFA kullanılabilir.\n\nİşletme görevlisine (${reward.biz}) kupon kodunu (${localCode}) gösterdiniz mi?\nOnaylarsanız kupon kullanılmış olarak işaretlenecek ve tekrar kullanılamayacaktır.`)) {
           GameState.markVoucherUsed(reward.id);
           showToast(`🎉 "${reward.title}" kuponu başarıyla kullanıldı! Afiyet olsun!`, "success");
-          sounds.playCollect();
+          if (typeof sounds !== 'undefined' && sounds.playCollect) sounds.playCollect();
           confirmBtn.textContent = "✅ BU KUPON KULLANILDI (GEÇERSİZ)";
           confirmBtn.style.opacity = "0.6";
           confirmBtn.style.cursor = "not-allowed";
           confirmBtn.disabled = true;
           confirmBtn.onclick = null;
           RewardsService.render();
+
+          // Firestore'da kullanıldı olarak işaretle
+          try {
+            const couponUrl = `https://firestore.googleapis.com/v1/projects/kentormanimaceraparki/databases/(default)/documents/coupons/${docId}`;
+            await fetch(couponUrl, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fields: {
+                  isUsed: { booleanValue: true },
+                  usedAt: { timestampValue: new Date().toISOString() }
+                }
+              })
+            });
+          } catch(err) {
+            console.warn("Coupon mark used in Firestore error:", err);
+          }
         }
       };
     }
@@ -8518,6 +9831,8 @@ window.RewardsService = RewardsService;
 window.switchHubTab = switchHubTab;
 window.openAchievementsHub = openAchievementsHub;
 window.DeviceNetworkService = DeviceNetworkService;
+window.DeviceInfoService = DeviceInfoService;
+window.refreshLiveGameData = refreshLiveGameData;
 window.CrossPlatformBridge = CrossPlatformBridge;
 window.startNatureQuiz = startNatureQuiz;
 window.focusOnMapPin = focusOnMapPin;
@@ -8652,5 +9967,96 @@ window.launchVictoryFireworks = function() {
     }, burst * 260);
   }
 };
+
+// ============================================================================
+// 12. MOBİL (iOS & ANDROID) ENTEGRASYON VE DONANIM ETKİLEŞİM KATMANI
+// ============================================================================
+
+// 1. Android Donanım / Hareket Geri Tuşu (Hardware & Gesture Back Key Handler)
+window.handleAndroidBackKey = function() {
+  // A) Quiz Modalı açık ise
+  const quizModal = document.getElementById("modal-nature-quiz");
+  if (quizModal && quizModal.classList.contains("active")) {
+    clearQuizTimer();
+    quizModal.classList.remove("active");
+    if (window.showScreen) window.showScreen("screen-map");
+    if (window.renderMapScreen) window.renderMapScreen();
+    return true;
+  }
+
+  // B) Açık herhangi bir modal var ise (Başarımlar, Ayarlar, Onboarding, Pause vb.)
+  const activeModals = document.querySelectorAll(".modal-overlay.active");
+  if (activeModals && activeModals.length > 0) {
+    activeModals.forEach(m => m.classList.remove("active"));
+    return true;
+  }
+
+  // C) Koşu oyunu ekranında ise -> Oyunu duraklat
+  const activeScreen = document.querySelector(".screen.active");
+  if (activeScreen && activeScreen.id === "screen-game") {
+    const pauseModal = document.getElementById("modal-pause");
+    if (pauseModal && !pauseModal.classList.contains("active")) {
+      if (window.togglePauseGame) window.togglePauseGame();
+      return true;
+    }
+  }
+
+  // D) Harita veya Kahraman ekranında ise -> Ana menüye dön
+  if (activeScreen && (activeScreen.id === "screen-map" || activeScreen.id === "screen-heroes")) {
+    if (window.showScreen) window.showScreen("screen-menu");
+    return true;
+  }
+
+  // E) Zaten Ana Menüde ise -> Sistem varsayılanına bırak (uygulamadan çık / arka plana al)
+  return false;
+};
+
+// 2. iOS WebKit & Android İlk Dokunuş Ses Uyandırıcısı (AudioContext Resume)
+(function initMobileAudioUnlock() {
+  const unlockAudio = () => {
+    try {
+      if (typeof sounds !== "undefined" && sounds && sounds.getAudioCtx) {
+        const ctx = sounds.getAudioCtx();
+        if (ctx && ctx.state === "suspended") {
+          ctx.resume();
+        }
+      }
+    } catch (e) {}
+    document.removeEventListener("touchstart", unlockAudio);
+    document.removeEventListener("pointerdown", unlockAudio);
+    document.removeEventListener("click", unlockAudio);
+  };
+  document.addEventListener("touchstart", unlockAudio, { passive: true });
+  document.addEventListener("pointerdown", unlockAudio, { passive: true });
+  document.addEventListener("click", unlockAudio, { passive: true });
+})();
+
+// 3. Evrensel Ekran Boyutu & Yönlendirme (Portrait & Landscape & Resize) Yöneticisi
+(function initUniversalResponsiveHandler() {
+  function handleAppOrientationOrResize() {
+    // A) Koşu oyunu aktif ise canvas boyutunu ve zeminini güncelle
+    if (typeof canvas !== "undefined" && canvas && typeof gameRunning !== "undefined" && gameRunning) {
+      canvas.width = canvas.parentElement.clientWidth || window.innerWidth;
+      canvas.height = canvas.parentElement.clientHeight || window.innerHeight;
+      const groundY = canvas.height - 90;
+      if (typeof player !== "undefined" && player && player.isGrounded) {
+        player.y = groundY - player.h;
+      }
+    }
+
+    // B) Harita ekranı aktif ise harita boyutunu ve odaklamasını güncelle
+    if (typeof adjustMapDimensions === "function") {
+      adjustMapDimensions();
+    }
+  }
+
+  window.addEventListener("resize", handleAppOrientationOrResize);
+  window.addEventListener("orientationchange", () => {
+    setTimeout(handleAppOrientationOrResize, 150);
+    setTimeout(handleAppOrientationOrResize, 400);
+  });
+})();
+
+
 
 

@@ -30,50 +30,72 @@
        1. ANA MENÜ EKRANI (ORİJİNAL TEMİZ GRAFİK & MENÜLER)
   ======================================================== -->
   <div id="screen-menu" class="screen active">
-    
-    <!-- Sol Üst: Arka Plandaki Ahşap Çarka Birebir Oturan AYARLAR Butonu (Tamamen Görünür ve Erişilebilir) -->
-    <button id="btn-menu-settings" class="btn-hit-settings" title="Oyun Ayarları (Ses, Müzik, Bilgi)" type="button" onclick="if(window.openSettingsModal)window.openSettingsModal();">
-      <span class="settings-hit-halo"></span>
-    </button>
-
-    <!-- Sağ Üst: Doğal Ahşap Çevreyle Uyumlu Ses Butonu -->
-    <button id="btn-toggle-sound" class="native-audio-toggle menu-audio-pos" title="Sesi Aç/Kapat" type="button" onclick="if(window.sounds){const on=window.sounds.toggleAudio();this.textContent=on?'🔊':'🔇';}">🔊</button>
-
-    <!-- Ahşap Pano Üzerindeki Sayı Sayaçları (ALTIN ve PUAN) -->
-    <div class="stat-slot-gold">
-      <span id="menu-coin-count">0</span>
-    </div>
-    <div class="stat-slot-score">
-      <span id="menu-high-score">0</span>
-    </div>
-
-    <!-- Altın & Puan Ahşap Panosunun Hemen Altında Ortalanmış Kaşif Profil Rozeti -->
-    <button id="menu-profile-pill" class="menu-profile-pill" title="Kaşif Profilini Düzenle" type="button" onclick="if(window.openOnboardingModal)window.openOnboardingModal();">
-      <span id="menu-profile-avatar" class="profile-pill-icon">🦊</span>
-      <div class="profile-pill-content">
-        <span class="profile-pill-sub">ORMAN KAŞİFİ:</span>
-        <span id="menu-profile-name" class="profile-pill-name">Kaşif Kaydı</span>
+    <!-- Sol Yatay Manzara Süsü (Landscape / Geniş Ekranlar) -->
+    <aside class="menu-landscape-flank flank-left" aria-hidden="true">
+      <div class="flank-card">
+        <span class="flank-icon">🌲</span>
+        <strong class="flank-title">Boğaziçi Yönetim</strong>
+        <span class="flank-desc">Kemerburgaz Kent Ormanı</span>
+        <div class="flank-tag">Doğa &amp; Macera Parkı</div>
       </div>
-      <span class="profile-pill-edit">✏️</span>
-    </button>
+    </aside>
 
-    <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar & Seçme Çerçeveleri -->
-    <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla &amp; Kahraman Seçimi" type="button" onclick="if(window.showScreen){window.showScreen('screen-heroes');if(window.initHeroesScreen)window.initHeroesScreen();}">
-      <span class="selection-arrow left-arrow">⮞</span>
-      <span class="selection-arrow right-arrow">⮜</span>
-    </button>
-    <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.showScreen){window.showScreen('screen-map');if(window.renderMapScreen)window.renderMapScreen();}">
-      <span class="selection-arrow left-arrow">⮞</span>
-      <span class="selection-arrow right-arrow">⮜</span>
-    </button>
-    <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();">
-      <span class="selection-arrow left-arrow">⮞</span>
-      <span class="selection-arrow right-arrow">⮜</span>
-    </button>
-    <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();">
-      <span class="selection-arrow left-arrow">⮞</span>
-      <span class="selection-arrow right-arrow">⮜</span>
-    </button>
+    <!-- Ana Menü Ahşap Pano Tuvali (Dikeyde ve Yatayda 1:1 Orantılı ve Hizalı) -->
+    <div class="menu-board-canvas" id="menu-board-canvas">
+      <!-- Sol Üst: Arka Plandaki Ahşap Çarka Birebir Oturan AYARLAR Butonu -->
+      <button id="btn-menu-settings" class="btn-hit-settings" title="Oyun Ayarları (Ses, Müzik, Bilgi)" type="button" onclick="if(window.openSettingsModal)window.openSettingsModal();">
+        <span class="settings-hit-halo"></span>
+      </button>
+
+      <!-- Sağ Üst: Doğal Ahşap Çevreyle Uyumlu Ses Butonu -->
+      <button id="btn-toggle-sound" class="native-audio-toggle menu-audio-pos" title="Sesi Aç/Kapat" type="button" onclick="if(window.sounds){const on=window.sounds.toggleAudio();this.textContent=on?'🔊':'🔇';}">🔊</button>
+
+      <!-- Ahşap Pano Üzerindeki Sayı Sayaçları (ALTIN ve PUAN) -->
+      <div class="stat-slot-gold">
+        <span id="menu-coin-count">0</span>
+      </div>
+      <div class="stat-slot-score">
+        <span id="menu-high-score">0</span>
+      </div>
+
+      <!-- Altın & Puan Ahşap Panosunun Hemen Altında Ortalanmış Kaşif Profil Rozeti -->
+      <button id="menu-profile-pill" class="menu-profile-pill" title="Kaşif Profilini Düzenle" type="button" onclick="if(window.openOnboardingModal)window.openOnboardingModal();">
+        <span id="menu-profile-avatar" class="profile-pill-icon">🦊</span>
+        <div class="profile-pill-content">
+          <span class="profile-pill-sub">🌱 ORMAN ÇAYLAĞI</span>
+          <span id="menu-profile-name" class="profile-pill-name">Kaşif Kaydı</span>
+        </div>
+        <span class="profile-pill-edit">✏️</span>
+      </button>
+
+      <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar & Seçme Çerçeveleri -->
+      <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla &amp; Kahraman Seçimi" type="button" onclick="if(window.showScreen){window.showScreen('screen-heroes');if(window.initHeroesScreen)window.initHeroesScreen();}">
+        <span class="selection-arrow left-arrow">⮞</span>
+        <span class="selection-arrow right-arrow">⮜</span>
+      </button>
+      <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.showScreen){window.showScreen('screen-map');if(window.renderMapScreen)window.renderMapScreen();}">
+        <span class="selection-arrow left-arrow">⮞</span>
+        <span class="selection-arrow right-arrow">⮜</span>
+      </button>
+      <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();">
+        <span class="selection-arrow left-arrow">⮞</span>
+        <span class="selection-arrow right-arrow">⮜</span>
+      </button>
+      <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();">
+        <span class="selection-arrow left-arrow">⮞</span>
+        <span class="selection-arrow right-arrow">⮜</span>
+      </button>
+    </div>
+
+    <!-- Sağ Yatay Manzara Süsü (Landscape / Geniş Ekranlar) -->
+    <aside class="menu-landscape-flank flank-right" aria-hidden="true">
+      <div class="flank-card">
+        <span class="flank-icon">🦊</span>
+        <strong class="flank-title">Macera Ormanı</strong>
+        <span class="flank-desc">10 Keşif Etabı &amp; Bilim Ligi</span>
+        <div class="flank-tag">Mobil &amp; Tablet 60 FPS</div>
+      </div>
+    </aside>
   </div>
 
   <!-- ========================================================
@@ -93,68 +115,73 @@
     </div>
 
     <div class="hero-card wood-hero-card">
-      <div class="hero-carousel">
-        <button id="btn-hero-prev" class="carousel-nav wood-nav-btn">◀</button>
-        <div class="hero-avatar-wrap">
-          <img id="hero-preview-img" src="Assets/Sprites/fox.gif" alt="Kahraman" class="hero-preview-animated-img">
-          <div id="preview-wear-hat" class="preview-wear-overlay wear-hat hidden">🧢</div>
-          <div id="preview-wear-vest" class="preview-wear-overlay wear-vest hidden">🦺</div>
-          <div id="preview-wear-pants" class="preview-wear-overlay wear-pants hidden">👖</div>
-          <div id="hero-lock-badge" class="hero-lock-badge hidden">
-            <span class="lock-icon">🔒</span>
-            <span id="hero-lock-req" class="lock-req-text">2. Bölüm</span>
+      <div class="hero-card-col hero-col-main">
+        <div class="hero-carousel">
+          <button id="btn-hero-prev" class="carousel-nav wood-nav-btn">◀</button>
+          <div class="hero-avatar-wrap" id="hero-avatar-wrap">
+            <img id="hero-preview-img" src="Assets/Sprites/fox.gif" alt="Kahraman" class="hero-preview-animated-img">
+            <div id="hero-lock-badge" class="hero-lock-badge hidden">
+              <span class="lock-icon">🔒</span>
+              <span id="hero-lock-req" class="lock-req-text">2. Bölüm</span>
+            </div>
+          </div>
+          <button id="btn-hero-next" class="carousel-nav wood-nav-btn">▶</button>
+        </div>
+
+        <div id="hero-name" class="hero-name">Tilki</div>
+        <div id="hero-desc" class="hero-desc">Dengeli ve çevik orman koşucusu.</div>
+
+        <div class="hero-stats">
+          <div class="stat-row">
+            <span>Hız:</span>
+            <span id="hero-stat-speed" class="stat-stars">★★★★☆</span>
+          </div>
+          <div class="stat-row">
+            <span>Zıplama:</span>
+            <span id="hero-stat-jump" class="stat-stars">★★★★☆</span>
+          </div>
+          <div class="stat-row">
+            <span>Dayanıklılık:</span>
+            <span id="hero-stat-durability" class="stat-stars">★★★☆☆</span>
           </div>
         </div>
-        <button id="btn-hero-next" class="carousel-nav wood-nav-btn">▶</button>
       </div>
 
-      <div id="hero-name" class="hero-name">Tilki</div>
-      <div id="hero-desc" class="hero-desc">Dengeli ve çevik orman koşucusu.</div>
+      <div class="hero-card-col hero-col-side">
+        <!-- Ahşap Kaşif Gardırobu (Kostüm & Ekipman Sandığı) -->
+        <div class="costume-wardrobe-box">
+          <div class="wardrobe-header">
+            <span class="wardrobe-title">🪵 Kaşif Sandığı &amp; Özel Kostümler</span>
+            <span id="active-costume-badge" class="wardrobe-badge">🌿 Doğal</span>
+          </div>
+          <div class="wardrobe-grid">
+            <button type="button" class="wardrobe-item-btn active" data-costume="none" title="Doğal Görünüm">
+              <span class="w-icon">🌿</span>
+              <span class="w-label">Doğal</span>
+              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
+            </button>
+            <button type="button" class="wardrobe-item-btn" data-costume="hat" title="Orman Kaşif Şapkası">
+              <span class="w-icon">🧢</span>
+              <span class="w-label">Kaşif Şapkası</span>
+              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
+            </button>
+            <button type="button" class="wardrobe-item-btn" data-costume="vest" title="Muhafız Yeleği">
+              <span class="w-icon">🦺</span>
+              <span class="w-label">Muhafız Yeleği</span>
+              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
+            </button>
+            <button type="button" class="wardrobe-item-btn" data-costume="pants" title="İzci Pantolonu">
+              <span class="w-icon">👖</span>
+              <span class="w-label">İzci Pantolonu</span>
+              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
+            </button>
+          </div>
+        </div>
 
-      <div class="hero-stats">
-        <div class="stat-row">
-          <span>Hız:</span>
-          <span id="hero-stat-speed" class="stat-stars">★★★★☆</span>
-        </div>
-        <div class="stat-row">
-          <span>Zıplama:</span>
-          <span id="hero-stat-jump" class="stat-stars">★★★★☆</span>
-        </div>
-        <div class="stat-row">
-          <span>Dayanıklılık:</span>
-          <span id="hero-stat-durability" class="stat-stars">★★★☆☆</span>
-        </div>
-      </div>
-
-      <!-- Ahşap Kaşif Gardırobu (Kostüm & Ekipman Sandığı) -->
-      <div class="costume-wardrobe-box">
-        <div class="wardrobe-header">
-          <span class="wardrobe-title">🪵 Kaşif Sandığı &amp; Özel Kostümler</span>
-          <span id="active-costume-badge" class="wardrobe-badge">🌿 Doğal</span>
-        </div>
-        <div class="wardrobe-grid">
-          <button type="button" class="wardrobe-item-btn active" data-costume="none" title="Doğal Görünüm">
-            <span class="w-icon">🌿</span>
-            <span class="w-label">Doğal</span>
-          </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="hat" title="Orman Kaşif Şapkası">
-            <span class="w-icon">🧢</span>
-            <span class="w-label">Kaşif Şapkası</span>
-          </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="vest" title="Muhafız Yeleği">
-            <span class="w-icon">🦺</span>
-            <span class="w-label">Muhafız Yeleği</span>
-          </button>
-          <button type="button" class="wardrobe-item-btn" data-costume="pants" title="İzci Pantolonu">
-            <span class="w-icon">👖</span>
-            <span class="w-label">İzci Pantolonu</span>
-          </button>
-        </div>
+        <button id="btn-hero-select" class="btn-main wood-btn-main">SEÇİLDİ</button>
+        <div class="hero-profile-sync-hint">💡 Not: Yarışma &amp; Sıralama maskotunu sol üstteki Kaşif Rozetine dokunarak dilediğin zaman değiştirebilirsin.</div>
       </div>
     </div>
-
-    <button id="btn-hero-select" class="btn-main wood-btn-main">SEÇİLDİ</button>
-    <div class="hero-profile-sync-hint">💡 Not: Yarışma &amp; Sıralama maskotunu sol üstteki Kaşif Rozetine dokunarak dilediğin zaman değiştirebilirsin.</div>
   </div>
 
   <!-- ========================================================
@@ -163,20 +190,11 @@
   <div id="screen-map" class="screen">
     <div class="top-bar map-top-bar">
       <button id="btn-map-back" class="btn-back-pill" onclick="if(window.showScreen)window.showScreen('screen-menu');">◀ Ana Menü</button>
-      <div class="map-sign-title">
-        <span>🌲</span>
-        <span>Orman Etapları</span>
+      <!-- Görünüm Değiştirici Sekmeler: Orman Haritası & Etap Listesi -->
+      <div class="view-toggle-bar map-header-toggle">
+        <button id="btn-toggle-map" class="btn-toggle-view active" type="button">🗺️ Orman Haritası</button>
+        <button id="btn-toggle-list" class="btn-toggle-view" type="button">📋 Etap Listesi</button>
       </div>
-      <div class="map-counter-pill">
-        <span>🗺️ 10 Orman Etabı</span>
-      </div>
-    </div>
-
-    <!-- Görünüm Değiştirici Sekmeler: Harita, Liste, QR Tara -->
-    <div class="view-toggle-bar">
-      <button id="btn-toggle-map" class="btn-toggle-view active" type="button">🗺️ Orman Haritası</button>
-      <button id="btn-toggle-list" class="btn-toggle-view" type="button">📋 Etap Listesi</button>
-      <button id="btn-toggle-scan" class="btn-toggle-view qr-scan-tab" type="button">📷 QR Tara</button>
     </div>
 
     <!-- 1. İNTERAKTİF 3D ORMAN HARİTASI (NewMap.png + Ahşap İğneler) -->
@@ -430,47 +448,27 @@
   <div id="modal-nature-quiz" class="modal-overlay">
     <div class="modal-content quiz-modal-content">
 
-      <!-- Üst Bar: Başlık + Canlı Altın/Puan Sayacı + Senkronizasyon Rozeti -->
-      <div class="quiz-top-bar">
-        <span class="quiz-title-label">🌿 DOĞA VE BİLİM YARIŞMASI</span>
-        <div class="quiz-live-coins-badge" id="quiz-live-coins-badge" title="Toplam Altın">
-          <span>🪙</span>
-          <span id="quiz-coins-counter">0</span>
-        </div>
-        <span id="quiz-sync-status" class="quiz-sync-badge live" title="Firebase Canlı Soru Havuzu">🟢 Canlı</span>
-      </div>
+      <!-- Üst Başlık (Temiz, sade, kurumsal) -->
+      <div class="modal-header-tag" style="letter-spacing: 0.8px; margin-bottom: 2px;">🌿 DOĞA VE BİLİM YARIŞMASI</div>
 
-      <!-- Streak + İstatistik Şeridi -->
-      <div class="quiz-stats-row">
-        <div class="quiz-streak-badge" id="quiz-streak-badge">
-          <span id="quiz-streak-fire">🌱</span>
-          <span>Seri: <strong id="quiz-streak-count">0</strong></span>
-        </div>
-        <div class="quiz-mini-stats">
-          <span style="color:#52b788;">✅ <span id="quiz-stat-correct">0</span></span>
-          <span style="color:#e07a5f;">❌ <span id="quiz-stat-wrong">0</span></span>
-          <span id="quiz-step-counter" class="quiz-step-badge">Soru 1/3</span>
-        </div>
+      <!-- 1 - 2 - 3 Adım Göstergesi (En Yukarıda) -->
+      <div class="quiz-progress-track" style="margin-top: 2px; margin-bottom: 4px;">
+        <div id="quiz-step-1" class="quiz-step-indicator active">1</div>
+        <div id="quiz-step-2" class="quiz-step-indicator">2</div>
+        <div id="quiz-step-3" class="quiz-step-indicator">3</div>
       </div>
 
       <!-- ⏱️ GERİ SAYIM ZAMANLAYICI ÇUBUĞU (15 sn) -->
-      <div class="quiz-timer-wrap" id="quiz-timer-wrap">
+      <div class="quiz-timer-wrap" id="quiz-timer-wrap" style="margin-bottom: 2px;">
         <div class="quiz-timer-track">
           <div class="quiz-timer-bar" id="quiz-timer-bar"></div>
         </div>
         <span class="quiz-timer-text" id="quiz-timer-text">15</span>
       </div>
 
-      <!-- Adım Göstergesi -->
-      <div class="quiz-progress-track">
-        <div id="quiz-step-1" class="quiz-step-indicator active">1</div>
-        <div id="quiz-step-2" class="quiz-step-indicator">2</div>
-        <div id="quiz-step-3" class="quiz-step-indicator">3</div>
-      </div>
-
       <!-- Soru Kartı -->
       <div id="quiz-question-box" class="quiz-question-box">
-        <div id="quiz-category-tag" class="quiz-category-tag">🐿️ Yaban Hayatı & Doğa</div>
+        <div id="quiz-category-tag" class="quiz-category-tag">🐿️ Yaban Hayatı &amp; Doğa</div>
         <h4 id="quiz-question-text" class="quiz-question-text">Soru yükleniyor...</h4>
       </div>
 
@@ -495,36 +493,71 @@
         <button id="btn-quiz-next-question" class="btn-main wood-btn-main" style="margin-top:4px; width:100%;">Sonraki Soruya Geç ⏩</button>
       </div>
 
-      <!-- Sonuç Ekranı -->
+      <!-- Şık, Kullanıcı Dostu Alt Bilgi ve Ödül Paneli (Anlık & Dinamik) -->
+      <div id="quiz-bottom-stats-bar" class="quiz-bottom-stats-bar">
+        <div class="quiz-bottom-stat-item">
+          <span class="quiz-b-icon">🧠</span>
+          <div class="quiz-b-meta">
+            <span class="quiz-b-label">Bilgi Puanı</span>
+            <strong id="quiz-live-points" class="quiz-b-val">+0</strong>
+          </div>
+        </div>
+        <div class="quiz-bottom-stat-item">
+          <span class="quiz-b-icon">🪙</span>
+          <div class="quiz-b-meta">
+            <span class="quiz-b-label">Kazanılan Altın</span>
+            <strong id="quiz-live-coins" class="quiz-b-val">+0</strong>
+          </div>
+        </div>
+        <div class="quiz-bottom-stat-item">
+          <span class="quiz-b-icon">🎯</span>
+          <div class="quiz-b-meta">
+            <span class="quiz-b-label" id="quiz-bottom-step-label">Soru 1/3</span>
+            <strong id="quiz-live-answers" class="quiz-b-val">✅ 0 &nbsp; ❌ 0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Soruları Cevaplama Sırasında Şık Gezinme Butonları (Sonraki Etaba Geç & Ana Menüye Dön) -->
+      <div id="quiz-nav-row" class="quiz-nav-row">
+        <button id="btn-quiz-nav-menu" class="btn-quiz-nav-sub" type="button">
+          <span>🏠</span> Ana Menüye Dön
+        </button>
+        <button id="btn-quiz-skip" class="btn-quiz-nav-main" type="button">
+          <span>⏭️</span> Sonraki Etaba Geç
+        </button>
+      </div>
+
+      <!-- Sonuç Ekranı (Sadece 3 Soru Tamamlandığında Üstte Görünür) -->
       <div id="quiz-summary-box" class="quiz-summary-box hidden">
         <div id="quiz-result-trophy" class="summary-trophy-icon">🏆</div>
         <h3 id="quiz-result-title" class="summary-title">Doğa Bilgini Tebrik Ederiz!</h3>
         <p id="quiz-summary-score" class="summary-desc">3 sorudan 3 tanesini doğru bildin!</p>
 
-        <!-- Animasyonlu Quiz Puan Sayacı -->
-        <div class="quiz-points-earned-box" id="quiz-points-earned-box">
-          <span class="quiz-points-label">🧠 Bilgi Puanı:</span>
-          <span class="quiz-points-val" id="quiz-points-val">+0</span>
+        <!-- Canlı Gerçek Sonuç Detay Kartı -->
+        <div class="quiz-results-summary-card">
+          <div class="quiz-res-row">
+            <span>🧠 Toplam Bilgi Puanı:</span>
+            <strong id="quiz-points-val" class="quiz-res-highlight">+0 Puan</strong>
+          </div>
+          <div class="quiz-res-row">
+            <span>🪙 Kazanılan Altın:</span>
+            <strong id="quiz-summary-rewards" class="quiz-res-highlight">+0 🪙</strong>
+          </div>
+          <div class="quiz-res-row">
+            <span>🎯 Doğru / Yanlış:</span>
+            <strong id="quiz-summary-breakdown" class="quiz-res-highlight">3 Doğru, 0 Yanlış</strong>
+          </div>
         </div>
 
-        <!-- Ligte Yükselme Bildirimi -->
-        <div class="quiz-rank-badge" id="quiz-rank-up-badge" style="display:none;">
-          <span>🏅 Bilgi Liginde Yükseldin!</span>
-        </div>
-
-        <div class="summary-rewards-badge">
-          <span>Kazanılan Altın: </span>
-          <strong id="quiz-summary-rewards">+30 🪙</strong>
-        </div>
         <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:8px;">
-          <button id="btn-quiz-proceed-next" class="btn-main wood-btn-main" style="width:100%;">🗺️ SONRAKİ ETABA GİT ⏩</button>
-          <button id="btn-quiz-back-map" class="btn-secondary" style="width:100%;">Haritaya Dön</button>
+          <button id="btn-quiz-proceed-next" class="btn-main wood-btn-main" style="width:100%;">🗺️ SONRAKİ ETABA DEVAM ET ⏩</button>
+          <div style="display:flex; gap:8px; width:100%;">
+            <button id="btn-quiz-back-map" class="btn-secondary" style="flex:1; padding:9px 10px; font-size:12px;">🗺️ Haritaya Dön</button>
+            <button id="btn-quiz-back-menu" class="btn-secondary" style="flex:1; padding:9px 10px; font-size:12px;">🏠 Ana Menü</button>
+          </div>
         </div>
       </div>
-
-      <button id="btn-quiz-skip" class="btn-secondary" style="font-size: 12px; padding: 8px 14px; margin-top: 6px; width: 100%;">
-        ⏭️ Soruları Atla &amp; Sonraki Etaba Geç
-      </button>
     </div>
   </div>
 
@@ -635,14 +668,17 @@
           <h3 class="hub-forest-title">Kaşif Başarı &amp; Sıralama</h3>
         </div>
         <div class="hub-status-col">
-          <span id="firebase-cloud-indicator" class="device-network-badge" title="Cihaz Canlı Ağ ve Mobil Veri Durumu">📶 Kontrol Ediliyor...</span>
+          <button id="btn-hub-refresh" class="btn-wood-refresh" type="button" title="Canlı Listeyi Yenile">
+            <span class="btn-refresh-text">Yenile</span>
+            <span class="btn-refresh-icon">🔄</span>
+          </button>
         </div>
       </div>
 
       <!-- 4 Sekmeli Gezinme Butonları -->
       <div class="hub-tabs-row">
         <button id="hub-tab-achieve" class="hub-tab-btn active" type="button">🏆 Başarılar</button>
-        <button id="hub-tab-lb" class="hub-tab-btn" type="button">🏆 Koşu Ligi</button>
+        <button id="hub-tab-lb" class="hub-tab-btn" type="button">🏃 Koşu Ligi</button>
         <button id="hub-tab-quiz-lb" class="hub-tab-btn" type="button">🧠 Bilgi Ligi</button>
         <button id="hub-tab-rewards" class="hub-tab-btn" type="button">🎁 Ödüller</button>
       </div>
@@ -698,7 +734,10 @@
         </div>
 
         <div style="display: flex; gap: 8px; margin-top: 6px;">
-          <button id="btn-lb-refresh" class="btn-secondary" style="flex: 1;" type="button">🔄 Canlı Listeyi Yenile</button>
+          <button id="btn-lb-refresh" class="btn-wood-refresh btn-wood-refresh-wide" type="button">
+            <span class="btn-refresh-text">Yenile</span>
+            <span class="btn-refresh-icon">🔄</span>
+          </button>
         </div>
       </div>
 
@@ -1102,7 +1141,10 @@
     <div class="modal-content modal-content-large leaderboard-modal-content">
       <div class="modal-header-tag" style="display: flex; justify-content: space-between; align-items: center;">
         <span>🏆 CANLI KAŞİF SIRALAMASI</span>
-        <span id="leaderboard-sync-badge" class="device-network-badge" title="Cihaz Canlı Ağ ve Mobil Veri Durumu">📶 Kontrol Ediliyor...</span>
+        <button id="btn-standalone-sync-refresh" class="btn-wood-refresh btn-wood-refresh-sm" type="button" title="Canlı Listeyi Yenile">
+          <span class="btn-refresh-text">Yenile</span>
+          <span class="btn-refresh-icon">🔄</span>
+        </button>
       </div>
       <h3 class="modal-title" style="color: #ffd166;">Kemerburgaz Kent Ormanı Puan Tablosu</h3>
       <p class="modal-desc">Ormanda engelleri aşan, doğa sorularını bilen ve altınları toplayan en iyi kaşifler:</p>
@@ -1135,7 +1177,10 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
-        <button id="btn-standalone-lb-refresh" class="btn-secondary" style="flex: 1;" type="button">🔄 Canlı Yenile</button>
+        <button id="btn-standalone-lb-refresh" class="btn-wood-refresh" style="flex: 1;" type="button">
+          <span class="btn-refresh-text">Yenile</span>
+          <span class="btn-refresh-icon">🔄</span>
+        </button>
         <button id="btn-close-leaderboard" class="btn-secondary" style="padding: 10px 18px;" type="button" onclick="document.getElementById('modal-leaderboard').classList.remove('active');">Kapat</button>
       </div>
     </div>
