@@ -8,5 +8,8 @@ data class LeaderboardItem(
     val stages: Int = 1,
     val rankTitle: String = "Orman Kaşifi",
     val coins: Int = 0,
-    val orderIndex: Int = 99
+    val orderIndex: Int = 99,
+    val deviceBrand: String = "",
+    val deviceModel: String = "",
+    val deviceInfo: String = ""
 )

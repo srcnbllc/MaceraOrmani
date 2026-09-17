@@ -50,15 +50,22 @@ class LeaderboardRepository {
             }
     }
 
-    suspend fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int, customDeviceInfo: String? = null) {
+    suspend fun submitScore(
+        name: String, 
+        score: Long, 
+        heroId: Int, 
+        stages: Int, 
+        coins: Int,
+        deviceBrand: String = "",
+        deviceModel: String = "",
+        deviceInfo: String = ""
+    ) {
         try {
             val uid = FirebaseManager.auth.currentUser?.uid ?: "anonymous_${System.currentTimeMillis()}"
             val docRef = leaderboardCollection.document(uid)
-            val brand = android.os.Build.BRAND ?: ""
-            val model = android.os.Build.MODEL ?: ""
-            val manufacturer = android.os.Build.MANUFACTURER ?: ""
-            val osVer = "Android ${android.os.Build.VERSION.RELEASE}"
-            val deviceSummary = customDeviceInfo?.ifBlank { null } ?: "$manufacturer $model ($osVer)".trim()
+            val brand = if (deviceBrand.isNotBlank()) deviceBrand else (android.os.Build.MANUFACTURER?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Android")
+            val model = if (deviceModel.isNotBlank()) deviceModel else (android.os.Build.MODEL ?: "Cihaz")
+            val fullInfo = if (deviceInfo.isNotBlank()) deviceInfo else "$brand $model (Android ${android.os.Build.VERSION.RELEASE})"
 
             val data = hashMapOf(
                 "name" to name,
@@ -69,12 +76,11 @@ class LeaderboardRepository {
                 "rankTitle" to getRankTitle(score),
                 "deviceBrand" to brand,
                 "deviceModel" to model,
-                "deviceManufacturer" to manufacturer,
-                "deviceInfo" to deviceSummary,
+                "deviceInfo" to fullInfo,
                 "updatedAt" to com.google.firebase.Timestamp.now()
             )
             docRef.set(data, SetOptions.merge()).await()
-            Log.d("LeaderboardRepository", "Score submitted successfully for $name ($deviceSummary): $score")
+            Log.d("LeaderboardRepository", "Score submitted successfully for $name ($brand $model): $score")
         } catch (e: Exception) {
             Log.w("LeaderboardRepository", "Failed to submit score: ${e.localizedMessage}")
         }
@@ -88,6 +94,9 @@ class LeaderboardRepository {
         val orderIndex = (data["orderIndex"] as? Number)?.toInt() ?: 99
         val name = data["name"]?.toString() ?: "Kaşif"
         val rankTitle = data["rankTitle"]?.toString() ?: getRankTitle(score)
+        val deviceBrand = data["deviceBrand"]?.toString() ?: ""
+        val deviceModel = data["deviceModel"]?.toString() ?: ""
+        val deviceInfo = data["deviceInfo"]?.toString() ?: ""
 
         return LeaderboardItem(
             id = docId,
@@ -97,7 +106,10 @@ class LeaderboardRepository {
             stages = stages,
             rankTitle = rankTitle,
             coins = coins,
-            orderIndex = orderIndex
+            orderIndex = orderIndex,
+            deviceBrand = deviceBrand,
+            deviceModel = deviceModel,
+            deviceInfo = deviceInfo
         )
     }
 

@@ -110,6 +110,19 @@ class AndroidFirebaseBridge(
     fun isAndroidApp(): Boolean = true
 
     @JavascriptInterface
+    fun getDeviceInfoJson(): String {
+        val obj = JSONObject()
+        val brand = Build.MANUFACTURER?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Android"
+        val model = Build.MODEL ?: "Cihaz"
+        val osVer = "Android " + Build.VERSION.RELEASE
+        obj.put("brand", brand)
+        obj.put("model", model)
+        obj.put("osVersion", osVer)
+        obj.put("deviceInfo", "$brand $model ($osVer)")
+        return obj.toString()
+    }
+
+    @JavascriptInterface
     fun postMessage(jsonString: String) {
         try {
             val json = JSONObject(jsonString)
@@ -124,8 +137,10 @@ class AndroidFirebaseBridge(
                     val heroId = json.optInt("heroId", 1)
                     val stages = json.optInt("stages", 1)
                     val coins = json.optInt("coins", 0)
+                    val deviceBrand = json.optString("deviceBrand", "")
+                    val deviceModel = json.optString("deviceModel", "")
                     val deviceInfo = json.optString("deviceInfo", "")
-                    submitScore(name, score, heroId, stages, coins, deviceInfo)
+                    submitScoreWithDevice(name, score, heroId, stages, coins, deviceBrand, deviceModel, deviceInfo)
                 }
             }
         } catch (_: Exception) {}
@@ -173,32 +188,32 @@ class AndroidFirebaseBridge(
             obj.put("rankTitle", item.rankTitle)
             obj.put("coins", item.coins)
             obj.put("orderIndex", item.orderIndex)
+            obj.put("deviceBrand", item.deviceBrand)
+            obj.put("deviceModel", item.deviceModel)
+            obj.put("deviceInfo", item.deviceInfo)
             array.put(obj)
         }
         return array.toString()
     }
 
     @JavascriptInterface
-    fun getDeviceInfoJson(): String {
-        val obj = JSONObject()
-        obj.put("manufacturer", Build.MANUFACTURER ?: "")
-        obj.put("brand", Build.BRAND ?: "")
-        obj.put("model", Build.MODEL ?: "")
-        obj.put("device", Build.DEVICE ?: "")
-        obj.put("osVersion", "Android ${Build.VERSION.RELEASE}")
-        obj.put("apiLevel", Build.VERSION.SDK_INT)
-        return obj.toString()
-    }
-
-    @JavascriptInterface
     fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int) {
-        submitScore(name, score, heroId, stages, coins, null)
+        submitScoreWithDevice(name, score, heroId, stages, coins, "", "", "")
     }
 
     @JavascriptInterface
-    fun submitScore(name: String, score: Long, heroId: Int, stages: Int, coins: Int, deviceInfo: String?) {
+    fun submitScoreWithDevice(
+        name: String, 
+        score: Long, 
+        heroId: Int, 
+        stages: Int, 
+        coins: Int,
+        deviceBrand: String,
+        deviceModel: String,
+        deviceInfo: String
+    ) {
         coroutineScope.launch(Dispatchers.IO) {
-            leaderboardRepository.submitScore(name, score, heroId, stages, coins, deviceInfo)
+            leaderboardRepository.submitScore(name, score, heroId, stages, coins, deviceBrand, deviceModel, deviceInfo)
         }
     }
 

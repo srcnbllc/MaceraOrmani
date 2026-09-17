@@ -148,36 +148,6 @@
       </div>
 
       <div class="hero-card-col hero-col-side">
-        <!-- Ahşap Kaşif Gardırobu (Kostüm & Ekipman Sandığı) -->
-        <div class="costume-wardrobe-box">
-          <div class="wardrobe-header">
-            <span class="wardrobe-title">🪵 Kaşif Sandığı &amp; Özel Kostümler</span>
-            <span id="active-costume-badge" class="wardrobe-badge">🌿 Doğal</span>
-          </div>
-          <div class="wardrobe-grid">
-            <button type="button" class="wardrobe-item-btn active" data-costume="none" title="Doğal Görünüm">
-              <span class="w-icon">🌿</span>
-              <span class="w-label">Doğal</span>
-              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
-            </button>
-            <button type="button" class="wardrobe-item-btn" data-costume="hat" title="Orman Kaşif Şapkası">
-              <span class="w-icon">🧢</span>
-              <span class="w-label">Kaşif Şapkası</span>
-              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
-            </button>
-            <button type="button" class="wardrobe-item-btn" data-costume="vest" title="Muhafız Yeleği">
-              <span class="w-icon">🦺</span>
-              <span class="w-label">Muhafız Yeleği</span>
-              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
-            </button>
-            <button type="button" class="wardrobe-item-btn" data-costume="pants" title="İzci Pantolonu">
-              <span class="w-icon">👖</span>
-              <span class="w-label">İzci Pantolonu</span>
-              <span class="w-selected-tag"><span class="w-tag-check">✓</span> SEÇİLDİ</span>
-            </button>
-          </div>
-        </div>
-
         <button id="btn-hero-select" class="btn-main wood-btn-main">SEÇİLDİ</button>
         <div class="hero-profile-sync-hint">💡 Not: Yarışma &amp; Sıralama maskotunu sol üstteki Kaşif Rozetine dokunarak dilediğin zaman değiştirebilirsin.</div>
       </div>
@@ -190,10 +160,11 @@
   <div id="screen-map" class="screen">
     <div class="top-bar map-top-bar">
       <button id="btn-map-back" class="btn-back-pill" onclick="if(window.showScreen)window.showScreen('screen-menu');">◀ Ana Menü</button>
-      <!-- Görünüm Değiştirici Sekmeler: Orman Haritası & Etap Listesi -->
+      <!-- Görünüm Değiştirici Sekmeler: Orman Haritası & Etap Listesi & Kaşif Rehberi -->
       <div class="view-toggle-bar map-header-toggle">
         <button id="btn-toggle-map" class="btn-toggle-view active" type="button">🗺️ Orman Haritası</button>
         <button id="btn-toggle-list" class="btn-toggle-view" type="button">📋 Etap Listesi</button>
+        <button id="btn-map-tutorial" class="btn-toggle-view btn-map-tutorial-action" type="button" onclick="if(window.startTutorialRun)window.startTutorialRun();" title="Nasıl Oynanır? Kaşif Alıştırma Parkuru">🎓 Nasıl Oynanır?</button>
       </div>
     </div>
 
@@ -258,11 +229,31 @@
       <span class="perk-tag" id="hud-perk-pack" style="display:none;">🎒 Bonus</span>
     </div>
 
-    <!-- Aktif Kıyafet Güçleri Şeridi (Şapka, Yelek, Pantolon) -->
+    <!-- Üst Alanda Oyunu Kapatmayan Aksesuar Butonları Şeridi (Şapka, Yelek, Pantolon) -->
     <div id="hud-clothing-power-bar" class="hud-clothing-bar">
-      <span class="clothing-buff-pill hat hidden" id="hud-cloth-hat">🧢 Şapka Koruması: <b id="timer-cloth-hat">15s</b></span>
-      <span class="clothing-buff-pill vest hidden" id="hud-cloth-vest">🦺 Çelik Zırh: <b id="timer-cloth-vest">12s</b></span>
-      <span class="clothing-buff-pill pants hidden" id="hud-cloth-pants">👖 Çevik Mıknatıs: <b id="timer-cloth-pants">15s</b></span>
+      <div class="clothing-target-wrap" style="position: relative; display: inline-flex; align-items: center;">
+        <button type="button" class="clothing-buff-pill hat hidden" id="hud-cloth-hat" onclick="window.useAccessory('hat')" title="Kaşif Şapkası - Engel Koruması">
+          <span class="cloth-pill-icon">🧢</span>
+          <span class="cloth-pill-title">KORUMA</span>
+          <span class="cloth-pill-badge" id="timer-cloth-hat">DOKUN</span>
+        </button>
+        <!-- 🎯 5. Adım Aksesuar Hedefleme Oku & Radarı -->
+        <div id="tutorial-hat-pointer" class="tutorial-target-pointer hidden">
+          <div class="pointer-beacon-ring"></div>
+          <span class="pointer-label-box">🎯 BURAYA DOKUN!</span>
+          <span class="pointer-hand-icon">👇</span>
+        </div>
+      </div>
+      <button type="button" class="clothing-buff-pill vest hidden" id="hud-cloth-vest" onclick="window.useAccessory('vest')" title="Muhafız Yeleği - Çelik Zırh">
+        <span class="cloth-pill-icon">🦺</span>
+        <span class="cloth-pill-title">ZIRH</span>
+        <span class="cloth-pill-badge" id="timer-cloth-vest">DOKUN</span>
+      </button>
+      <button type="button" class="clothing-buff-pill pants hidden" id="hud-cloth-pants" onclick="window.useAccessory('pants')" title="İzci Pantolonu - Mıknatıs & Çeviklik">
+        <span class="cloth-pill-icon">👖</span>
+        <span class="cloth-pill-title">MIKNATIS</span>
+        <span class="cloth-pill-badge" id="timer-cloth-pants">DOKUN</span>
+      </button>
     </div>
 
     <!-- Saha Bilgi & Mola Kartı (Bölüm Başında 3.5 sn Gözükür) -->
@@ -273,26 +264,40 @@
       <div id="spot-card-amenities" class="spot-amenities">ℹ️ Danışma: 30m | 🚲 Bisiklet: 40m | 🚻 WC: 50m</div>
     </div>
 
-    <div id="runner-player-sprite-wrap" class="runner-player-sprite-wrap">
-      <img id="runner-player-gif" src="Assets/Sprites/fox.gif" alt="Koşucu Karakter" class="runner-player-gif">
-      <div id="runner-wear-hat" class="runner-wear-overlay wear-hat hidden" title="Kaşif Şapkası">
-        <span class="cloth-icon">🧢</span>
-        <span class="cloth-glow"></span>
+    <!-- 🪵 İNTERAKTİF KAŞİF REHBERİ (TUTORIAL STEP-BY-STEP KARTI) -->
+    <div id="tutorial-guide-card" class="tutorial-guide-card hidden" onclick="if(window.onTutorialCardClick)window.onTutorialCardClick();">
+      <div class="tutorial-guide-header">
+        <span class="tutorial-guide-badge">🪵 ORMAN KAŞİFİ REHBERİ</span>
+        <button type="button" class="tutorial-skip-btn" onclick="event.stopPropagation(); window.skipTutorial();" title="Alıştırma Parkurunu Geç">Parkuru Geç ⏩</button>
       </div>
-      <div id="runner-wear-vest" class="runner-wear-overlay wear-vest hidden" title="Muhafız Yeleği">
-        <span class="cloth-icon">🦺</span>
-        <span class="cloth-glow"></span>
+      <div class="tutorial-guide-body">
+        <div class="tutorial-guide-icon" id="tutorial-guide-icon">🌲</div>
+        <div class="tutorial-guide-text">
+          <h4 id="tutorial-guide-title">Orman Rotası &amp; Görevler</h4>
+          <p id="tutorial-guide-desc">Kemerburgaz Kent Ormanı'na hoş geldin! Etabın sonuna kadar koşarak ormanı keşfet, doğayı koru ve puanları topla!</p>
+        </div>
       </div>
-      <div id="runner-wear-pants" class="runner-wear-overlay wear-pants hidden" title="İzci Pantolonu">
-        <span class="cloth-icon">👖</span>
-        <span class="cloth-glow"></span>
+      <!-- 🎯 5. Adım Kart İçi Doğrudan Kalkan Açma Butonu -->
+      <div id="tutorial-card-cta-wrap" class="tutorial-card-cta-wrap hidden">
+        <button type="button" id="btn-tutorial-card-shield" class="tutorial-card-cta-btn" onclick="event.stopPropagation(); if(window.useAccessory) window.useAccessory('hat');">
+          🛡️ 🧢 KORUMA KALKANINI AÇ (DOKUN)
+        </button>
+      </div>
+      <div class="tutorial-guide-action-prompt" id="tutorial-guide-action-prompt">
+        <span class="prompt-hand">👆</span>
+        <span class="prompt-msg" id="tutorial-prompt-msg">Devam etmek için ekrana dokun!</span>
       </div>
     </div>
 
+    <div id="runner-player-sprite-wrap" class="runner-player-sprite-wrap">
+      <img id="runner-player-gif" src="Assets/Sprites/fox.gif" alt="Koşucu Karakter" class="runner-player-gif">
+    </div>
+    <div id="runner-wear-pants" class="hidden" style="display:none;" aria-hidden="true"></div>
+
     <canvas id="game-canvas"></canvas>
 
-    <!-- Ekranın Sağında Altın Toplandıkça Açılan Kıyafet Booster İkonları (Ahşap Tasarım) -->
-    <div id="game-active-boosters-dock" class="game-boosters-dock">
+    <!-- Yan alandaki kapatıcı butonlar üst alana taşındığı için gizlendi -->
+    <div id="game-active-boosters-dock" class="game-boosters-dock" style="display:none !important;" aria-hidden="true">
       <button type="button" id="in-game-booster-hat" class="in-game-booster-btn wood-booster-btn hat hidden" onclick="window.activateInGameBooster('hat')" title="Şapka Koruması">
         <span class="booster-icon">🧢</span>
         <span class="booster-tag">KORUMA</span>
@@ -614,6 +619,37 @@
     </div>
   </div>
 
+  <!-- 🎓 Tutorial Tamamlandı - Şimdi Hazırsan Başlıyoruz Modalı -->
+  <div id="modal-tutorial-complete" class="modal-overlay">
+    <div class="modal-content tutorial-complete-modal-content">
+      <div class="modal-header-tag">🌲 BOĞAZİÇİ YÖNETİM • KAŞİF REHBERİ</div>
+      <div class="tutorial-celebrate-icon">🦊🎉</div>
+      <h3 class="modal-title" style="color: #ffd166; font-size: 21px; margin-top: 4px;">Şimdi Hazırsan Başlıyoruz!</h3>
+      <p class="modal-desc" style="font-size: 13px; line-height: 1.5; color: #e2f1e7;">
+        Tebrikler Küçük Kaşif! Ağaç kütüklerinin üzerinden atlamayı, asma macera halatlarının altından süzülmeyi ve kaşif donanımlarını kullanmayı başarıyla öğrendin. Artık Kemerburgaz Kent Ormanı'nın kadim rotasını keşfetmeye hazırsın!
+      </p>
+      
+      <div class="tutorial-ready-summary-box">
+        <div class="summary-check-item">🪵 <strong>Ağaç Kütükleri &amp; Halatlar:</strong> Zemin kütüklerinden zıpla, dalların altından kay</div>
+        <div class="summary-check-item">❤️ <strong>Canlar &amp; Meşe Palamutları:</strong> 3 canını koru, Altın Palamut ile enerjini yenile</div>
+        <div class="summary-check-item">🦺 <strong>Kaşif Donanımları:</strong> Şapka, zırh ve pantolonu ihtiyaç anında dokunarak çalıştır</div>
+      </div>
+
+      <div class="tutorial-notice-pill">
+        🍃 <em>Alıştırma parkuru tamamlandı! 1. Bölüm: Mağlova Kapısı orman serüvenin sıfır puan ve temiz başlangıçla başlıyor!</em>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 14px;">
+        <button id="btn-tutorial-start-real" class="btn-main wood-btn-main" onclick="if(window.startRealGameFromTutorial)window.startRealGameFromTutorial();" type="button" style="font-size: 15px; padding: 13px;">
+          🌲 ŞİMDİ HAZIRIM, 1. BÖLÜME BAŞLA!
+        </button>
+        <button id="btn-tutorial-back-map" class="btn-secondary wood-btn-secondary" onclick="if(window.exitTutorialToMap)window.exitTutorialToMap(false);" type="button">
+          🗺️ Bölümler Haritasına Dön
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 10. Bölüm Büyük Şampiyonluk & Mağlova Kemeri Modalı -->
   <div id="modal-grand-victory" class="modal-overlay">
     <div class="modal-content grand-victory-modal-content">
@@ -668,10 +704,7 @@
           <h3 class="hub-forest-title">Kaşif Başarı &amp; Sıralama</h3>
         </div>
         <div class="hub-status-col">
-          <button id="btn-hub-refresh" class="btn-wood-refresh" type="button" title="Canlı Listeyi Yenile">
-            <span class="btn-refresh-text">Yenile</span>
-            <span class="btn-refresh-icon">🔄</span>
-          </button>
+          <span id="firebase-cloud-indicator" class="device-network-badge" title="Cihaz Canlı Ağ ve Mobil Veri Durumu">📶 Kontrol Ediliyor...</span>
         </div>
       </div>
 
@@ -734,9 +767,9 @@
         </div>
 
         <div style="display: flex; gap: 8px; margin-top: 6px;">
-          <button id="btn-lb-refresh" class="btn-wood-refresh btn-wood-refresh-wide" type="button">
-            <span class="btn-refresh-text">Yenile</span>
-            <span class="btn-refresh-icon">🔄</span>
+          <button id="btn-lb-refresh" class="wood-refresh-btn" style="flex: 1;" type="button">
+            <span class="wood-refresh-label">Yenile</span>
+            <span class="wood-refresh-icon">🔄</span>
           </button>
         </div>
       </div>
@@ -1076,6 +1109,30 @@
   </div>
 
   <!-- ========================================================
+       EĞİTİM/ALIŞTIRMA TAMAMLANDI MODALI (ALTERNATİF)
+  ======================================================== -->
+  <div id="modal-tutorial-complete-alt" class="modal-overlay">
+    <div class="tutorial-complete-modal-content">
+      <div class="tutorial-celebrate-icon">🎉</div>
+      <h2 style="color: #ffd166; font-family: 'Fredoka', sans-serif; font-size: 24px; margin: 0 0 8px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Harika İş Çıkardın!</h2>
+      <p style="color: #e2f1e7; font-size: 14px; margin: 0 0 12px 0;">Kaşif alıştırmasını başarıyla tamamladın. Artık Kemerburgaz Kent Ormanı'nı keşfetmeye tamamen hazırsın!</p>
+      
+      <div class="tutorial-ready-summary-box">
+        <div class="summary-check-item"><strong>✅</strong> Zıplamayı ve engelleri aşmayı öğrendin.</div>
+        <div class="summary-check-item"><strong>✅</strong> Halatların altından eğilerek kaymayı başardın.</div>
+        <div class="summary-check-item"><strong>✅</strong> Altın palamut ile enerjini tazeledin.</div>
+        <div class="summary-check-item"><strong>✅</strong> Özel kalkan donanımını kullandın.</div>
+      </div>
+
+      <div class="tutorial-notice-pill" style="margin-top: 16px;">🌲 1. Bölüm: Mağlova Kapısı haritada açıldı!</div>
+
+      <button type="button" class="wood-btn-main" style="width: 100%; margin-top: 18px; font-size: 15px; padding: 14px; cursor: pointer; background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a0f00; font-family: 'Fredoka', sans-serif; font-weight: 900; border-radius: 14px; border: 1.5px solid #fff275; box-shadow: 0 4px 15px rgba(255, 209, 102, 0.5);" onclick="window.startRealGameFromTutorial();">
+        MACERAYA BAŞLA 🏃‍♂️
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================
        10. OYUN AYARLARI MODALI (AYARLAR)
   ======================================================== -->
   <div id="modal-settings" class="modal-overlay">
@@ -1141,10 +1198,7 @@
     <div class="modal-content modal-content-large leaderboard-modal-content">
       <div class="modal-header-tag" style="display: flex; justify-content: space-between; align-items: center;">
         <span>🏆 CANLI KAŞİF SIRALAMASI</span>
-        <button id="btn-standalone-sync-refresh" class="btn-wood-refresh btn-wood-refresh-sm" type="button" title="Canlı Listeyi Yenile">
-          <span class="btn-refresh-text">Yenile</span>
-          <span class="btn-refresh-icon">🔄</span>
-        </button>
+        <span id="leaderboard-sync-badge" class="device-network-badge" title="Cihaz Canlı Ağ ve Mobil Veri Durumu">📶 Kontrol Ediliyor...</span>
       </div>
       <h3 class="modal-title" style="color: #ffd166;">Kemerburgaz Kent Ormanı Puan Tablosu</h3>
       <p class="modal-desc">Ormanda engelleri aşan, doğa sorularını bilen ve altınları toplayan en iyi kaşifler:</p>
@@ -1177,9 +1231,9 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
-        <button id="btn-standalone-lb-refresh" class="btn-wood-refresh" style="flex: 1;" type="button">
-          <span class="btn-refresh-text">Yenile</span>
-          <span class="btn-refresh-icon">🔄</span>
+        <button id="btn-standalone-lb-refresh" class="wood-refresh-btn" style="flex: 1;" type="button">
+          <span class="wood-refresh-label">Yenile</span>
+          <span class="wood-refresh-icon">🔄</span>
         </button>
         <button id="btn-close-leaderboard" class="btn-secondary" style="padding: 10px 18px;" type="button" onclick="document.getElementById('modal-leaderboard').classList.remove('active');">Kapat</button>
       </div>
