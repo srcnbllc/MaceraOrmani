@@ -8690,12 +8690,6 @@ function onLevelVictory() {
     updateMenuUI();
     LeaderboardService.syncMyScore();
     showToast("👑 EFSANEVİ ZAFER! Büyük Finali tamamladın, 'PROFESYONEL MUHAFIZ' rütbesine eriştin!", "success");
-
-    document.getElementById("modal-grand-victory").classList.add("active");
-    setTimeout(() => {
-      if (window.launchVictoryFireworks) window.launchVictoryFireworks();
-    }, 400);
-    return;
   }
 
   // Normal Zafer Modalı
@@ -8704,7 +8698,9 @@ function onLevelVictory() {
   const vicMapBtn = document.getElementById("btn-victory-map");
   document.getElementById("victory-coins-earned").textContent = `+${coinsCollected} 🪙 (+120 XP ⭐)`;
 
-  document.getElementById("victory-title").textContent = `${currentLevelNumber}. Etap Başarıyla Geçildi!`;
+  document.getElementById("victory-title").textContent = currentLevelNumber === 10 
+    ? `🏆 10. Etap (Büyük Final) Başarıyla Geçildi!` 
+    : `${currentLevelNumber}. Etap Başarıyla Geçildi!`;
   document.getElementById("victory-fact").textContent = etap.fact;
 
   if (nextIndex <= 9) {
@@ -8725,19 +8721,23 @@ function onLevelVictory() {
       };
     }
   } else {
+    // 10. ETAP FİNAL AKIŞI: Oyuncu ister 10. etabın bilgi yarışmasını çözer, ister direkt büyük finale geçer
     if (nextBtn) {
-      nextBtn.textContent = "🏆 BÜYÜK ŞAMPİYONLUK KEMERİ";
+      nextBtn.textContent = "🌿 BÜYÜK FİNAL BİLGİ YARIŞMASINA BAŞLA (+Puan) 🎓";
       nextBtn.onclick = () => {
         document.getElementById("modal-victory").classList.remove("active");
-        document.getElementById("modal-grand-victory").classList.add("active");
-        if (window.launchVictoryFireworks) window.launchVictoryFireworks();
+        startNatureQuiz(currentIndex, () => {
+          document.getElementById("modal-grand-victory").classList.add("active");
+          if (window.launchVictoryFireworks) window.launchVictoryFireworks();
+        });
       };
     }
     if (vicMapBtn) {
-      vicMapBtn.textContent = "🗺️ Haritaya Dön";
+      vicMapBtn.textContent = "🏆 DİREKT BÜYÜK FİNALE VE KUTLAMAYA GEÇ ⏩";
       vicMapBtn.onclick = () => {
         document.getElementById("modal-victory").classList.remove("active");
-        proceedToNextStageOnMap(10);
+        document.getElementById("modal-grand-victory").classList.add("active");
+        if (window.launchVictoryFireworks) window.launchVictoryFireworks();
       };
     }
   }
