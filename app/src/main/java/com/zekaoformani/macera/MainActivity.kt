@@ -60,12 +60,13 @@ class MainActivity : ComponentActivity() {
                 mediaPlaybackRequiresUserGesture = false
                 useWideViewPort = true
                 loadWithOverviewMode = true
-                cacheMode = WebSettings.LOAD_DEFAULT
+                cacheMode = WebSettings.LOAD_NO_CACHE
                 builtInZoomControls = false
                 displayZoomControls = false
                 setSupportZoom(false)
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
+            clearCache(true)
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {

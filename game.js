@@ -3289,6 +3289,13 @@ function handleQuizAnswer(selectedOption) {
   if (feedbackBox) feedbackBox.classList.remove("hidden");
 }
 
+// Oyun Kıyafet Tanımları (Kaşif Şapkası, Muhafız Yeleği, İzci Pantolonu)
+const KARAKTER_KIYAFETLERI = [
+  { id: "hat", name: "Kaşif Şapkası", icon: "🧢" },
+  { id: "vest", name: "Muhafız Yeleği", icon: "🦺" },
+  { id: "pants", name: "İzci Pantolonu", icon: "👖" }
+];
+
 function showQuizSummary() {
   clearQuizTimer();
 
@@ -3304,6 +3311,7 @@ function showQuizSummary() {
   const skipBtn = document.getElementById("btn-quiz-skip");
   const timerWrap = document.getElementById("quiz-timer-wrap");
 
+  // Önce soru kutularını gizle ve sonuç kartını KESİNLİKLE görünür yap
   if (questionBox) questionBox.classList.add("hidden");
   if (optionsBox) optionsBox.classList.add("hidden");
   if (feedbackBox) feedbackBox.classList.add("hidden");
@@ -3312,74 +3320,81 @@ function showQuizSummary() {
   if (timerWrap) timerWrap.style.display = "none";
   if (skipBtn) skipBtn.style.display = "none";
 
+  if (summaryBox) {
+    summaryBox.classList.remove("hidden");
+    summaryBox.style.display = "flex";
+  }
+
   for (let s = 1; s <= 3; s++) {
     const el = document.getElementById(`quiz-step-${s}`);
     if (el) el.className = "quiz-step-indicator completed";
   }
 
-  // 3/3 Mükemmel bonusu
-  if (quizCorrectCount === 3) {
-    quizSessionPoints += 200;
-    showToast("🏆 MÜKEMMEL! 3/3 Doğru — +200 Bilgi Puanı Bonusu!", "success");
-  }
-
-  const earnedCoins = quizCorrectCount * 10;
-
-  // Bilgi puanını kaydet
-  GameState.addQuizPoints(quizSessionPoints);
-  GameState.addQuizWeeklyPoints(quizSessionPoints);
-
-  // XP ekle
-  FirebaseSimService.addXp(quizCorrectCount * 20);
-
-  // Sonuç kartı metinlerini DİNAMİK ayarla
-  const scoreEl = document.getElementById("quiz-summary-score");
-  const rewardsEl = document.getElementById("quiz-summary-rewards");
-  const pointsValEl = document.getElementById("quiz-points-val");
-  const breakdownEl = document.getElementById("quiz-summary-breakdown");
-  const trophyEl = document.getElementById("quiz-result-trophy");
-  const titleEl = document.getElementById("quiz-result-title");
-
-  if (scoreEl) {
-    scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru bildin!`;
-  }
-  if (pointsValEl) {
-    pointsValEl.textContent = `+${quizSessionPoints} ⭐`;
-  }
-  if (rewardsEl) {
-    rewardsEl.textContent = `+${earnedCoins} 🪙`;
-  }
-  if (breakdownEl) {
-    breakdownEl.innerHTML = `<span style="color:#52b788; font-weight:800;">${quizCorrectCount} Doğru</span> • <span style="color:#e07a5f; font-weight:800;">${quizWrongCount} Yanlış</span>`;
-  }
-
-  if (quizCorrectCount === 3) {
-    if (trophyEl) trophyEl.textContent = "🏆";
-    if (titleEl) titleEl.textContent = "Mükemmel Doğa Bilgini!";
-  } else if (quizCorrectCount === 2) {
-    if (trophyEl) trophyEl.textContent = "🥈";
-    if (titleEl) titleEl.textContent = "Harika Başarı!";
-  } else if (quizCorrectCount === 1) {
-    if (trophyEl) trophyEl.textContent = "🥉";
-    if (titleEl) titleEl.textContent = "Güzel Deneme!";
-  } else {
-    if (trophyEl) trophyEl.textContent = "🌱";
-    if (titleEl) titleEl.textContent = "Öğrenmeye Devam!";
-  }
-
-  // Kostüm ödülü (3/3 ise)
-  if (quizCorrectCount === 3) {
-    let unownedCostumes = KARAKTER_KIYAFETLERI.filter(c => c.id !== "none" && !GameState.isCostumeUnlocked(c.id));
-    unownedCostumes = unownedCostumes.sort(() => Math.random() - 0.5);
-    const rewardsToGive = unownedCostumes.slice(0, 1);
-    if (rewardsToGive.length > 0) {
-      rewardsToGive.forEach(c => GameState.unlockCostume(c.id));
-      showToast(`🎁 Tüm soruları doğru bildin! ${rewardsToGive[0].icon} ${rewardsToGive[0].name} kazandın!`, "success");
+  try {
+    // 3/3 Mükemmel bonusu
+    if (quizCorrectCount === 3) {
+      quizSessionPoints += 200;
+      showToast("🏆 MÜKEMMEL! 3/3 Doğru — +200 Bilgi Puanı Bonusu!", "success");
     }
-  }
 
-  if (summaryBox) {
-    summaryBox.classList.remove("hidden");
+    const earnedCoins = quizCorrectCount * 10;
+
+    // Bilgi puanını kaydet
+    GameState.addQuizPoints(quizSessionPoints);
+    GameState.addQuizWeeklyPoints(quizSessionPoints);
+
+    // XP ekle
+    if (typeof FirebaseSimService !== "undefined" && FirebaseSimService.addXp) {
+      FirebaseSimService.addXp(quizCorrectCount * 20);
+    }
+
+    // Sonuç kartı metinlerini DİNAMİK ayarla
+    const scoreEl = document.getElementById("quiz-summary-score");
+    const rewardsEl = document.getElementById("quiz-summary-rewards");
+    const pointsValEl = document.getElementById("quiz-points-val");
+    const breakdownEl = document.getElementById("quiz-summary-breakdown");
+    const trophyEl = document.getElementById("quiz-result-trophy");
+    const titleEl = document.getElementById("quiz-result-title");
+
+    if (scoreEl) {
+      scoreEl.textContent = `3 sorudan ${quizCorrectCount} tanesini doğru bildin!`;
+    }
+    if (pointsValEl) {
+      pointsValEl.textContent = `+${quizSessionPoints} ⭐`;
+    }
+    if (rewardsEl) {
+      rewardsEl.textContent = `+${earnedCoins} 🪙`;
+    }
+    if (breakdownEl) {
+      breakdownEl.innerHTML = `<span style="color:#52b788; font-weight:800;">${quizCorrectCount} Doğru</span> • <span style="color:#e07a5f; font-weight:800;">${quizWrongCount} Yanlış</span>`;
+    }
+
+    if (quizCorrectCount === 3) {
+      if (trophyEl) trophyEl.textContent = "🏆";
+      if (titleEl) titleEl.textContent = "Mükemmel Doğa Bilgini!";
+    } else if (quizCorrectCount === 2) {
+      if (trophyEl) trophyEl.textContent = "🥈";
+      if (titleEl) titleEl.textContent = "Harika Başarı!";
+    } else if (quizCorrectCount === 1) {
+      if (trophyEl) trophyEl.textContent = "🥉";
+      if (titleEl) titleEl.textContent = "Güzel Deneme!";
+    } else {
+      if (trophyEl) trophyEl.textContent = "🌱";
+      if (titleEl) titleEl.textContent = "Öğrenmeye Devam!";
+    }
+
+    // Kostüm ödülü (3/3 ise)
+    if (quizCorrectCount === 3) {
+      let unownedCostumes = KARAKTER_KIYAFETLERI.filter(c => c.id !== "none" && !GameState.isCostumeUnlocked(c.id));
+      if (unownedCostumes.length > 0) {
+        unownedCostumes = unownedCostumes.sort(() => Math.random() - 0.5);
+        const reward = unownedCostumes[0];
+        GameState.unlockCostume(reward.id);
+        showToast(`🎁 Tüm soruları doğru bildin! ${reward.icon} ${reward.name} kazandın!`, "success");
+      }
+    }
+  } catch (err) {
+    console.warn("Quiz summary processing warning:", err);
   }
 
   const proceedBtn = document.getElementById("btn-quiz-proceed-next");
@@ -3746,9 +3761,11 @@ function startRunnerGame(levelId) {
 
   lastSpawnedObstacleType = "none";
 
-  // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 1.65 ile yumuşak ve keyifli başlar, 10. Bölüm 5.40'a kadar kademeli hızlanır)
-  const stageSpeeds = [1.65, 1.95, 2.30, 2.70, 3.15, 3.60, 4.05, 4.50, 4.95, 5.40];
-  gameSpeed = stageSpeeds[levelId - 1] || (1.65 + (levelId - 1) * 0.40);
+  // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 1.35 ile yumuşak ve keyifli başlar, 10. Bölüm 5.45'e kadar kademeli hızlanır)
+  const stageSpeeds = [1.35, 1.70, 2.10, 2.55, 3.05, 3.55, 4.05, 4.55, 5.00, 5.45];
+  gameSpeed = stageSpeeds[levelId - 1] || (1.35 + (levelId - 1) * 0.40);
+  lastLoopTimestamp = 0;
+  loopTimeAccumulator = 0;
   updateClothingHUD();
 
   const heroId = GameState.getSelectedHero();
@@ -4786,24 +4803,42 @@ function handleSpawning() {
   }
 }
 
-function gameLoop() {
+let lastLoopTimestamp = 0;
+let loopTimeAccumulator = 0;
+const FIXED_TIMESTEP = 1000 / 60; // 16.666 ms (Sabit 60 FPS standardı)
+
+function gameLoop(currentTime) {
   if (!gameRunning) return;
 
-  try {
-    if (typeof isTutorialMode !== 'undefined' && isTutorialMode) {
-      updateTutorialLogic();
-    }
-    updatePhysics();
-    renderCanvas();
+  const now = currentTime || performance.now();
+  if (!lastLoopTimestamp) lastLoopTimestamp = now;
+  let delta = now - lastLoopTimestamp;
+  if (delta > 250) delta = 250; // Sekme geçişi veya duraklatmada ani fırlamayı engelle
+  lastLoopTimestamp = now;
+  loopTimeAccumulator += delta;
 
-    // Zamanlayıcı ve ilerleme (ilerleme barının dinamik güncellenmesi)
-    if (typeof isTutorialMode === 'undefined' || !isTutorialMode) {
-      levelTimeElapsed += 1 / 60;
-      if (levelTimeElapsed >= levelTotalDurationSeconds) {
-        onLevelVictory();
-        return;
+  try {
+    // 60 FPS Sabit Fizik Adımı: 90Hz/120Hz/144Hz telefon ekranlarında oyunun hızlı koşmasını önler
+    let steps = 0;
+    while (loopTimeAccumulator >= FIXED_TIMESTEP && steps < 3) {
+      if (typeof isTutorialMode !== 'undefined' && isTutorialMode) {
+        updateTutorialLogic();
       }
+      updatePhysics();
+
+      // Zamanlayıcı ve ilerleme (ilerleme barının dinamik güncellenmesi)
+      if (typeof isTutorialMode === 'undefined' || !isTutorialMode) {
+        levelTimeElapsed += 1 / 60;
+        if (levelTimeElapsed >= levelTotalDurationSeconds) {
+          onLevelVictory();
+          return;
+        }
+      }
+      loopTimeAccumulator -= FIXED_TIMESTEP;
+      steps++;
     }
+
+    renderCanvas();
     updateHUD();
     consecutiveLoopErrors = 0; // Başarılı frame, sayacı sıfırla
   } catch (err) {
