@@ -2,9 +2,9 @@ name: Build and Verify Multiplatform Game
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "gelistirme" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "gelistirme" ]
   workflow_dispatch:
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
           if-no-files-found: error
 
   build-ios:
-    name: Build iOS Simulator
+    name: Build iOS Package (No Mac Needed)
     runs-on: macos-14
 
     steps:
@@ -54,6 +54,26 @@ jobs:
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
-            -destination "generic/platform=iOS Simulator" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
             clean build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package Unsigned IPA and App Bundle
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/iosApp.app Payload/
+          zip -r iosApp-unsigned.ipa Payload
+          zip -r iosApp-Release.zip build/Build/Products/Release-iphoneos/iosApp.app
+
+      - name: Upload iOS App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app-package
+          path: |
+            iosApp-unsigned.ipa
+            iosApp-Release.zip
+          if-no-files-found: error

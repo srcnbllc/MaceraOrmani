@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import WebKit
 
 // iOS Native WKWebView Container for Macera Ormanı
@@ -21,6 +21,7 @@ struct GameWebView: UIViewRepresentable {
         webView.backgroundColor = UIColor(red: 0.03, green: 0.08, blue: 0.05, alpha: 1.0)
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.bounces = false
+        webView.uiDelegate = context.coordinator
 
         if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView.loadFileURL(indexURL, allowingReadAccessTo: Bundle.main.bundleURL)
@@ -38,12 +39,36 @@ struct GameWebView: UIViewRepresentable {
         Coordinator()
     }
 
-    class Coordinator: NSObject, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "gameBridge" {
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
+                if let dict = message.body as? [String: Any], let event = dict["event"] as? String {
+                    if event == "STAGE_COMPLETED" {
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                    } else if event == "GAME_OVER" {
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.error)
+                    } else {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                } else {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                }
             }
+        }
+
+        @available(iOS 15.0, *)
+        func webView(
+            _ webView: WKWebView,
+            requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+            initiatedBy frame: WKFrameInfo,
+            type: WKMediaCaptureType,
+            decisionHandler: @escaping (WKPermissionDecision) -> Void
+        ) {
+            decisionHandler(.grant)
         }
     }
 }

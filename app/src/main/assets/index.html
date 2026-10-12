@@ -68,23 +68,11 @@
         <span class="profile-pill-edit">✏️</span>
       </button>
 
-      <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar & Seçme Çerçeveleri -->
-      <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla &amp; Kahraman Seçimi" type="button" onclick="if(window.showScreen){window.showScreen('screen-heroes');if(window.initHeroesScreen)window.initHeroesScreen();}">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.showScreen){window.showScreen('screen-map');if(window.renderMapScreen)window.renderMapScreen();}">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
+      <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar -->
+      <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla" type="button" onclick="if(window.startAdventureFromMenu)window.startAdventureFromMenu();"></button>
+      <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.openMapFromMenu)window.openMapFromMenu();"></button>
+      <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();"></button>
+      <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();"></button>
     </div>
 
     <!-- Sağ Yatay Manzara Süsü (Landscape / Geniş Ekranlar) -->
@@ -308,7 +296,7 @@
         <span class="booster-tag">ZIRH</span>
         <span class="booster-touch-prompt">DOKUN</span>
       </button>
-      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn wood-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="Çeviklik &amp; Mıknatıs">
+      <button type="button" id="in-game-booster-pants" class="in-game-booster-btn wood-booster-btn pants hidden" onclick="window.activateInGameBooster('pants')" title="Çeviklik & Mıknatıs">
         <span class="booster-icon">👖</span>
         <span class="booster-tag">MIKNATIS</span>
         <span class="booster-touch-prompt">DOKUN</span>
@@ -444,6 +432,9 @@
     </div>
   </div>
 
+  <!-- ========================================================
+       4.5 3 SORULUK DOĞA VE BİLİM YARIŞMASI MODALI (ETAP GEÇİŞİ)
+  ======================================================== -->
   <!-- ========================================================
        4.5 3 SORULUK DOĞA VE BİLİM YARIŞMASI MODALI (ETAP GEÇİŞİ)
   ======================================================== -->
@@ -649,15 +640,44 @@
 
   <!-- 10. Bölüm Büyük Şampiyonluk & Mağlova Kemeri Modalı -->
   <div id="modal-grand-victory" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş.</div>
+    <div class="modal-content grand-victory-modal-content">
+      <div class="modal-header-tag">BOĞAZİÇİ YÖNETİM A.Ş. • 10. ETAP BÜYÜK FİNALİ</div>
       <h3 class="modal-title" style="color: #ffd166;">MAĞLOVA SU KEMERİ BÜYÜK ŞAMPİYONLUĞU</h3>
+      
+      <!-- 🎖️ İNTERAKTİF 3D ORMAN KAŞİFİ RESMİ ROZETİ -->
+      <div class="grand-badge-container" id="grand-badge-container" onclick="if(window.triggerBadgeCelebration)window.triggerBadgeCelebration();" title="Dokun ve Kutla!">
+        <div class="badge-rays"></div>
+        <div class="grand-gold-medal">
+          <div class="medal-outer-ring">
+            <div class="medal-inner-disc">
+              <span class="medal-crown">👑</span>
+              <div class="medal-emblem">🏛️</div>
+              <span class="medal-title-text">RESMİ ORMAN KAŞİFİ</span>
+              <span class="medal-sub-text">MAĞLOVA MUHAFIZI</span>
+              <div class="medal-stars">⭐⭐⭐⭐⭐</div>
+            </div>
+          </div>
+          <div class="medal-ribbon-left"></div>
+          <div class="medal-ribbon-right"></div>
+        </div>
+        <div class="badge-sparkle-prompt">✨ Rozete Dokun &amp; Havai Fişekleri Başlat! ✨</div>
+      </div>
+
       <img src="Assets/Sprites/mağlovakemeri.jpg" alt="Mağlova Su Kemeri" class="victory-photo">
-      <p id="grand-certificate-text" class="modal-desc" style="font-size: 12px; line-height: 1.45;">
-        Kemerburgaz Kent Ormanı'nın 10 etabını baştan başa tamamlayarak 'Doğa ve Tarih Muhafızı' unvanına hak kazandın!
+      <p id="grand-certificate-text" class="modal-desc" style="font-size: 12.5px; line-height: 1.45; margin-top: 6px;">
+        Tebrikler Küçük Kaşif! Kemerburgaz Kent Ormanı'nın 10 etabını baştan başa tamamlayarak 'Doğa ve Tarih Muhafızı' unvanına ve Resmi Berat Rozetine hak kazandın!
       </p>
-      <button id="btn-grand-view-voucher" class="btn-main" onclick="document.getElementById('modal-grand-victory').classList.remove('active');if(window.openRewardsModal)window.openRewardsModal();">🎟️ TESİS ÖDÜLLERİNİ GÖR</button>
-      <button id="btn-grand-menu" class="btn-secondary">Ana Menüye Dön</button>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 10px;">
+        <button id="btn-grand-celebrate" class="btn-main wood-btn-main" onclick="if(window.triggerBadgeCelebration)window.triggerBadgeCelebration();" type="button" style="background: linear-gradient(180deg, #ffd166 0%, #f59e0b 100%); color: #1e1002; font-size: 14px;">
+          🎆 HAVAİ FİŞEK &amp; KONFETİ KUTLAMASI
+        </button>
+        <button id="btn-grand-view-voucher" class="btn-main wood-btn-main" onclick="document.getElementById('modal-grand-victory').classList.remove('active');if(window.openRewardsModal)window.openRewardsModal();" type="button">
+          🎟️ RESMİ TESİS ÖDÜLLERİNİ GÖR
+        </button>
+        <button id="btn-grand-menu" class="btn-secondary wood-btn-secondary" type="button">
+          🏠 Ana Menüye Dön
+        </button>
+      </div>
     </div>
   </div>
 
@@ -795,6 +815,9 @@
   </div>
 
 
+  <!-- ========================================================
+       7. GELİŞİM VADİSİ & KAŞİF KAMPI (GELİŞMİŞ YETENEK VE GÜÇLENDİRME MERKEZİ)
+  ======================================================== -->
   <!-- ========================================================
        7. GELİŞİM VADİSİ & KAŞİF KAMPI (GELİŞMİŞ YETENEK VE GÜÇLENDİRME MERKEZİ)
   ======================================================== -->
@@ -1074,6 +1097,30 @@
   </div>
 
   <!-- ========================================================
+       EĞİTİM/ALIŞTIRMA TAMAMLANDI MODALI (ALTERNATİF)
+  ======================================================== -->
+  <div id="modal-tutorial-complete-alt" class="modal-overlay">
+    <div class="tutorial-complete-modal-content">
+      <div class="tutorial-celebrate-icon">🎉</div>
+      <h2 style="color: #ffd166; font-family: 'Fredoka', sans-serif; font-size: 24px; margin: 0 0 8px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Harika İş Çıkardın!</h2>
+      <p style="color: #e2f1e7; font-size: 14px; margin: 0 0 12px 0;">Kaşif alıştırmasını başarıyla tamamladın. Artık Kemerburgaz Kent Ormanı'nı keşfetmeye tamamen hazırsın!</p>
+      
+      <div class="tutorial-ready-summary-box">
+        <div class="summary-check-item"><strong>✅</strong> Zıplamayı ve engelleri aşmayı öğrendin.</div>
+        <div class="summary-check-item"><strong>✅</strong> Halatların altından eğilerek kaymayı başardın.</div>
+        <div class="summary-check-item"><strong>✅</strong> Altın palamut ile enerjini tazeledin.</div>
+        <div class="summary-check-item"><strong>✅</strong> Özel kalkan donanımını kullandın.</div>
+      </div>
+
+      <div class="tutorial-notice-pill" style="margin-top: 16px;">🌲 1. Bölüm: Mağlova Kapısı haritada açıldı!</div>
+
+      <button type="button" class="wood-btn-main" style="width: 100%; margin-top: 18px; font-size: 15px; padding: 14px; cursor: pointer; background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a0f00; font-family: 'Fredoka', sans-serif; font-weight: 900; border-radius: 14px; border: 1.5px solid #fff275; box-shadow: 0 4px 15px rgba(255, 209, 102, 0.5);" onclick="window.startRealGameFromTutorial();">
+        MACERAYA BAŞLA 🏃‍♂️
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================
        10. OYUN AYARLARI MODALI (AYARLAR)
   ======================================================== -->
   <div id="modal-settings" class="modal-overlay">
@@ -1199,31 +1246,6 @@
         <button id="btn-use-voucher-confirm" class="btn-main" style="flex: 2; font-size: 13px;" type="button">🎟️ İŞLETMEDE KULLAN (1 DEFA)</button>
         <button id="btn-close-voucher-popup" class="btn-secondary" style="flex: 1; padding: 8px 12px;" type="button" onclick="document.getElementById('modal-voucher-detail').classList.remove('active');">Kapat</button>
       </div>
-    </div>
-    </div>
-  </div>
-
-  <!-- ========================================================
-       EĞİTİM/ALIŞTIRMA TAMAMLANDI MODALI (ALTERNATİF)
-  ======================================================== -->
-  <div id="modal-tutorial-complete-alt" class="modal-overlay">
-    <div class="tutorial-complete-modal-content">
-      <div class="tutorial-celebrate-icon">🎉</div>
-      <h2 style="color: #ffd166; font-family: 'Fredoka', sans-serif; font-size: 24px; margin: 0 0 8px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Harika İş Çıkardın!</h2>
-      <p style="color: #e2f1e7; font-size: 14px; margin: 0 0 12px 0;">Kaşif alıştırmasını başarıyla tamamladın. Artık Kemerburgaz Kent Ormanı'nı keşfetmeye tamamen hazırsın!</p>
-      
-      <div class="tutorial-ready-summary-box">
-        <div class="summary-check-item"><strong>✅</strong> Zıplamayı ve engelleri aşmayı öğrendin.</div>
-        <div class="summary-check-item"><strong>✅</strong> Halatların altından eğilerek kaymayı başardın.</div>
-        <div class="summary-check-item"><strong>✅</strong> Altın palamut ile enerjini tazeledin.</div>
-        <div class="summary-check-item"><strong>✅</strong> Özel kalkan donanımını kullandın.</div>
-      </div>
-
-      <div class="tutorial-notice-pill" style="margin-top: 16px;">🌲 1. Bölüm: Mağlova Kapısı haritada açıldı!</div>
-
-      <button type="button" class="wood-btn-main" style="width: 100%; margin-top: 18px; font-size: 15px; padding: 14px; cursor: pointer; background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a0f00; font-family: 'Fredoka', sans-serif; font-weight: 900; border-radius: 14px; border: 1.5px solid #fff275; box-shadow: 0 4px 15px rgba(255, 209, 102, 0.5);" onclick="window.startRealGameFromTutorial();">
-        MACERAYA BAŞLA 🏃‍♂️
-      </button>
     </div>
   </div>
 

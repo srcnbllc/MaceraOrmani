@@ -68,23 +68,11 @@
         <span class="profile-pill-edit">✏️</span>
       </button>
 
-      <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar & Seçme Çerçeveleri -->
-      <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla &amp; Kahraman Seçimi" type="button" onclick="if(window.showScreen){window.showScreen('screen-heroes');if(window.initHeroesScreen)window.initHeroesScreen();}">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.showScreen){window.showScreen('screen-map');if(window.renderMapScreen)window.renderMapScreen();}">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
-      <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();">
-        <span class="selection-arrow left-arrow">⮞</span>
-        <span class="selection-arrow right-arrow">⮜</span>
-      </button>
+      <!-- Görseldeki 4 Ahşap Buton Üzerine Tam Oturan İnteraktif Alanlar -->
+      <button id="btn-menu-maceraya-basla" class="native-wood-btn btn-hit-1" title="Maceraya Başla" type="button" onclick="if(window.startAdventureFromMenu)window.startAdventureFromMenu();"></button>
+      <button id="btn-menu-bolumler" class="native-wood-btn btn-hit-2" title="Bölümler &amp; 10 Saha Etabı Haritası" type="button" onclick="if(window.openMapFromMenu)window.openMapFromMenu();"></button>
+      <button id="btn-menu-basarimlar" class="native-wood-btn btn-hit-3" title="Başarımlar, Pasaport &amp; Kuponlar" type="button" onclick="if(window.openAchievementsModal)window.openAchievementsModal();"></button>
+      <button id="btn-menu-gelisim-vadisi" class="native-wood-btn btn-hit-4" title="Gelişim Vadisi / Kamp Alanı" type="button" onclick="if(window.openCampModal)window.openCampModal();"></button>
     </div>
 
     <!-- Sağ Yatay Manzara Süsü (Landscape / Geniş Ekranlar) -->

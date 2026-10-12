@@ -11,8 +11,12 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.zekaoformani.macera.bridge.AndroidFirebaseBridge
 import com.zekaoformani.macera.data.repository.CampaignRepository
@@ -30,20 +34,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Immersive Full Screen for Game Ergonomics
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        )
+        // Modern Immersive Full Screen (Edge-to-Edge with swipe-to-show transient system bars)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        insetsController.hide(WindowInsetsCompat.Type.systemBars())
 
         // Request Camera Permission for in-park QR scanner
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -69,6 +64,7 @@ class MainActivity : ComponentActivity() {
                 builtInZoomControls = false
                 displayZoomControls = false
                 setSupportZoom(false)
+                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
 
             webChromeClient = object : WebChromeClient() {
@@ -97,30 +93,34 @@ class MainActivity : ComponentActivity() {
         webView.addJavascriptInterface(firebaseBridge, "AndroidFirebaseBridge")
         webView.addJavascriptInterface(firebaseBridge, "AndroidBridge")
 
-        setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (::webView.isInitialized) {
-            webView.evaluateJavascript(
-                "(function() { if (window.handleAndroidBackKey) { return window.handleAndroidBackKey(); } return false; })()"
-            ) { result ->
-                val handled = result?.replace("\"", "")?.trim() == "true"
-                if (!handled) {
-                    if (webView.canGoBack()) {
-                        webView.goBack()
-                    } else {
-                        @Suppress("DEPRECATION")
-                        super.onBackPressed()
+        // Modern Jetpack Back Key Dispatcher (Android 13/14+ predictive back compatible)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (::webView.isInitialized) {
+                    webView.evaluateJavascript(
+                        "(function() { if (window.handleAndroidBackKey) { return window.handleAndroidBackKey(); } return false; })()"
+                    ) { result ->
+                        val handled = result?.replace("\"", "")?.trim() == "true"
+                        if (!handled) {
+                            if (webView.canGoBack()) {
+                                webView.goBack()
+                            } else {
+                                isEnabled = false
+                                onBackPressedDispatcher.onBackPressed()
+                                isEnabled = true
+                            }
+                        }
                     }
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
                 }
             }
-        } else {
-            @Suppress("DEPRECATION")
-            super.onBackPressed()
-        }
+        })
+
+        setContentView(webView)
+        webView.loadUrl("file:///android_asset/index.html")
     }
 
     override fun onResume() {

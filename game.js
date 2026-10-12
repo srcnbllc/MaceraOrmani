@@ -346,6 +346,19 @@ class GameState {
     localStorage.setItem(`LevelState_${index}`, state.toString());
   }
 
+  static getCurrentActiveLevel() {
+    let active = 1;
+    for (let i = 0; i < 10; i++) {
+      if (this.getLevelState(i) === 2) {
+        return i + 1;
+      }
+      if (this.getLevelState(i) === 3) {
+        active = Math.min(10, i + 2);
+      }
+    }
+    return active;
+  }
+
   static getTentLevel() {
     const v = parseInt(localStorage.getItem("tent_level") || "0", 10);
     return Math.min(3, Math.max(0, isNaN(v) ? 0 : v));
@@ -1216,6 +1229,33 @@ class SoundService {
       src.start(now);
       src.stop(now + 0.11);
     } catch (_) {}
+  }
+
+  playClick() {
+    if (!this.sfxEnabled) return;
+    try {
+      const ctx = this.getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(560, now);
+      osc.frequency.exponentialRampToValueAtTime(340, now + 0.05);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } catch (_) {
+      try {
+        if (this.jumpSound) {
+          this.jumpSound.currentTime = 0;
+          this.jumpSound.play().catch(() => {});
+        }
+      } catch (e) {}
+    }
   }
 
   playJump() {
@@ -9023,6 +9063,7 @@ window.addEventListener("pointerup", e => {
 // Orijinal Arka Plan Ahşap Buton Bağlantıları & Ayarlar Sistemi
 // ============================================================================
 function openSettingsModal() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
   const modal = document.getElementById("modal-settings");
   if (!modal) return;
 
@@ -9093,26 +9134,72 @@ function initSettingsEvents() {
   }
 }
 
+function startAdventureFromMenu() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") {
+    sounds.playClick();
+  } else if (typeof sounds !== "undefined" && typeof sounds.playCollect === "function") {
+    sounds.playCollect();
+  }
+  let activeLevel = 1;
+  try {
+    if (typeof GameState !== "undefined" && typeof GameState.getCurrentActiveLevel === "function") {
+      activeLevel = GameState.getCurrentActiveLevel();
+    }
+  } catch(e) {}
+  
+  if (typeof startRunnerGame === "function") {
+    startRunnerGame(activeLevel);
+  } else if (typeof showScreen === "function") {
+    showScreen("screen-game");
+  }
+}
+window.startAdventureFromMenu = startAdventureFromMenu;
+
+function openMapFromMenu() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") {
+    sounds.playClick();
+  } else if (typeof sounds !== "undefined" && typeof sounds.playCollect === "function") {
+    sounds.playCollect();
+  }
+  if (typeof showScreen === "function") showScreen("screen-map");
+  if (typeof renderMapScreen === "function") renderMapScreen();
+}
+window.openMapFromMenu = openMapFromMenu;
+
+function toggleSoundFromMenu(btn) {
+  if (typeof sounds !== "undefined" && typeof sounds.toggleAudio === "function") {
+    const isEnabled = sounds.toggleAudio();
+    if (btn) btn.textContent = isEnabled ? "🔊" : "🔇";
+    const soundBtn = document.getElementById("btn-toggle-sound");
+    if (soundBtn) soundBtn.textContent = isEnabled ? "🔊" : "🔇";
+    if (typeof showToast === "function") {
+      showToast(isEnabled ? "Sesler Açık 🔊" : "Sesler Kapalı 🔇", "info");
+    }
+    return isEnabled;
+  }
+  return true;
+}
+window.toggleSoundFromMenu = toggleSoundFromMenu;
+
 function initNavigationEvents() {
   const btnMacerayaBasla = document.getElementById("btn-menu-maceraya-basla");
   if (btnMacerayaBasla) {
     btnMacerayaBasla.onclick = () => {
-      showScreen("screen-heroes");
-      initHeroesScreen();
+      startAdventureFromMenu();
     };
   }
 
   const btnBolumler = document.getElementById("btn-menu-bolumler");
   if (btnBolumler) {
     btnBolumler.onclick = () => {
-      showScreen("screen-map");
-      renderMapScreen();
+      openMapFromMenu();
     };
   }
 
   const btnBasarimlar = document.getElementById("btn-menu-basarimlar");
   if (btnBasarimlar) {
     btnBasarimlar.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
       openAchievementsModal();
     };
   }
@@ -9120,22 +9207,31 @@ function initNavigationEvents() {
   const btnGelisimVadisi = document.getElementById("btn-menu-gelisim-vadisi");
   if (btnGelisimVadisi) {
     btnGelisimVadisi.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
       openCampModal();
     };
   }
 
   const btnHeroesBack = document.getElementById("btn-heroes-back");
-  if (btnHeroesBack) btnHeroesBack.onclick = () => showScreen("screen-menu");
+  if (btnHeroesBack) {
+    btnHeroesBack.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
+      showScreen("screen-menu");
+    };
+  }
 
   const btnMapBack = document.getElementById("btn-map-back");
-  if (btnMapBack) btnMapBack.onclick = () => showScreen("screen-menu");
+  if (btnMapBack) {
+    btnMapBack.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
+      showScreen("screen-menu");
+    };
+  }
 
   const btnSound = document.getElementById("btn-toggle-sound");
   if (btnSound) {
     btnSound.onclick = () => {
-      const isEnabled = sounds.toggleAudio();
-      btnSound.textContent = isEnabled ? "🔊" : "🔇";
-      showToast(isEnabled ? "Sesler Açık 🔊" : "Sesler Kapalı 🔇", "info");
+      toggleSoundFromMenu(btnSound);
     };
   }
 
@@ -9850,6 +9946,7 @@ if (btnCloseCamp) {
 let onboardingSelectedHero = 1;
 
 function openOnboardingModal() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
   const modal = document.getElementById("modal-onboarding");
   if (!modal) return;
 
@@ -10896,6 +10993,10 @@ window.openAchievementsHub = openAchievementsHub;
 window.DeviceNetworkService = DeviceNetworkService;
 window.CrossPlatformBridge = CrossPlatformBridge;
 window.startNatureQuiz = startNatureQuiz;
+window.startAdventureFromMenu = startAdventureFromMenu;
+window.openMapFromMenu = openMapFromMenu;
+window.toggleSoundFromMenu = toggleSoundFromMenu;
+window.startRunnerGame = startRunnerGame;
 window.focusOnMapPin = focusOnMapPin;
 window.proceedToNextStageOnMap = proceedToNextStageOnMap;
 
@@ -10931,15 +11032,6 @@ function initApp() {
       version: "2.6.0", 
       platform: navigator.userAgent 
     });
-  } catch(e) {}
-
-  // İlk açılışta kaşif adı yoksa Kaşif Kayıt Modalı otomatik açılsın
-  try {
-    if (!GameState.hasCompletedOnboarding()) {
-      setTimeout(() => {
-        openOnboardingModal();
-      }, 450);
-    }
   } catch(e) {}
 }
 

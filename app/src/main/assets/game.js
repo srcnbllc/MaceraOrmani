@@ -346,6 +346,19 @@ class GameState {
     localStorage.setItem(`LevelState_${index}`, state.toString());
   }
 
+  static getCurrentActiveLevel() {
+    let active = 1;
+    for (let i = 0; i < 10; i++) {
+      if (this.getLevelState(i) === 2) {
+        return i + 1;
+      }
+      if (this.getLevelState(i) === 3) {
+        active = Math.min(10, i + 2);
+      }
+    }
+    return active;
+  }
+
   static getTentLevel() {
     const v = parseInt(localStorage.getItem("tent_level") || "0", 10);
     return Math.min(3, Math.max(0, isNaN(v) ? 0 : v));
@@ -410,6 +423,38 @@ class GameState {
     localStorage.setItem(`voucher_used_${rewardId}`, "1");
   }
 
+  // 🧠 BİLGİ LİGİ: Quiz Toplam Puan Yönetimi (Koşu puanından bağımsız)
+  static getQuizTotalPoints() {
+    return parseInt(localStorage.getItem("quiz_total_points") || "0", 10);
+  }
+
+  static addQuizPoints(amount) {
+    const current = this.getQuizTotalPoints();
+    const next = current + Math.max(0, amount);
+    localStorage.setItem("quiz_total_points", next.toString());
+    return next;
+  }
+
+  static getQuizWeeklyPoints() {
+    const weekKey = this._getWeekKey();
+    return parseInt(localStorage.getItem(`quiz_weekly_${weekKey}`) || "0", 10);
+  }
+
+  static addQuizWeeklyPoints(amount) {
+    const weekKey = this._getWeekKey();
+    const current = this.getQuizWeeklyPoints();
+    const next = current + Math.max(0, amount);
+    localStorage.setItem(`quiz_weekly_${weekKey}`, next.toString());
+    return next;
+  }
+
+  static _getWeekKey() {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${now.getFullYear()}_w${week}`;
+  }
+
   static resetData() {
     localStorage.clear();
     sessionStorage.clear();
@@ -418,6 +463,7 @@ class GameState {
     localStorage.setItem("unlocked_costumes", JSON.stringify(["none"]));
   }
 }
+
 
 // Başlangıçtaki haksız 50 bedava altını düzeltme (Tek seferlik geçiş)
 try {
@@ -953,6 +999,7 @@ class SoundService {
   constructor() {
     this.sfxEnabled = true;
     this.musicEnabled = true;
+    this.audioCtx = null;
 
     try {
       this.jumpSound = new Audio("Assets/Audio/jump.wav");
@@ -1182,6 +1229,33 @@ class SoundService {
       src.start(now);
       src.stop(now + 0.11);
     } catch (_) {}
+  }
+
+  playClick() {
+    if (!this.sfxEnabled) return;
+    try {
+      const ctx = this.getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(560, now);
+      osc.frequency.exponentialRampToValueAtTime(340, now + 0.05);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } catch (_) {
+      try {
+        if (this.jumpSound) {
+          this.jumpSound.currentTime = 0;
+          this.jumpSound.play().catch(() => {});
+        }
+      } catch (e) {}
+    }
   }
 
   playJump() {
@@ -2081,7 +2155,7 @@ function openLevelModal(idx) {
       };
     } else {
       if (isBeltur) {
-        descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Önceki 3. etabı başarıyla tamamlayarak VEYA <strong>BELTUR Restoran &amp; Kafe</strong> masasındaki QR kodu okutarak <strong>ÜCRETSİZ</strong> açabilirsiniz.`;
+        descEl.innerHTML = `${etap.desc}<br><br>🌟 <strong>Açılış Koşulu:</strong> Önceki 3. etabı tamamlayarak VEYA <strong>BELTUR Restoran &amp; Kafe</strong> masasındaki QR kodu okutarak <strong>ÜCRETSİZ</strong> açabilirsiniz.`;
         startBtn.textContent = "🔒 KİLİTLİ (Önceki Etabı Tamamla)";
         startBtn.disabled = true;
         startBtn.style.opacity = "0.6";
@@ -2823,6 +2897,14 @@ let quizWrongCount = 0;
 let quizAnswerLocked = false;
 let quizProceedAction = null;
 
+// Dopamin Döngüsü Quiz Değişkenleri
+let quizTimerInterval = null;
+let quizTimeLeft = 15;
+const QUIZ_TIMER_SECONDS = 15;
+let quizStreak = 0;      // Mevcut soru serisi
+let quizSessionPoints = 0; // Bu quiz turundaki kazanılan bilgi puanı
+let quizQuestionStartTime = 0; // Hız bonusu hesabı için
+
 function getQuestionsForStage(stageIdx) {
   if (typeof RemoteQuizService !== "undefined" && RemoteQuizService.getStageQuestions) {
     return RemoteQuizService.getStageQuestions(stageIdx);
@@ -2930,13 +3012,6 @@ function startNatureQuiz(stageIndex, onComplete = null) {
   if (modal) modal.classList.add("active");
 }
 
-let quizTimerInterval = null;
-let quizTimeLeft = 15;
-const QUIZ_TIMER_SECONDS = 15;
-let quizStreak = 0;
-let quizSessionPoints = 0;
-let quizQuestionStartTime = 0;
-
 // ⏱️ Quiz Geri Sayım Zamanlayıcı Yönetimi
 function startQuizTimer() {
   clearQuizTimer();
@@ -2974,10 +3049,11 @@ function startQuizTimer() {
 
     if (quizTimeLeft <= 0) {
       clearQuizTimer();
+      // Süre doldu → otomatik yanlış cevap
       if (!quizAnswerLocked) {
         quizAnswerLocked = true;
         quizWrongCount++;
-        quizStreak = 0;
+        quizStreak = 0; // Seriyi kır
         updateStreakUI();
         const statWrong = document.getElementById("quiz-stat-wrong");
         if (statWrong) statWrong.textContent = quizWrongCount;
@@ -3071,13 +3147,14 @@ function renderQuizQuestion(idx) {
   const feedbackBox = document.getElementById("quiz-feedback-box");
   if (feedbackBox) feedbackBox.classList.add("hidden");
 
+  // ⏱️ Her yeni soruda zamanlayıcıyı sıfırla ve başlat
   startQuizTimer();
 }
 
 function handleQuizAnswer(selectedOption) {
   if (quizAnswerLocked) return;
   quizAnswerLocked = true;
-  clearQuizTimer();
+  clearQuizTimer(); // Cevap verildi → zamanlayıcıyı durdur
 
   const elapsed = (Date.now() - quizQuestionStartTime) / 1000;
   const q = currentQuizQuestions[currentQuizQuestionIndex];
@@ -3089,6 +3166,7 @@ function handleQuizAnswer(selectedOption) {
   const selectedBtn = selectedOption === "A" ? btnA : btnB;
   const correctBtn = q.correct === "A" ? btnA : btnB;
 
+  // Çift tıklamayı önle
   [btnA, btnB].forEach(b => {
     if (b) {
       b.style.pointerEvents = "none";
@@ -3110,9 +3188,11 @@ function handleQuizAnswer(selectedOption) {
     quizCorrectCount++;
     quizStreak++;
 
+    // Temel puan: +100
     let earnedPoints = 100;
     let bonusMsg = "";
 
+    // ⚡ Hız bonusu: 5 saniye içinde cevaplandıysa +50 ekstra puan
     if (elapsed < 5) {
       earnedPoints += 50;
       bonusMsg = " ⚡ +50 Hız Bonusu!";
@@ -3120,6 +3200,7 @@ function handleQuizAnswer(selectedOption) {
 
     quizSessionPoints += earnedPoints;
 
+    // Doğru şıkkı yeşil yap ve etiketle
     if (selectedBtn) {
       selectedBtn.classList.add("correct");
       const badge = document.createElement("span");
@@ -3128,6 +3209,7 @@ function handleQuizAnswer(selectedOption) {
       selectedBtn.appendChild(badge);
     }
 
+    // Altın & Puanı anında artır ve ekranda güncelle
     sounds.playCollect();
     GameState.addCoins(10);
     GameState.addQuizPoints(earnedPoints);
@@ -3143,10 +3225,11 @@ function handleQuizAnswer(selectedOption) {
     }
   } else {
     quizWrongCount++;
-    quizStreak = 0;
+    quizStreak = 0; // Seriyi kır
 
     updateQuizBottomStatsUI();
 
+    // Seçilen yanlış şıkkı kırmızı yap
     if (selectedBtn) {
       selectedBtn.classList.add("wrong");
       const badge = document.createElement("span");
@@ -3155,6 +3238,7 @@ function handleQuizAnswer(selectedOption) {
       selectedBtn.appendChild(badge);
     }
 
+    // DOĞRU ŞIKKI AYNI ANDA YEŞİL VURGULA
     if (correctBtn) {
       correctBtn.classList.add("correct");
       const badge = document.createElement("span");
@@ -3628,6 +3712,7 @@ function startRunnerGame(levelId) {
   });
 
   lastSpawnedObstacleType = "none";
+
   // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 2.30 ile rahat ve keyifli başlar, kademeli hızlanır)
   const stageSpeeds = [2.30, 2.48, 2.68, 2.90, 3.15, 3.40, 3.65, 3.90, 4.15, 4.40];
   gameSpeed = stageSpeeds[levelId - 1] || (2.30 + (levelId - 1) * 0.22);
@@ -3709,7 +3794,7 @@ function startRunnerGame(levelId) {
   obstacles = [];
   coins = [];
   particles = [];
-  spawnCooldown = 90;
+  spawnCooldown = 75;
 
   // Saha Kartı Gösterimi (Bölümün ilk 3.5 saniyesi)
   // Önceki gizleme zamanlayıcısını temizle (restart çakışmasını önle)
@@ -3725,51 +3810,43 @@ function startRunnerGame(levelId) {
   const spotCard = document.getElementById("game-spot-card");
   const etap = RESMI_ETAPLAR[levelId - 1] || RESMI_ETAPLAR[0];
 
-  // Kart zaten görünürse: aşağı kayarak çıkış → içeriği güncelle → yukarıdan kayarak giriş
-  if (!spotCard.classList.contains("hidden")) {
-    spotCard.classList.add("spot-card-exit");
-    setTimeout(() => {
+  if (spotCard) {
+    // Kart zaten görünürse: aşağı kayarak çıkış → içeriği güncelle → yukarıdan kayarak giriş
+    if (!spotCard.classList.contains("hidden")) {
+      spotCard.classList.add("spot-card-exit");
+      setTimeout(() => {
+        document.getElementById("spot-card-title").textContent = etap.title;
+        document.getElementById("spot-card-desc").textContent = etap.desc;
+        document.getElementById("spot-card-amenities").textContent = etap.facilities;
+        spotCard.classList.remove("spot-card-exit");
+        spotCard.classList.add("spot-card-enter");
+        setTimeout(() => spotCard.classList.remove("spot-card-enter"), 400);
+      }, 280);
+    } else {
       document.getElementById("spot-card-title").textContent = etap.title;
       document.getElementById("spot-card-desc").textContent = etap.desc;
       document.getElementById("spot-card-amenities").textContent = etap.facilities;
-      spotCard.classList.remove("spot-card-exit");
+      spotCard.classList.remove("hidden");
+      spotCard.style.opacity = "1";
       spotCard.classList.add("spot-card-enter");
       setTimeout(() => spotCard.classList.remove("spot-card-enter"), 400);
-    }, 280);
-  } else {
-    document.getElementById("spot-card-title").textContent = etap.title;
-    document.getElementById("spot-card-desc").textContent = etap.desc;
-    document.getElementById("spot-card-amenities").textContent = etap.facilities;
-    spotCard.classList.remove("hidden");
-    spotCard.classList.add("spot-card-enter");
-    setTimeout(() => spotCard.classList.remove("spot-card-enter"), 400);
-  }
+    }
 
-  spotCardHideTimer = setTimeout(() => {
-    spotCard.classList.add("spot-card-exit");
-    setTimeout(() => {
-      spotCard.classList.add("hidden");
-      spotCard.classList.remove("spot-card-exit");
-    }, 280);
-    spotCardHideTimer = null;
-  }, 3500);
+    spotCardHideTimer = setTimeout(() => {
+      spotCard.classList.add("spot-card-exit");
+      setTimeout(() => {
+        spotCard.classList.add("hidden");
+        spotCard.classList.remove("spot-card-exit");
+        spotCard.style.opacity = "1";
+      }, 280);
+      spotCardHideTimer = null;
+    }, 3500);
+  }
 
   updateHUD();
-  updateHUDPerks();
 
-  // 1. Bölüm İlk Açılış Step-by-Step Koşu Eğitimi (Tutorial)
-  if (levelId === 1 && !GameState.isTutorialCompleted()) {
-    gameRunning = false;
-    openTutorialModal(() => {
-      gameRunning = true;
-      if (gameLoopId) cancelAnimationFrame(gameLoopId);
-      gameLoopId = requestAnimationFrame(gameLoop);
-    });
-    return;
-  }
-
+  // Oyun Döngüsü Başlat
   gameRunning = true;
-  if (gameLoopId) cancelAnimationFrame(gameLoopId);
   gameLoopId = requestAnimationFrame(gameLoop);
 }
 
@@ -3926,18 +4003,17 @@ function showTutorialGuideStep(step) {
     if (icon) icon.textContent = "🌲";
     if (title) title.textContent = "1. Adım: Kemerburgaz Orman Rotası";
     if (desc) desc.textContent = "Kemerburgaz Kent Ormanı'na hoş geldin! Etabın sonuna kadar koşarak ormanı keşfet, engellerden kaç ve meşe palamutlarını topla!";
-    if (promptMsg) promptMsg.textContent = "👉 Başlamak İçin Dokun! 🏃‍♂️ (veya bekle)";
-    tutorialStepTimer = 300; // 5 saniye okuma süresi
+    if (promptMsg) promptMsg.textContent = "👉 Devam Etmek İçin Dokun! 🏃‍♂️";
   } else if (step === 2) {
     tutorialWaitingAction = "jump";
     tutorialSlowMo = 1.0;
     gameSpeed = 2.8; // Platform akıcı ve dinamik 60 FPS hızla hareketlenir (donma yok)
-    if (icon) icon.textContent = "🪵";
-    if (title) title.textContent = "2. Adım: Zemin Ağaç Kütüğü (Zıpla)";
-    if (desc) desc.textContent = "Orman patikasında karşına ağaç kütükleri çıkacak. Üzerlerinden atlamak için sağdaki ZIPLA butonuna dokun!";
-    if (promptMsg) promptMsg.textContent = "Önündeki kütük yaklaşınca sağdaki ⬆️ ZIPLA butonuna bas!";
+    if (icon) icon.textContent = "🚧";
+    if (title) title.textContent = "2. Adım: Ahşap Çit (Zıpla)";
+    if (desc) desc.textContent = "Orman patikasında karşına ahşap çitler çıkacak. Üzerlerinden atlamak için sağdaki ZIPLA butonuna dokun!";
+    if (promptMsg) promptMsg.textContent = "Önündeki çit yaklaşınca sağdaki ⬆️ ZIPLA butonuna bas!";
     
-    // Engelleri temizle ve kütüğü hemen ekranın sağ ucunda doğur (gecikme/takılma yok)
+    // Engelleri temizle ve çiti hemen ekranın sağ ucunda doğur (gecikme/takılma yok)
     obstacles = [];
     coins = [];
     const groundY = canvas.height - 90;
@@ -4133,15 +4209,15 @@ function onTutorialAction(actionType) {
     clearTutorialHighlights();
     const hurdle = obstacles.find(o => o.type === "hurdle");
     if (hurdle) hurdle.actionTriggered = true;
-    score = Math.max(score, 50);
+    score = Math.max(score, 30);
     updateHUD();
     const promptMsg = document.getElementById("tutorial-prompt-msg");
-    if (promptMsg) promptMsg.textContent = "Harika Zıpladın! 👏 Kütüğü aştın! (+50 Puan)";
+    if (promptMsg) promptMsg.textContent = "Harika Zıpladın! 👏 Çiti aştın! (+30 Puan)";
   } else if (tutorialStep === 3 && actionType === 'slide') {
     clearTutorialHighlights();
     const rope = obstacles.find(o => o.type === "overhead_log");
     if (rope) rope.actionTriggered = true;
-    score = Math.max(score, 100);
+    score = Math.max(score, 50);
     updateHUD();
     const promptMsg = document.getElementById("tutorial-prompt-msg");
     if (promptMsg) promptMsg.textContent = "Mükemmel Eğildin! 👏 Halatın altından süzüldün! (+50 Puan)";
@@ -4435,14 +4511,13 @@ function handleSpawning() {
   if (spawnCooldown <= 0) {
     const groundY = canvas.height - 90;
 
-    // Kademeli Engel Yoğunluğu: 1. Etap %42 sakin -> 10. Etap %68 yoğun
-    const spawnChance = Math.min(0.68, 0.42 + (currentLevelNumber * 0.026));
+    // Profesyonel Engel Yoğunluğu: 1. Etap %48 dinamik -> 10. Etap %76 yoğun profesyonel parkur
+    const spawnChance = Math.min(0.76, 0.48 + (currentLevelNumber * 0.028));
     const spawnTypeRoll = Math.random();
 
     if (spawnTypeRoll < spawnChance) {
       // ENGEL OLUŞTURMA: Zemin (Zıpla) veya Asılı (Eğil/Kay)
-      // 1. Etapta daha çok zıplama (%22 kayma), ilerledikçe zengin denge (%45 kayma)
-      const slideProb = currentLevelNumber === 1 ? 0.22 : Math.min(0.46, 0.22 + (currentLevelNumber * 0.024));
+      const slideProb = currentLevelNumber === 1 ? 0.25 : Math.min(0.48, 0.25 + (currentLevelNumber * 0.024));
       const isSlideObstacle = Math.random() < slideProb;
 
       if (isSlideObstacle) {
@@ -4550,7 +4625,7 @@ function handleSpawning() {
           coins.push({
             type: "coin",
             x: canvas.width + 24,
-            y: groundY - obsH - 58, // Engelin üstünden zıplama tepe noktasına hafif yukarı alındı
+            y: groundY - obsH - 68, // Engelin üstünden zıplama tepe noktasına hafif yukarı alındı (68px yukarıda)
             w: 24,
             h: 24,
             seed: Math.random() * 100,
@@ -4560,7 +4635,7 @@ function handleSpawning() {
           coins.push({
             type: "star",
             x: canvas.width + 24,
-            y: groundY - obsH - 58,
+            y: groundY - obsH - 68,
             w: 24,
             h: 24,
             collected: false
@@ -4687,6 +4762,16 @@ function gameLoop() {
     }
     updatePhysics();
     renderCanvas();
+
+    // Zamanlayıcı ve ilerleme (ilerleme barının dinamik güncellenmesi)
+    if (typeof isTutorialMode === 'undefined' || !isTutorialMode) {
+      levelTimeElapsed += 1 / 60;
+      if (levelTimeElapsed >= levelTotalDurationSeconds) {
+        onLevelVictory();
+        return;
+      }
+    }
+    updateHUD();
     consecutiveLoopErrors = 0; // Başarılı frame, sayacı sıfırla
   } catch (err) {
     consecutiveLoopErrors++;
@@ -5013,7 +5098,7 @@ function updatePhysics() {
     if (!obs.passed && obs.x < player.x) {
       obs.passed = true;
       if (typeof isTutorialMode === 'undefined' || !isTutorialMode) {
-        score = Math.min(currentMaxStageScore, score + 35);
+        score = Math.min(currentMaxStageScore, score + 20);
         updateHUD();
       }
     }
@@ -5097,7 +5182,7 @@ function updatePhysics() {
         playerTakesDamage();
         if (!gameRunning) return;
       } catch (err) {
-        console.error("playerTakesDamage hatası:", err);
+        console.warn("playerTakesDamage safe catch:", err);
       }
     }
 
@@ -5196,17 +5281,17 @@ function updatePhysics() {
             player.hasShield = true;
             showToast("🛡️ Koruyucu Kalkan Devrede! Harika gidiyorsun!", "success");
           }
-          score = Math.min(currentMaxStageScore, score + 150);
+          score = Math.min(currentMaxStageScore, score + 100);
           coinsCollected += 5;
           GameState.addCoins(5);
           player.invulnerable = 180;
         } else {
           // Normal Altın Palamut
-          score = Math.min(currentMaxStageScore, score + 120);
+          score = Math.min(currentMaxStageScore, score + 80);
           coinsCollected += 5;
           GameState.addCoins(5);
           player.invulnerable = 180;
-          showToast("✨ Altın Meşe Palamudu! +120 Skor & 🛡️ Dokunulmazlık!", "success");
+          showToast("✨ Altın Meşe Palamudu! +80 Skor & 🛡️ Dokunulmazlık!", "success");
         }
 
         for (let k = 0; k < 10; k++) {
@@ -5222,8 +5307,8 @@ function updatePhysics() {
         }
       } else if (coin.type === "star") {
         // 🌟 ORMAN PUAN YILDIZI (Taktiksel Zıplama/Kayma Puanı)
-        score = Math.min(currentMaxStageScore, score + 50);
-        showToast("⭐ Orman Puan Yıldızı! +50 Puan!", "success");
+        score = Math.min(currentMaxStageScore, score + 35);
+        showToast("⭐ Orman Puan Yıldızı! +35 Puan!", "success");
         for (let k = 0; k < 8; k++) {
           particles.push({
             x: coin.x + 12,
@@ -5238,7 +5323,7 @@ function updatePhysics() {
       } else if (coin.type === "clothing_crate") {
         // 🎁 KAŞİF HAVADAN TOPLANAN KIYAFET ÖZELLİĞİ (Şapka, Yelek, Pantolon)
         const cId = coin.clothingId;
-        score = Math.min(currentMaxStageScore, score + 50);
+        score = Math.min(currentMaxStageScore, score + 35);
 
         // Sağ kenardaki dokunmatik butonu da tüket ve gizle (zaten alındı)
         inGameReadyBoosters[cId] = false;
@@ -5272,15 +5357,14 @@ function updatePhysics() {
             color: cId === "hat" ? "#38bdf8" : (cId === "vest" ? "#fb923c" : "#4ade80")
           });
         }
-        updateClothingHUD();
       } else {
         const fireLevel = GameState.getCampfireLevel();
         const mult = fireLevel >= 3 ? 3 : (fireLevel >= 2 ? 2 : 1);
         coinsCollected += mult;
         coinsCollectedInRun += mult;
-        score = Math.min(currentMaxStageScore, score + (75 * mult));
-        GameState.addCoins(mult);
         checkInRunClothingRewards(coinsCollectedInRun);
+        score = Math.min(currentMaxStageScore, score + (25 * mult));
+        GameState.addCoins(mult);
 
         // Altın toplama kıvılcımı
         for (let k = 0; k < 4; k++) {
@@ -5310,20 +5394,11 @@ function updatePhysics() {
     if (coin.x < -30 || coin.collected) coins.splice(i, 1);
   }
 
-  // Koşu Süresi ve İlerleme Takibi (Kullanıcı Talebi: Tam 2:30 Dakika Oynanış - Alıştırmada zaman ve puan adım adım kontrol edilir)
+  // Hayatta kalma ve koşulan mesafe puanı (Maksimum Bölüm Puanı Tavanı ile - Alıştırmada otomatik puan artışı engellenir)
   if (typeof isTutorialMode === 'undefined' || !isTutorialMode) {
-    levelTimeElapsed += 1 / 60;
-
-    // Hayatta kalma ve koşulan mesafe puanı (Maksimum Bölüm Puanı Tavanı ile)
-    if (Math.floor(levelTimeElapsed * 60) % 6 === 0) {
-      score = Math.min(currentMaxStageScore, score + Math.max(1, Math.round(gameSpeed * 0.4)));
+    if (Math.floor(levelTimeElapsed * 60) % 20 === 0) {
+      score = Math.min(currentMaxStageScore, score + Math.max(1, Math.round(gameSpeed * 0.6)));
       updateHUD();
-    }
-
-    // Bölüm Parkur Süresi Tamamlandı mı? (2:30 Dakika Sonunda Zafer)
-    if (levelTimeElapsed >= levelTotalDurationSeconds) {
-      onLevelVictory();
-      return;
     }
   }
 }
@@ -5403,8 +5478,8 @@ function checkCollision(player, obs) {
               color: k % 3 === 0 ? "#ffffff" : (k % 3 === 1 ? "#bae6fd" : "#ea580c")
             });
           }
-          score = Math.min(currentMaxStageScore, score + 50);
-          showToast("☃️ Kardan Adamın Üzerinden Uçtun! +50 Puan!", "success");
+          score = Math.min(currentMaxStageScore, score + 35);
+          showToast("☃️ Kardan Adamın Üzerinden Uçtun! +35 Puan!", "success");
         } else if (obs.type === "mud_puddle" || obs.type === "puddle") {
           sounds.playSplash();
           for (let k = 0; k < 12; k++) {
@@ -5418,8 +5493,8 @@ function checkCollision(player, obs) {
               color: k % 2 === 0 ? "#5c3317" : "#38bdf8"
             });
           }
-          score = Math.min(currentMaxStageScore, score + 40);
-          showToast("💦 Çamur Birikintisini Aştın! +40 Puan!", "success");
+          score = Math.min(currentMaxStageScore, score + 25);
+          showToast("💦 Çamur Birikintisini Aştın! +25 Puan!", "success");
         } else {
           sounds.playJump();
           // Altın ve yeşil doğa kıvılcım parçacıkları
@@ -5434,7 +5509,7 @@ function checkCollision(player, obs) {
               color: "#ffd166"
             });
           }
-          score = Math.min(currentMaxStageScore, score + 40);
+          score = Math.min(currentMaxStageScore, score + 25);
         }
         updateHUD();
         return false; // Can kesinlikle gitmez!
@@ -5848,14 +5923,8 @@ function drawPlayerAccessoryCircle(ctx, p) {
     }
     ctx.restore();
 
-    // 5. Çember Üstünde Salınan Küçük İkon Rozeti
-    const badgeAngle = -Math.PI / 2 + Math.sin(t * 2) * 0.35;
-    const bx = cx + Math.cos(badgeAngle) * (r + 4);
-    const by = cy + Math.sin(badgeAngle) * (r + 4);
-    ctx.font = "14px 'Fredoka', sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(item.icon, bx, by);
+    // 5. Çember Üstünde Salınan Küçük İkon Rozeti (Kullanıcı İsteği: Kaldırıldı)
+    // Sadece koruma çemberi efekti bırakıldı.
 
     // 6. Çemberden Yayılan Mikro Kıvılcımlar (Koşunun tersine süzülür)
     if (Math.random() < 0.22) {
@@ -5890,9 +5959,6 @@ function drawPlayerShieldAura(ctx, p) {
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.stroke();
-
-  ctx.restore();
-}
 
   ctx.restore();
 }
@@ -8083,7 +8149,7 @@ window.useAccessory = function(type) {
 
   updateClothingHUD();
 };
-window.activateInGameBooster = window.useAccessory;
+window.activateInGameBooster = window.useAccessory; // Eski fonksiyon çağrıları için tam uyumluluk
 
 function updateHUDPerks() {
   const tentBonus = GameState.getTentLevel();
@@ -8997,6 +9063,7 @@ window.addEventListener("pointerup", e => {
 // Orijinal Arka Plan Ahşap Buton Bağlantıları & Ayarlar Sistemi
 // ============================================================================
 function openSettingsModal() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
   const modal = document.getElementById("modal-settings");
   if (!modal) return;
 
@@ -9067,26 +9134,72 @@ function initSettingsEvents() {
   }
 }
 
+function startAdventureFromMenu() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") {
+    sounds.playClick();
+  } else if (typeof sounds !== "undefined" && typeof sounds.playCollect === "function") {
+    sounds.playCollect();
+  }
+  let activeLevel = 1;
+  try {
+    if (typeof GameState !== "undefined" && typeof GameState.getCurrentActiveLevel === "function") {
+      activeLevel = GameState.getCurrentActiveLevel();
+    }
+  } catch(e) {}
+  
+  if (typeof startRunnerGame === "function") {
+    startRunnerGame(activeLevel);
+  } else if (typeof showScreen === "function") {
+    showScreen("screen-game");
+  }
+}
+window.startAdventureFromMenu = startAdventureFromMenu;
+
+function openMapFromMenu() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") {
+    sounds.playClick();
+  } else if (typeof sounds !== "undefined" && typeof sounds.playCollect === "function") {
+    sounds.playCollect();
+  }
+  if (typeof showScreen === "function") showScreen("screen-map");
+  if (typeof renderMapScreen === "function") renderMapScreen();
+}
+window.openMapFromMenu = openMapFromMenu;
+
+function toggleSoundFromMenu(btn) {
+  if (typeof sounds !== "undefined" && typeof sounds.toggleAudio === "function") {
+    const isEnabled = sounds.toggleAudio();
+    if (btn) btn.textContent = isEnabled ? "🔊" : "🔇";
+    const soundBtn = document.getElementById("btn-toggle-sound");
+    if (soundBtn) soundBtn.textContent = isEnabled ? "🔊" : "🔇";
+    if (typeof showToast === "function") {
+      showToast(isEnabled ? "Sesler Açık 🔊" : "Sesler Kapalı 🔇", "info");
+    }
+    return isEnabled;
+  }
+  return true;
+}
+window.toggleSoundFromMenu = toggleSoundFromMenu;
+
 function initNavigationEvents() {
   const btnMacerayaBasla = document.getElementById("btn-menu-maceraya-basla");
   if (btnMacerayaBasla) {
     btnMacerayaBasla.onclick = () => {
-      showScreen("screen-heroes");
-      initHeroesScreen();
+      startAdventureFromMenu();
     };
   }
 
   const btnBolumler = document.getElementById("btn-menu-bolumler");
   if (btnBolumler) {
     btnBolumler.onclick = () => {
-      showScreen("screen-map");
-      renderMapScreen();
+      openMapFromMenu();
     };
   }
 
   const btnBasarimlar = document.getElementById("btn-menu-basarimlar");
   if (btnBasarimlar) {
     btnBasarimlar.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
       openAchievementsModal();
     };
   }
@@ -9094,22 +9207,31 @@ function initNavigationEvents() {
   const btnGelisimVadisi = document.getElementById("btn-menu-gelisim-vadisi");
   if (btnGelisimVadisi) {
     btnGelisimVadisi.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
       openCampModal();
     };
   }
 
   const btnHeroesBack = document.getElementById("btn-heroes-back");
-  if (btnHeroesBack) btnHeroesBack.onclick = () => showScreen("screen-menu");
+  if (btnHeroesBack) {
+    btnHeroesBack.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
+      showScreen("screen-menu");
+    };
+  }
 
   const btnMapBack = document.getElementById("btn-map-back");
-  if (btnMapBack) btnMapBack.onclick = () => showScreen("screen-menu");
+  if (btnMapBack) {
+    btnMapBack.onclick = () => {
+      if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
+      showScreen("screen-menu");
+    };
+  }
 
   const btnSound = document.getElementById("btn-toggle-sound");
   if (btnSound) {
     btnSound.onclick = () => {
-      const isEnabled = sounds.toggleAudio();
-      btnSound.textContent = isEnabled ? "🔊" : "🔇";
-      showToast(isEnabled ? "Sesler Açık 🔊" : "Sesler Kapalı 🔇", "info");
+      toggleSoundFromMenu(btnSound);
     };
   }
 
@@ -9127,9 +9249,15 @@ function initNavigationEvents() {
     btnVicNext.onclick = () => {
       const modal = document.getElementById("modal-victory");
       if (modal) modal.classList.remove("active");
-      showScreen("screen-map");
-      renderMapScreen();
-      setTimeout(() => openLevelModal(currentLevelNumber), 250);
+      const curIdx = currentLevelNumber - 1;
+      const nextIdx = curIdx + 1;
+      if (nextIdx <= 9) {
+        startNatureQuiz(curIdx, () => {
+          proceedToNextStageOnMap(nextIdx);
+        });
+      } else {
+        proceedToNextStageOnMap(nextIdx);
+      }
     };
   }
 
@@ -9138,8 +9266,7 @@ function initNavigationEvents() {
     btnVicMap.onclick = () => {
       const modal = document.getElementById("modal-victory");
       if (modal) modal.classList.remove("active");
-      showScreen("screen-map");
-      renderMapScreen();
+      proceedToNextStageOnMap(currentLevelNumber);
     };
   }
 
@@ -9217,16 +9344,16 @@ function initNavigationEvents() {
 // ============================================================================
 
 const QUIZ_BOT_PLAYERS = [
-  { name: "Zeynep K.",  icon: "🦊", quizPts: 2450, weeklyPts: 380 },
-  { name: "Ali Rıza T.", icon: "🐺", quizPts: 2100, weeklyPts: 210 },
-  { name: "Defne S.",   icon: "🦥", quizPts: 1870, weeklyPts: 450 },
-  { name: "Mert B.",    icon: "🐾", quizPts: 1650, weeklyPts: 150 },
-  { name: "Selin D.",   icon: "🦮", quizPts: 1420, weeklyPts: 320 },
-  { name: "Ömer F.",    icon: "🌲", quizPts: 1200, weeklyPts: 100 },
-  { name: "Büşra Y.",   icon: "🌿", quizPts:  980, weeklyPts: 280 },
-  { name: "Kaan A.",    icon: "🐿️", quizPts:  750, weeklyPts:  90 },
-  { name: "Nisa M.",    icon: "🦹", quizPts:  520, weeklyPts: 130 },
-  { name: "Ege T.",     icon: "🌱", quizPts:  300, weeklyPts:  50 }
+  { name: "Zeynep K.",  icon: "\ud83e\udd8a", quizPts: 2450, weeklyPts: 380 },
+  { name: "Ali R\u0131za T.", icon: "\ud83d\udc3a", quizPts: 2100, weeklyPts: 210 },
+  { name: "Defne S.",   icon: "\ud83e\udda5", quizPts: 1870, weeklyPts: 450 },
+  { name: "Mert B.",    icon: "\ud83d\udc3e", quizPts: 1650, weeklyPts: 150 },
+  { name: "Selin D.",   icon: "\ud83e\udda6", quizPts: 1420, weeklyPts: 320 },
+  { name: "Omer F.",    icon: "\ud83c\udf32", quizPts: 1200, weeklyPts: 100 },
+  { name: "Busra Y.",   icon: "\ud83c\udf3f", quizPts:  980, weeklyPts: 280 },
+  { name: "Kaan A.",    icon: "\ud83d\udc3f\ufe0f", quizPts:  750, weeklyPts:  90 },
+  { name: "Nisa M.",    icon: "\ud83e\uddb8", quizPts:  520, weeklyPts: 130 },
+  { name: "Ege T.",     icon: "\ud83c\udf31", quizPts:  300, weeklyPts:  50 }
 ];
 
 const QuizLeaderboardService = {
@@ -9236,7 +9363,7 @@ const QuizLeaderboardService = {
       : (mode === "weekly" ? GameState.getQuizWeeklyPoints() : GameState.getQuizTotalPoints());
     const myName = GameState.getExplorerName() || "Sen";
     const myHeroId = GameState.getSelectedHero() || 1;
-    const HERO_ICONS = ["🦊","🐺","🦥","🐾","🦮","🌲","🐿️","🦹"];
+    const HERO_ICONS = ["\ud83e\udd8a","\ud83d\udc3a","\ud83e\udda5","\ud83d\udc3e","\ud83e\udda6","\ud83c\udf32","\ud83d\udc3f\ufe0f","\ud83e\uddb8"];
     const myIcon = HERO_ICONS[(myHeroId - 1) % HERO_ICONS.length];
 
     const bots = QUIZ_BOT_PLAYERS.map(b => ({
@@ -9264,6 +9391,7 @@ const QuizLeaderboardService = {
     if (myScoreEl) myScoreEl.textContent = (meEntry ? meEntry.pts : 0).toLocaleString("tr-TR") + " Puan";
     if (myRankEl)  myRankEl.textContent  = meEntry ? "#" + meEntry.rank : "#--";
 
+    const medals = ["\ud83e\udd47", "\ud83e\udd48", "\ud83e\udd49"];
     container.innerHTML = data.map(entry => {
       const isMe = !!entry.isMe;
       let rankClass = "other";
@@ -9302,7 +9430,7 @@ const QuizLeaderboardService = {
 window.QuizLeaderboardService = QuizLeaderboardService;
 
 // ============================================================================
-// 10. ÇOCUKLAR İÇİN İNTERAKTİF BAŞARIMLAR & FİREBASE SİSTEMİ
+// 10. COCUKLAR ICIN INTERAKTIF BASARIMLAR & FIREBASE SISTEMI
 // ============================================================================
 
 function openAchievementsModal() {
@@ -9818,6 +9946,7 @@ if (btnCloseCamp) {
 let onboardingSelectedHero = 1;
 
 function openOnboardingModal() {
+  if (typeof sounds !== "undefined" && typeof sounds.playClick === "function") sounds.playClick();
   const modal = document.getElementById("modal-onboarding");
   if (!modal) return;
 
@@ -10864,6 +10993,10 @@ window.openAchievementsHub = openAchievementsHub;
 window.DeviceNetworkService = DeviceNetworkService;
 window.CrossPlatformBridge = CrossPlatformBridge;
 window.startNatureQuiz = startNatureQuiz;
+window.startAdventureFromMenu = startAdventureFromMenu;
+window.openMapFromMenu = openMapFromMenu;
+window.toggleSoundFromMenu = toggleSoundFromMenu;
+window.startRunnerGame = startRunnerGame;
 window.focusOnMapPin = focusOnMapPin;
 window.proceedToNextStageOnMap = proceedToNextStageOnMap;
 
@@ -10899,15 +11032,6 @@ function initApp() {
       version: "2.6.0", 
       platform: navigator.userAgent 
     });
-  } catch(e) {}
-
-  // İlk açılışta kaşif adı yoksa Kaşif Kayıt Modalı otomatik açılsın
-  try {
-    if (!GameState.hasCompletedOnboarding()) {
-      setTimeout(() => {
-        openOnboardingModal();
-      }, 450);
-    }
   } catch(e) {}
 }
 
