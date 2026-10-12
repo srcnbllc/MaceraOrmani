@@ -1886,20 +1886,22 @@ function focusOnMapPin(stageIdx) {
     behavior: "smooth"
   });
 
-  const pins = document.querySelectorAll(".map-pin-btn");
-  pins.forEach((btn, i) => {
+  const pins = document.querySelectorAll("#map-pins-overlay .map-pin-btn");
+  pins.forEach((btn) => {
     btn.classList.remove("pin-next-focus");
     const existingBadge = btn.querySelector(".pin-focus-callout");
     if (existingBadge) existingBadge.remove();
-
-    if (i === stageIdx) {
-      btn.classList.add("pin-next-focus");
-      const callout = document.createElement("div");
-      callout.className = "pin-focus-callout";
-      callout.innerHTML = `<span>🎯 SIRADAKİ ETAP!</span><span class="callout-arrow">▼</span>`;
-      btn.appendChild(callout);
-    }
   });
+
+  // pins[0] tutorial pini olduğu için stageIdx + 1 gerçek etap pinidir
+  const targetPin = pins[stageIdx + 1] || pins[stageIdx];
+  if (targetPin) {
+    targetPin.classList.add("pin-next-focus");
+    const callout = document.createElement("div");
+    callout.className = "pin-focus-callout";
+    callout.innerHTML = `<span>🎯 SIRADAKİ ETAP!</span><span class="callout-arrow">▼</span>`;
+    targetPin.appendChild(callout);
+  }
 }
 window.focusOnMapPin = focusOnMapPin;
 
@@ -1933,11 +1935,16 @@ function proceedToNextStageOnMap(nextStageIndex) {
   currentMapViewMode = "map";
   renderMapScreen();
 
-  // Haritayı dinamik olarak sonraki durağa fokusla ve parlat
+  // Haritayı dinamik olarak sonraki durağa fokusla ve 350ms sonra standart etap kartını otomatik aç!
   setTimeout(() => {
     focusOnMapPin(targetIdx);
     const etap = RESMI_ETAPLAR[targetIdx];
-    showToast(`🗺️ ${targetIdx + 1}. Etap: ${etap.business.split('&')[0].trim()} açıldı! İğneye dokunarak yarışmaya başlayabilirsin!`, "success");
+    if (etap) {
+      showToast(`🗺️ ${targetIdx + 1}. Etap: ${etap.business.split('&')[0].trim()} açıldı!`, "success");
+    }
+    setTimeout(() => {
+      openLevelModal(targetIdx);
+    }, 350);
   }, 200);
 }
 window.proceedToNextStageOnMap = proceedToNextStageOnMap;
@@ -3180,8 +3187,31 @@ function handleQuizAnswer(selectedOption) {
   const feedbackText = document.getElementById("quiz-feedback-text");
   const nextQBtn = document.getElementById("btn-quiz-next-question");
 
-  if (nextQBtn) {
-    nextQBtn.textContent = (currentQuizQuestionIndex === 2) ? "🏆 Sonuçları Tamamla & Ödülleri Al ⏩" : "Sonraki Soruya Geç ⏩";
+  if (currentQuizQuestionIndex === 2) {
+    if (nextQBtn) {
+      nextQBtn.textContent = "🏆 Sonuçları Gör & Ödülleri Al ⏩";
+      nextQBtn.style.background = "linear-gradient(180deg, #ffd166 0%, #f59e0b 100%)";
+      nextQBtn.style.color = "#1e1002";
+      nextQBtn.style.fontWeight = "900";
+    }
+    // 3. Soru bittiğinde açıklamanın okunması için 1.3 sn sonra doğal akışla otomatik sonuç paneline geç
+    setTimeout(() => {
+      const modal = document.getElementById("modal-nature-quiz");
+      if (modal && modal.classList.contains("active")) {
+        const sumBox = document.getElementById("quiz-summary-box");
+        if (sumBox && sumBox.classList.contains("hidden")) {
+          clearQuizTimer();
+          showQuizSummary();
+        }
+      }
+    }, 1300);
+  } else {
+    if (nextQBtn) {
+      nextQBtn.textContent = "Sonraki Soruya Geç ⏩";
+      nextQBtn.style.background = "";
+      nextQBtn.style.color = "";
+      nextQBtn.style.fontWeight = "";
+    }
   }
 
   if (isCorrect) {
@@ -3261,6 +3291,9 @@ function handleQuizAnswer(selectedOption) {
 
 function showQuizSummary() {
   clearQuizTimer();
+
+  const modalContent = document.querySelector(".quiz-modal-content");
+  if (modalContent) modalContent.scrollTop = 0;
 
   const summaryBox = document.getElementById("quiz-summary-box");
   const questionBox = document.getElementById("quiz-question-box");
@@ -3713,9 +3746,9 @@ function startRunnerGame(levelId) {
 
   lastSpawnedObstacleType = "none";
 
-  // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 2.30 ile rahat ve keyifli başlar, kademeli hızlanır)
-  const stageSpeeds = [2.30, 2.48, 2.68, 2.90, 3.15, 3.40, 3.65, 3.90, 4.15, 4.40];
-  gameSpeed = stageSpeeds[levelId - 1] || (2.30 + (levelId - 1) * 0.22);
+  // 🚀 7-15 Yaş Çocuk Dostu Kademeli Hız Dengesi (1. Bölüm 1.65 ile yumuşak ve keyifli başlar, 10. Bölüm 5.40'a kadar kademeli hızlanır)
+  const stageSpeeds = [1.65, 1.95, 2.30, 2.70, 3.15, 3.60, 4.05, 4.50, 4.95, 5.40];
+  gameSpeed = stageSpeeds[levelId - 1] || (1.65 + (levelId - 1) * 0.40);
   updateClothingHUD();
 
   const heroId = GameState.getSelectedHero();
@@ -4511,13 +4544,13 @@ function handleSpawning() {
   if (spawnCooldown <= 0) {
     const groundY = canvas.height - 90;
 
-    // Profesyonel Engel Yoğunluğu: 1. Etap %48 dinamik -> 10. Etap %76 yoğun profesyonel parkur
-    const spawnChance = Math.min(0.76, 0.48 + (currentLevelNumber * 0.028));
+    // Profesyonel Engel Yoğunluğu: 1. Etap %36 hafif & sakin -> 10. Etap %78 yoğun parkur
+    const spawnChance = Math.min(0.78, 0.36 + (currentLevelNumber * 0.042));
     const spawnTypeRoll = Math.random();
 
     if (spawnTypeRoll < spawnChance) {
       // ENGEL OLUŞTURMA: Zemin (Zıpla) veya Asılı (Eğil/Kay)
-      const slideProb = currentLevelNumber === 1 ? 0.25 : Math.min(0.48, 0.25 + (currentLevelNumber * 0.024));
+      const slideProb = currentLevelNumber === 1 ? 0.20 : Math.min(0.48, 0.20 + (currentLevelNumber * 0.028));
       const isSlideObstacle = Math.random() < slideProb;
 
       if (isSlideObstacle) {
@@ -4643,13 +4676,13 @@ function handleSpawning() {
         }
       }
 
-      // PROFESYONEL VE RİTMİK ENGEL ARALIĞI:
-      // 1. Etap: ~90-105 frame (1.5 - 1.8 saniye canlı reaksiyon payı)
-      // 10. Etap: ~55-70 frame (0.9 - 1.2 saniye heyecanlı profesyonel akış)
-      const baseGap = Math.max(54, 112 - (currentLevelNumber * 5.5));
-      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 16 : 10));
+      // KADEMELİ VE RİTMİK ENGEL ARALIĞI:
+      // 1. Etap: ~118-136 frame (2.0 - 2.3 saniye rahat reaksiyon payı)
+      // 10. Etap: ~46-56 frame (0.8 - 1.0 saniye heyecanlı profesyonel akış)
+      const baseGap = Math.max(46, 126 - (currentLevelNumber * 8));
+      let extraBuffer = Math.floor(Math.random() * (currentLevelNumber <= 3 ? 18 : 10));
       if (lastSpawnedObstacleType === "overhead") {
-        extraBuffer += 12; // Kaymadan sonra doğrulmak için ilave pay
+        extraBuffer += 14; // Kaymadan sonra doğrulmak için ilave pay
       }
       spawnCooldown = Math.floor(baseGap + extraBuffer);
     } else {
@@ -8676,7 +8709,7 @@ function onLevelVictory() {
 
   if (nextIndex <= 9) {
     if (nextBtn) {
-      nextBtn.textContent = `🌿 DOĞA VE BİLİM YARIŞMASINA GEÇ ⏩`;
+      nextBtn.textContent = `🌿 DOĞA VE BİLİM YARIŞMASINA BAŞLA (+Puan) 🎓`;
       nextBtn.onclick = () => {
         document.getElementById("modal-victory").classList.remove("active");
         startNatureQuiz(currentIndex, () => {
@@ -8685,7 +8718,7 @@ function onLevelVictory() {
       };
     }
     if (vicMapBtn) {
-      vicMapBtn.textContent = `🗺️ Soruları Geç, ${nextIndex + 1}. Etaba Odaklan`;
+      vicMapBtn.textContent = `🗺️ DİREKT ${nextIndex + 1}. ETABA DEVAM ET ⏩`;
       vicMapBtn.onclick = () => {
         document.getElementById("modal-victory").classList.remove("active");
         proceedToNextStageOnMap(nextIndex);
