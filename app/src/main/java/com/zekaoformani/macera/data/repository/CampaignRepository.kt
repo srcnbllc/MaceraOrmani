@@ -6,12 +6,13 @@ import com.zekaoformani.macera.data.models.Campaign
 import kotlinx.coroutines.tasks.await
 
 class CampaignRepository {
-    private val firestore = FirebaseManager.firestore
-    private val campaignsCollection = firestore.collection("campaigns")
+    private val firestore get() = FirebaseManager.firestore
+    private val campaignsCollection get() = firestore?.collection("campaigns")
 
     suspend fun getCampaigns(isChildMode: Boolean = true): List<Campaign> {
         return try {
-            val snapshot = campaignsCollection.get().await()
+            val collection = campaignsCollection ?: return getDefaultCampaigns()
+            val snapshot = collection.get().await()
             val list = if (!snapshot.isEmpty) {
                 snapshot.documents.mapNotNull { doc ->
                     val data = doc.data ?: return@mapNotNull null

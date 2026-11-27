@@ -4207,11 +4207,12 @@ body.is-native-app #app-container {
   align-items: center;
   gap: 6px;
   position: absolute;
-  top: 114px;
+  top: 124px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: 95;
   pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .perk-tag {
@@ -5010,7 +5011,7 @@ body.is-native-app #app-container {
    ========================================================== */
 .in-game-spot-card {
   position: absolute;
-  top: 154px;
+  top: 170px;
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 32px);
@@ -6363,7 +6364,12 @@ body.is-native-app #app-container {
   }
 
   .hud-perks-bar {
-    top: max(104px, calc(env(safe-area-inset-top, 0px) + 100px)) !important;
+    top: max(118px, calc(env(safe-area-inset-top, 0px) + 110px)) !important;
+    z-index: 95 !important;
+  }
+
+  .in-game-spot-card {
+    top: max(168px, calc(env(safe-area-inset-top, 0px) + 158px)) !important;
   }
 
   /* Alt Kontroller: Sol Başparmağa EĞİL, Sağ Başparmağa ZIPLA, Orta Bölge Boş */

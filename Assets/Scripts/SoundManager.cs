@@ -41,6 +41,12 @@ public class SoundManager : MonoBehaviour
         }
 
         if (sfxSource == null) sfxSource = GetComponent<AudioSource>();
+        if (musicSource == null)
+        {
+            AudioSource[] sources = GetComponents<AudioSource>();
+            if (sources.Length > 1) musicSource = sources[1];
+            else musicSource = gameObject.AddComponent<AudioSource>();
+        }
     }
 
     public void PlayJump()
@@ -92,6 +98,15 @@ public class SoundManager : MonoBehaviour
             return;
         }
 
+        if (musicSource == null)
+        {
+            AudioSource[] sources = GetComponents<AudioSource>();
+            if (sources.Length > 1) musicSource = sources[1];
+            else musicSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (musicSource == null) return;
+
         if (musicSource.clip == musicClip && musicSource.isPlaying)
         {
             return; // Already playing this clip
@@ -110,10 +125,13 @@ public class SoundManager : MonoBehaviour
 
     public void StopBackgroundMusic()
     {
-        if (musicSource.isPlaying)
+        if (musicSource != null)
         {
-            musicSource.Stop();
+            if (musicSource.isPlaying)
+            {
+                musicSource.Stop();
+            }
+            musicSource.clip = null;
         }
-        musicSource.clip = null;
     }
 }

@@ -8,12 +8,13 @@ import com.zekaoformani.macera.data.models.LeaderboardItem
 import kotlinx.coroutines.tasks.await
 
 class LeaderboardRepository {
-    private val firestore = FirebaseManager.firestore
-    private val leaderboardCollection = firestore.collection("leaderboard")
+    private val firestore get() = FirebaseManager.firestore
+    private val leaderboardCollection get() = firestore?.collection("leaderboard")
 
     suspend fun getLeaderboard(): List<LeaderboardItem> {
         return try {
-            val snapshot = leaderboardCollection.orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING).limit(50).get().await()
+            val collection = leaderboardCollection ?: return getDefaultLeaderboard()
+            val snapshot = collection.orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING).limit(50).get().await()
             if (!snapshot.isEmpty) {
                 snapshot.documents.mapNotNull { doc ->
                     doc.data?.let { mapDocumentToLeaderboardItem(doc.id, it) }
@@ -31,8 +32,9 @@ class LeaderboardRepository {
      * Real-time listener: Attaches Firestore SnapshotListener so changes made in Firebase Console
      * (editing scores, adding players, resetting leaderboard) instantly update the game screen!
      */
-    fun listenToLeaderboard(onUpdate: (List<LeaderboardItem>) -> Unit): ListenerRegistration {
-        return leaderboardCollection.orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
+    fun listenToLeaderboard(onUpdate: (List<LeaderboardItem>) -> Unit): ListenerRegistration? {
+        val collection = leaderboardCollection ?: return null
+        return collection.orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -61,8 +63,9 @@ class LeaderboardRepository {
         deviceInfo: String = ""
     ) {
         try {
-            val uid = FirebaseManager.auth.currentUser?.uid ?: "anonymous_${System.currentTimeMillis()}"
-            val docRef = leaderboardCollection.document(uid)
+            val collection = leaderboardCollection ?: return
+            val uid = FirebaseManager.auth?.currentUser?.uid ?: "anonymous_${System.currentTimeMillis()}"
+            val docRef = collection.document(uid)
             val brand = if (deviceBrand.isNotBlank()) deviceBrand else (android.os.Build.MANUFACTURER?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Android")
             val model = if (deviceModel.isNotBlank()) deviceModel else (android.os.Build.MODEL ?: "Cihaz")
             val fullInfo = if (deviceInfo.isNotBlank()) deviceInfo else "$brand $model (Android ${android.os.Build.VERSION.RELEASE})"

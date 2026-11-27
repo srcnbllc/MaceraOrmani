@@ -82,9 +82,13 @@ public class BolumSecimLogic : MonoBehaviour
             if (butonResmi != null)
             {
                 if (bolum.levelIndex == 4 || bolum.levelIndex == 9)
+                {
                     if (cerceveOzel != null) butonResmi.sprite = cerceveOzel;
+                }
                 else
+                {
                     if (cerceveStandart != null) butonResmi.sprite = cerceveStandart;
+                }
             }
 
             DataManager.LevelState guncelDurum = dataManager.GetLevelState(bolum.levelIndex);
@@ -92,6 +96,8 @@ public class BolumSecimLogic : MonoBehaviour
             // ==========================================
             // DEMİR YUMRUK: Oyun kilidi açsa bile QR okutulmadıysa kilitli göster!
             // ==========================================
+            bool qrIkonuGoster = false;
+
             if (bolum.levelIndex == 0 || bolum.levelIndex == 1) 
             {
                 qrIkonuGoster = false; 
@@ -106,7 +112,13 @@ public class BolumSecimLogic : MonoBehaviour
                 if (guncelDurum == DataManager.LevelState.Unlocked && !qrOkutulduMu)
                 {
                     guncelDurum = DataManager.LevelState.QrRequired;
+                    qrIkonuGoster = true;
                 }
+            }
+
+            if (guncelDurum == DataManager.LevelState.QrRequired)
+            {
+                qrIkonuGoster = true;
             }
 
             switch (guncelDurum)

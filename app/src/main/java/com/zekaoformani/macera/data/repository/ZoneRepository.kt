@@ -8,13 +8,14 @@ import com.zekaoformani.macera.data.models.Zone
 import kotlinx.coroutines.tasks.await
 
 class ZoneRepository {
-    private val firestore = FirebaseManager.firestore
-    private val zonesCollection = firestore.collection("parks").document("kemerburgaz").collection("zones")
-    private val topLevelZonesCollection = firestore.collection("zones")
+    private val firestore get() = FirebaseManager.firestore
+    private val zonesCollection get() = firestore?.collection("parks")?.document("kemerburgaz")?.collection("zones")
+    private val topLevelZonesCollection get() = firestore?.collection("zones")
 
     suspend fun getZones(): List<Zone> {
         return try {
-            val snapshot = zonesCollection.get().await()
+            val collection = zonesCollection ?: return fetchTopLevelZonesOrFallback()
+            val snapshot = collection.get().await()
             if (!snapshot.isEmpty) {
                 val list = snapshot.documents.mapNotNull { doc ->
                     doc.data?.let { mapDocumentToZone(doc.id, it) }
@@ -31,7 +32,8 @@ class ZoneRepository {
 
     private suspend fun fetchTopLevelZonesOrFallback(): List<Zone> {
         return try {
-            val topSnap = topLevelZonesCollection.get().await()
+            val collection = topLevelZonesCollection ?: return getDefaultZones()
+            val topSnap = collection.get().await()
             if (!topSnap.isEmpty) {
                 val list = topSnap.documents.mapNotNull { doc ->
                     doc.data?.let { mapDocumentToZone(doc.id, it) }
@@ -49,8 +51,9 @@ class ZoneRepository {
      * Real-time listener: Attaches Firestore SnapshotListener so changes in Firebase Console
      * (names, businesses, coordinates, descriptions) immediately notify the game without restarts.
      */
-    fun listenToZones(onUpdate: (List<Zone>) -> Unit): ListenerRegistration {
-        return zonesCollection.addSnapshotListener { snapshot, error ->
+    fun listenToZones(onUpdate: (List<Zone>) -> Unit): ListenerRegistration? {
+        val collection = zonesCollection ?: return null
+        return collection.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.w("ZoneRepository", "Snapshot listener error: ${error.localizedMessage}")
                 return@addSnapshotListener

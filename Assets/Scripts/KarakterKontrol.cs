@@ -52,7 +52,7 @@ public class KarakterKontrol : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        levelManager = FindObjectOfType<LevelManager>(); 
+        levelManager = FindFirstObjectByType<LevelManager>(); 
         orijinalScale = transform.localScale;
 
         // Seçilen Karakterin (Tilki, Maymun, Ayı/Kaplan) Benzersiz Fizik & Yetenek Ayarları

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 using TMPro;
 
 /// <summary>
@@ -70,7 +71,7 @@ public class LevelManager : MonoBehaviour
         SkoruGuncelle();
 
         // Kademeli zorluk: İlerleyen bölümlerde engeller kademeli olarak biraz daha sık gelsin
-        Spawner spawner = FindObjectOfType<Spawner>();
+        Spawner spawner = FindFirstObjectByType<Spawner>();
         if (spawner != null)
         {
             float hizFaktoru = Mathf.Max(0.55f, 1.0f - (gecerliBolumID - 1) * 0.045f);
@@ -79,14 +80,14 @@ public class LevelManager : MonoBehaviour
         }
 
         // Arka plan kayma hızını bölüm hızına oranla
-        ArkaplanKaydirma bg = FindObjectOfType<ArkaplanKaydirma>();
+        ArkaplanKaydirma bg = FindFirstObjectByType<ArkaplanKaydirma>();
         if (bg != null)
         {
             bg.kaydirmaHizi = 3.0f * (seviyeHizi / 5.0f);
         }
 
         // Gerçekçi Kent Ormanı Saha & Mola Tanıtım Kartı
-        if (FindObjectOfType<ForestSpotCard>() == null)
+        if (FindFirstObjectByType<ForestSpotCard>() == null)
         {
             GameObject spotCardObj = new GameObject("ForestSpotCardController");
             spotCardObj.AddComponent<ForestSpotCard>();
@@ -186,7 +187,7 @@ public class LevelManager : MonoBehaviour
 
         SoundManager.Instance?.PlayGameOver();
 
-        Spawner spawner = FindObjectOfType<Spawner>();
+        Spawner spawner = FindFirstObjectByType<Spawner>();
         if (spawner != null) spawner.UretimiDurdur();
 
         AltinlariCuzdanaKaydet();
@@ -199,7 +200,7 @@ public class LevelManager : MonoBehaviour
         if (oyunBittiMi) return;
         oyunBittiMi = true;
 
-        Spawner spawner = FindObjectOfType<Spawner>();
+        Spawner spawner = FindFirstObjectByType<Spawner>();
         if (spawner != null) spawner.UretimiDurdur();
 
         Debug.Log($"TEBRİKLER! {gecerliBolumID}. Bölüm başarıyla tamamlandı!");
@@ -217,7 +218,7 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 0;
 
         // 10. BÖLÜM BÜYÜK FİNAL KONTROLÜ
-        GrandVictoryLogic grandVictory = FindObjectOfType<GrandVictoryLogic>();
+        GrandVictoryLogic grandVictory = FindFirstObjectByType<GrandVictoryLogic>();
         if (gecerliBolumID >= 10 && grandVictory != null)
         {
             int toplamAltin = PlayerPrefs.GetInt("total_coins", 0);

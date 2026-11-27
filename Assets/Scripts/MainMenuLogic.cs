@@ -279,9 +279,13 @@ public class MainMenuLogic : MonoBehaviour
 
             if (card == null) continue;
 
-            Image iconImage = card.transform.Find("Icon").GetComponent<Image>();
-            TextMeshProUGUI statusText = card.transform.Find("StatusText").GetComponent<TextMeshProUGUI>();
+            Transform iconTrans = card.transform.Find("Icon");
+            Transform statusTrans = card.transform.Find("StatusText");
+            if (iconTrans == null || statusTrans == null) continue;
+            Image iconImage = iconTrans.GetComponent<Image>();
+            TextMeshProUGUI statusText = statusTrans.GetComponent<TextMeshProUGUI>();
             Button cardButton = card.GetComponent<Button>();
+            if (iconImage == null || statusText == null || cardButton == null) continue;
 
             // Ekrana basmadan önce DataManager'a soruyoruz: "Bu bölümün kilidi ne alemde?"
             DataManager.LevelState state = DataManager.LevelState.Locked;
@@ -332,7 +336,7 @@ public class MainMenuLogic : MonoBehaviour
 
         Image rowLockImage = lockIconTransform.GetComponent<Image>();
 
-        if (currentLevel > requiredLevel)
+        if (currentLevel >= requiredLevel)
         {
             if (unlockedRewardIcon != null) rowLockImage.sprite = unlockedRewardIcon;
         }

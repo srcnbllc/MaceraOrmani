@@ -14,34 +14,52 @@ import kotlinx.coroutines.tasks.await
 object FirebaseManager {
     private const val TAG = "FirebaseManager"
 
-    val auth: FirebaseAuth by lazy { Firebase.auth }
-    val firestore: FirebaseFirestore by lazy { Firebase.firestore }
-    val remoteConfig: FirebaseRemoteConfig by lazy { Firebase.remoteConfig }
+    fun ensureInitialized(context: android.content.Context) {
+        try {
+            if (com.google.firebase.FirebaseApp.getApps(context).isEmpty()) {
+                com.google.firebase.FirebaseApp.initializeApp(context)
+                Log.d(TAG, "FirebaseApp explicitly initialized.")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "FirebaseApp initialization error: ${e.localizedMessage}")
+        }
+    }
+
+    val auth: FirebaseAuth?
+        get() = try { Firebase.auth } catch (e: Exception) { Log.w(TAG, "Auth unavailable: ${e.message}"); null }
+
+    val firestore: FirebaseFirestore?
+        get() = try { Firebase.firestore } catch (e: Exception) { Log.w(TAG, "Firestore unavailable: ${e.message}"); null }
+
+    val remoteConfig: FirebaseRemoteConfig?
+        get() = try { Firebase.remoteConfig } catch (e: Exception) { Log.w(TAG, "RemoteConfig unavailable: ${e.message}"); null }
 
     suspend fun initAndSignInAnonymously() {
         try {
-            if (auth.currentUser == null) {
-                val result = auth.signInAnonymously().await()
+            val currentAuth = auth ?: return
+            if (currentAuth.currentUser == null) {
+                val result = currentAuth.signInAnonymously().await()
                 Log.d(TAG, "Firebase Anonymous Sign-In successful. UID: ${result.user?.uid}")
             } else {
-                Log.d(TAG, "Already signed in. UID: ${auth.currentUser?.uid}")
+                Log.d(TAG, "Already signed in. UID: ${currentAuth.currentUser?.uid}")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Anonymous sign-in failed: ${e.localizedMessage}")
         }
 
         try {
+            val config = remoteConfig ?: return
             val configSettings = remoteConfigSettings {
                 minimumFetchIntervalInSeconds = 3600
             }
-            remoteConfig.setConfigSettingsAsync(configSettings)
+            config.setConfigSettingsAsync(configSettings)
             val defaults = mapOf(
                 "game_speed_multiplier" to 1.0,
                 "base_shields_count" to 1,
                 "child_mode_default" to true
             )
-            remoteConfig.setDefaultsAsync(defaults)
-            remoteConfig.fetchAndActivate()
+            config.setDefaultsAsync(defaults)
+            config.fetchAndActivate()
             Log.d(TAG, "RemoteConfig initialized and activated")
         } catch (e: Exception) {
             Log.w(TAG, "RemoteConfig setup warning: ${e.localizedMessage}")

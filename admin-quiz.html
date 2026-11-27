@@ -350,7 +350,6 @@
     ];
 
     function initPanel() {
-      // Önce localStorage önbelleği veya varsayılan havuz
       let saved = null;
       try {
         saved = localStorage.getItem("bogazici_remote_quiz_pool_v1");
@@ -431,7 +430,6 @@
       if (!quizPool[activeStageIndex]) quizPool[activeStageIndex] = [];
       if (!quizPool[activeStageIndex][qIdx]) quizPool[activeStageIndex][qIdx] = {};
       quizPool[activeStageIndex][qIdx][field] = val;
-      // Yerel önbelleğe anında yaz
       localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
     }
 
@@ -470,9 +468,8 @@
           localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
           showToast("✅ Başarıyla Firestore'a kaydedildi! Oyuncular yeni soruları otomatik görecek.");
         } else {
-          // REST API fallback: yerel önbellek koruması
           localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));
-          showToast("💾 Yerel önbelleğe kaydedildi. (Firestore bağlantı yanıtı: " + res.status + ")");
+          showToast("💾 Yerel önbelleğe kaydedildi. (Firestore yanıtı: " + res.status + ")");
         }
       } catch (err) {
         localStorage.setItem("bogazici_remote_quiz_pool_v1", JSON.stringify(quizPool));

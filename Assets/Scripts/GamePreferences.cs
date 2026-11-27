@@ -16,20 +16,22 @@ public class GamePreferences : MonoBehaviour
 
     public int SelectedCharacter
     {
-        get => PlayerPrefs.GetInt(KEY_SELECTED_CHARACTER, 1);
+        get => PlayerPrefs.GetInt(KEY_SELECTED_CHARACTER, PlayerPrefs.GetInt("SelectedCharacterID", 1));
         set
         {
             PlayerPrefs.SetInt(KEY_SELECTED_CHARACTER, value);
+            PlayerPrefs.SetInt("SelectedCharacterID", value);
             PlayerPrefs.Save();
         }
     }
 
     public int TotalScore
     {
-        get => PlayerPrefs.GetInt(KEY_TOTAL_SCORE, 0);
+        get => Mathf.Max(PlayerPrefs.GetInt(KEY_TOTAL_SCORE, 0), PlayerPrefs.GetInt("total_coins", 0));
         set
         {
             PlayerPrefs.SetInt(KEY_TOTAL_SCORE, value);
+            PlayerPrefs.SetInt("total_coins", value);
             PlayerPrefs.Save();
         }
     }
@@ -86,6 +88,15 @@ public class GamePreferences : MonoBehaviour
         if (clamped > currentMax)
         {
             PlayerPrefs.SetInt(KEY_UNLOCKED_CHAPTER, clamped);
+            // DataManager LevelState senkronizasyonu (bölüm indeksi 0-tabanlı)
+            if (clamped - 1 >= 0)
+            {
+                int currentLevelState = PlayerPrefs.GetInt("LevelState_" + (clamped - 1), 0);
+                if (currentLevelState == 0) // Eğer Locked ise Unlocked yap
+                {
+                    PlayerPrefs.SetInt("LevelState_" + (clamped - 1), 2); // Unlocked
+                }
+            }
             PlayerPrefs.Save();
         }
     }
@@ -97,7 +108,8 @@ public class GamePreferences : MonoBehaviour
 
     public bool IsLevelCompleted(int levelId)
     {
-        return PlayerPrefs.GetInt($"level_{levelId}_completed", 0) == 1;
+        return PlayerPrefs.GetInt($"level_{levelId}_completed", 0) == 1 ||
+               PlayerPrefs.GetInt($"LevelState_{levelId - 1}", 0) == 3; // 3 = Completed
     }
 
     public int GetLevelStars(int levelId)

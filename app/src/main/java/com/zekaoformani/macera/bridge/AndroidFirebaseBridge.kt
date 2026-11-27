@@ -33,8 +33,11 @@ class AndroidFirebaseBridge(
     private val leaderboardRepository: LeaderboardRepository,
     private val coroutineScope: CoroutineScope
 ) {
+    @Volatile
     private var cachedZones: List<Zone> = zoneRepository.getDefaultZones()
+    @Volatile
     private var cachedCampaigns: List<Campaign> = campaignRepository.getDefaultCampaigns()
+    @Volatile
     private var cachedLeaderboard: List<LeaderboardItem> = leaderboardRepository.getDefaultLeaderboard()
 
     private var zoneListener: ListenerRegistration? = null
@@ -94,15 +97,15 @@ class AndroidFirebaseBridge(
     }
 
     private fun notifyWebviewOfFirebaseSync() {
-        val zonesJson = getZonesJson()
-        val campaignsJson = getCampaignsJson()
-        val script = "if (window.onFirebaseDataReady) { window.onFirebaseDataReady($zonesJson, $campaignsJson); }"
+        val zonesQuoted = JSONObject.quote(getZonesJson())
+        val campaignsQuoted = JSONObject.quote(getCampaignsJson())
+        val script = "if (window.onFirebaseDataReady) { window.onFirebaseDataReady(JSON.parse($zonesQuoted), JSON.parse($campaignsQuoted)); }"
         webView.evaluateJavascript(script, null)
     }
 
     private fun notifyWebviewOfLeaderboardSync() {
-        val lbJson = getLeaderboardJson()
-        val script = "if (window.onFirebaseLeaderboardReady) { window.onFirebaseLeaderboardReady($lbJson); }"
+        val lbQuoted = JSONObject.quote(getLeaderboardJson())
+        val script = "if (window.onFirebaseLeaderboardReady) { window.onFirebaseLeaderboardReady(JSON.parse($lbQuoted)); }"
         webView.evaluateJavascript(script, null)
     }
 

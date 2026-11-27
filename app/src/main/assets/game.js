@@ -2329,16 +2329,27 @@ let unlockedInRun = { hat: false, vest: false, pants: false };
 
 function unlockInGameBoosterReward(type) {
   inGameReadyBoosters[type] = true;
+  if (typeof readyAccessories !== "undefined") {
+    readyAccessories[type] = true;
+  }
   const btn = document.getElementById(`in-game-booster-${type}`);
   if (btn) {
     btn.classList.remove("hidden");
+  }
+  const hudBtn = document.getElementById(`hud-cloth-${type}`);
+  if (hudBtn) {
+    hudBtn.classList.remove("hidden");
+    hudBtn.classList.add("is-ready");
+  }
+  if (typeof updateClothingHUD === "function") {
+    updateClothingHUD();
   }
   const names = {
     hat: "🧢 Kaşif Şapkası (Koruma)",
     vest: "🦺 Muhafız Yeleği (Çelik Zırh)",
     pants: "👖 İzci Pantolonu (Mıknatıs)"
   };
-  showToast(`🎉 Ödül Açıldı: ${names[type] || 'Kıyafet'}! Sağdaki ikona DOKUN ve aktif et!`, "success");
+  showToast(`🎉 Ödül Açıldı: ${names[type] || 'Kıyafet'}! Sağ üstteki ikona DOKUN ve aktif et!`, "success");
   sounds.playCollect();
 }
 window.unlockInGameBoosterReward = unlockInGameBoosterReward;
@@ -3858,9 +3869,13 @@ function startRunnerGame(levelId) {
   if (tutGuideCard) tutGuideCard.classList.add("hidden");
 
   const spotCard = document.getElementById("game-spot-card");
+  const hudPerks = document.getElementById("game-hud-perks");
   const etap = RESMI_ETAPLAR[levelId - 1] || RESMI_ETAPLAR[0];
 
   if (spotCard) {
+    // Spot kart açıkken arkasında çadır/can görselinin sıkışıp kalmasını önle
+    if (hudPerks) hudPerks.style.display = "none";
+
     // Kart zaten görünürse: aşağı kayarak çıkış → içeriği güncelle → yukarıdan kayarak giriş
     if (!spotCard.classList.contains("hidden")) {
       spotCard.classList.add("spot-card-exit");
@@ -3888,6 +3903,9 @@ function startRunnerGame(levelId) {
         spotCard.classList.add("hidden");
         spotCard.classList.remove("spot-card-exit");
         spotCard.style.opacity = "1";
+        // Saha kartı kaybolduğunda güçlendirme rozetini geri göster
+        const perks = document.getElementById("game-hud-perks");
+        if (perks) perks.style.display = "flex";
       }, 280);
       spotCardHideTimer = null;
     }, 3500);
@@ -8159,35 +8177,49 @@ window.testAccessory = function(duration = 15) {
 // Üst Alandaki Aksesuar Butonuna Dokunulduğunda O Esnada Aktif Etme & İkonu Gizleme
 window.useAccessory = function(type) {
   if (!type) return;
-  if (typeof isTutorialMode !== "undefined" && isTutorialMode && tutorialStep === 5) {
-    onTutorialAction('accessory');
-  }
-  const duration = 15;
 
-  // Zaten aktifse tekrar basılmasını yut
-  if (typeof activeClothingBuffs !== "undefined" && activeClothingBuffs[type] > 0) return;
-
-  // 1. Hazır envanter hakkını tüket ve ekrandaki ikonu ANINDA KAYBET (ekran temiz kalır)
+  // 1. Hazır envanter hakkını tüket ve ekrandaki butonları/işaretçileri ANINDA GİZLE (ekran temiz kalır)
   if (typeof readyAccessories !== "undefined") {
     readyAccessories[type] = false;
   }
   if (typeof inGameReadyBoosters !== "undefined") {
     inGameReadyBoosters[type] = false;
   }
+
   const pill = document.getElementById(`hud-cloth-${type}`);
   if (pill) {
     pill.classList.add("hidden");
-    pill.classList.remove("is-ready");
+    pill.classList.remove("is-ready", "tutorial-highlight-pulse", "tutorial-target-focused");
   }
 
-  // 2. Aksesuarı tam o anda 15 sn boyunca aktif et (Kahraman çevresinde dönen dinamik çember açılır)
+  // Tutorial işaretçisi ve kart içi aksiyon butonunu anında gizle
+  const pointer = document.getElementById("tutorial-hat-pointer");
+  if (pointer) pointer.classList.add("hidden");
+  const cardCta = document.getElementById("tutorial-card-cta-wrap");
+  if (cardCta) cardCta.classList.add("hidden");
+
+  const oldBooster = document.getElementById(`in-game-booster-${type}`);
+  if (oldBooster) oldBooster.classList.add("hidden");
+
+  // 2. Tutorial 5. Adım (Kalkan & Zırh Öğretisi): 'hat' veya 'vest' tıklandığında alıştırma adımını ilerlet
+  if (typeof isTutorialMode !== "undefined" && isTutorialMode && tutorialStep === 5) {
+    onTutorialAction('accessory');
+  }
+
+  const duration = 15;
+
+  // 3. Aksesuarı aktif et (Dinamik koruma çemberi & zırh)
   if (typeof AccessoryController !== "undefined") {
     AccessoryController.activateAccessory(type, duration);
-  } else if (typeof activeClothingBuffs !== "undefined") {
+  }
+  if (typeof activeClothingBuffs !== "undefined") {
     activeClothingBuffs[type] = duration;
   }
+  if (typeof player !== "undefined") {
+    player.hasShield = true;
+  }
 
-  // 3. Çocuk dostu parıltı parçacıkları
+  // 4. Çocuk dostu parıltı parçacıkları
   if (typeof player !== "undefined" && Array.isArray(particles)) {
     const pColor = type === "hat" ? "#fbbf24" : (type === "vest" ? "#22c55e" : "#38bdf8");
     for (let k = 0; k < 12; k++) {
@@ -8204,9 +8236,9 @@ window.useAccessory = function(type) {
   }
 
   const toasts = {
-    hat: "🧢 Kaşif Şapkası Aktif! (15 sn Engel Koruması Başladı)",
-    vest: "🦺 Muhafız Yeleği Aktif! (15 sn Çelik Zırh Koruması Başladı)",
-    pants: "👖 İzci Pantolonu Aktif! (15 sn Mıknatıs & Çift Zıplama Başladı)"
+    hat: "🧢 Kaşif Şapkası Aktif! (15 sn Engel Koruması Devrede)",
+    vest: "🦺 Muhafız Yeleği Aktif! (15 sn Çelik Zırh Koruması Devrede)",
+    pants: "👖 İzci Pantolonu Aktif! (15 sn Mıknatıs & Çift Zıplama Devrede)"
   };
   if (typeof showToast === "function" && toasts[type]) {
     showToast(toasts[type], "success");

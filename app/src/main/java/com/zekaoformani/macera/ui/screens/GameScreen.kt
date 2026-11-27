@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -208,8 +209,8 @@ fun GameScreen(
                 val obsEffectiveHeight = obs.height * (1f - tolerance)
                 val obsLeft = obs.x + (obs.width * tolerance * 0.5f)
                 val obsRight = obsLeft + obsEffectiveWidth
-                val obsBottom = 320f
-                val obsTop = if (obs.type == ObstacleType.HIGH_BRANCH) 320f - 140f else 320f - obsEffectiveHeight
+                val obsBottom = if (obs.type == ObstacleType.HIGH_BRANCH) 320f - 50f else 320f
+                val obsTop = if (obs.type == ObstacleType.HIGH_BRANCH) 320f - 110f else 320f - obsEffectiveHeight
 
                 val isHorizontallyOverlapping = heroRight > obsLeft && heroLeft < obsRight
                 val isVerticallyOverlapping = heroBottom > obsTop && heroTop < obsBottom
@@ -372,11 +373,11 @@ fun GameScreen(
         // 2. Koşan Kahraman (Tilki) & Otomatik Kalkan Aurası
         val heroBottomY = screenHeight * 0.78f
         val heroXPos = if (isLandscape) 120.dp else 60.dp
-        val heroActualY = heroBottomY - (heroYOffset.dp) - (if (heroAction == HeroAction.SLIDE) 45.dp else heroSizeDp)
+        val heroActualY = (heroBottomY - (heroYOffset.dp) - (if (heroAction == HeroAction.SLIDE) 45.dp else heroSizeDp)).coerceAtLeast(0.dp)
 
         Box(
             modifier = Modifier
-                .padding(start = heroXPos, top = heroActualY)
+                .offset(x = heroXPos, y = heroActualY)
                 .size(heroSizeDp),
             contentAlignment = Alignment.Center
         ) {

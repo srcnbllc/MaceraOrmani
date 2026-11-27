@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.zekaoformani.macera.bridge.AndroidFirebaseBridge
+import com.zekaoformani.macera.data.firebase.FirebaseManager
 import com.zekaoformani.macera.data.repository.CampaignRepository
 import com.zekaoformani.macera.data.repository.LeaderboardRepository
 import com.zekaoformani.macera.data.repository.ZoneRepository
@@ -33,6 +34,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseManager.ensureInitialized(applicationContext)
 
         // Modern Immersive Full Screen (Edge-to-Edge with swipe-to-show transient system bars)
         WindowCompat.setDecorFitsSystemWindows(window, false)

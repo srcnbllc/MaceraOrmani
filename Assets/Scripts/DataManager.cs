@@ -37,6 +37,7 @@ public class DataManager : MonoBehaviour
 
             // Satın alınan karakterleri de sıfırla ki mağaza testi yapılabilsin
             PlayerPrefs.DeleteKey("SelectedCharacterID");
+            PlayerPrefs.DeleteKey("selected_character");
             for (int i = 2; i <= 10; i++)
             {
                 PlayerPrefs.DeleteKey($"unlocked_char_{i}");
@@ -70,22 +71,60 @@ public class DataManager : MonoBehaviour
     public void SetLevelState(int levelIndex, LevelState state)
     {
         PlayerPrefs.SetInt("LevelState_" + levelIndex, (int)state);
+        
+        // GamePreferences çift yönlü senkronizasyonu
+        if (state == LevelState.Completed)
+        {
+            PlayerPrefs.SetInt($"level_{levelIndex + 1}_completed", 1);
+            int currentMax = PlayerPrefs.GetInt("unlocked_chapter", 1);
+            if (levelIndex + 2 > currentMax)
+            {
+                PlayerPrefs.SetInt("unlocked_chapter", Mathf.Min(levelIndex + 2, 10));
+            }
+        }
+        else if (state == LevelState.Unlocked)
+        {
+            int currentMax = PlayerPrefs.GetInt("unlocked_chapter", 1);
+            if (levelIndex + 1 > currentMax)
+            {
+                PlayerPrefs.SetInt("unlocked_chapter", Mathf.Min(levelIndex + 1, 10));
+            }
+        }
+        
         PlayerPrefs.Save();
     }
 
     public LevelState GetLevelState(int levelIndex)
     {
-        // Veri yoksa güvenlik için Locked (0) döndürür
-        return (LevelState)PlayerPrefs.GetInt("LevelState_" + levelIndex, 0);
+        // Önce doğrudan LevelState kontrolü
+        if (PlayerPrefs.HasKey("LevelState_" + levelIndex))
+        {
+            return (LevelState)PlayerPrefs.GetInt("LevelState_" + levelIndex, 0);
+        }
+
+        // GamePreferences yedeği kontrolü
+        if (PlayerPrefs.GetInt($"level_{levelIndex + 1}_completed", 0) == 1)
+        {
+            return LevelState.Completed;
+        }
+
+        int unlockedChapter = PlayerPrefs.GetInt("unlocked_chapter", 1);
+        if (levelIndex == 0 || unlockedChapter >= levelIndex + 1)
+        {
+            return LevelState.Unlocked;
+        }
+
+        return LevelState.Locked;
     }
     // ------------------------------------------
 
     public int TotalCoins
     {
-        get => PlayerPrefs.GetInt(KEY_TOTAL_COINS, 0);
+        get => Mathf.Max(PlayerPrefs.GetInt(KEY_TOTAL_COINS, 0), PlayerPrefs.GetInt("total_score", 0));
         set
         {
             PlayerPrefs.SetInt(KEY_TOTAL_COINS, value);
+            PlayerPrefs.SetInt("total_score", value);
             PlayerPrefs.Save();
         }
     }
